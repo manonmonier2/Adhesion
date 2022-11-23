@@ -1,0 +1,4 @@
+default:
+  batches: C:/Users/jean-/OneDrive/Bureau/Manon/data/batch/
+  concatenate_file: C:/Users/jean-/OneDrive/Bureau/Manon/dev/data_concatenate.csv
+  concatenate_id_file: C:/Users/jean-/OneDrive/Bureau/Manon/dev/id_concatenate.csv
