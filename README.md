@@ -24,7 +24,7 @@ _concatenation_data.R_: ...
 ## USAGE
 
 ### Preparation
-All the path must be provided in the _config.yml_ file.
+All the parameters must be provided in the _config.yml_ file.
 
 Multiple config can be saved, the **"default"** configuration is currently used.
 
