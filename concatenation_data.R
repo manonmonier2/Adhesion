@@ -1,28 +1,20 @@
 rm(list = ls())
 
-library(readxl)
-library(cli)
-library(optparse)
+library("readxl")
+library("cli")
+library("optparse")
+library("config")
 
-### PARAMETERS
 
-option_list = list(
-  make_option(c("-b", "--batches"), type="character", help="Path to batches data files", metavar="character"),
-  make_option(c("-c", "--concatenate_file"), type="character", help="Path to the created concatenate file", metavar="character"),
-  make_option(c("-i", "--concatenate_id_file"), type="character", help="Path to the created concatenate id file", metavar="character")
-); 
+# load config file
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
 
-opt_parser = OptionParser(option_list=option_list);
-opt = parse_args(opt_parser);
-
+# retrieve parameters
 path_data = opt$batches
 path_output_file_data = opt$concatenate_file
 path_output_file_id = opt$concatenate_id_file
 
-path_data = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/batch/"
-path_output_file_data = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/data_complete.csv"
-path_output_file_id = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/id_complete.csv"
-
+# get all batch file (.xlsx file)
 list_infile = list.files(path_data, pattern = ".xlsx$", full.names = T)
 
 nb_row = 500 # nombre de mesures (ie ligne) attendues pour chaque pupe
@@ -32,7 +24,6 @@ merge_id = c()
 merge_comment = c()
 
 for (infile in list_infile){
-  print(infile)
   sheet1 = read_excel(infile, sheet = 1)
   sheet2 = read_excel(infile, sheet = 2)
   
@@ -41,11 +32,9 @@ for (infile in list_infile){
   list_comment = sheet2$`Comment on this sample`
   
   # verifie la concordance de dimensions entre la feuille 1 et 2
-  if (dim(sheet1)[2] / 3 == length(list_id)){
-    nb_id = length(list_id)
-    print("ok")
-  } else {
-    print("pb")
+  if (dim(sheet1)[2] / 3 != length(list_id)){
+   print(paste0("Pb in: ", infile, " - file ignored"))
+    next
   }
   
   pupes_data = ''
