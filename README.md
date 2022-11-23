@@ -11,7 +11,7 @@ readxl 1.3.1
 
 cli 3.1.0
 
-config --> à quoi ça correspond ?
+config --> à quoi ça correspond ? (JN) A un package pour gérer le fichier config
 
 svglite 2.0.0
 
