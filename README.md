@@ -15,16 +15,11 @@ cli
 
 optparse
 
-### _Python_ mods
-os
-
-sys
-
-argparse
-
-re
+config
 
 ## script description
+
+_All the path must be provided in the config.yml file_
 
 #### concatenatoion
 ``` shell
