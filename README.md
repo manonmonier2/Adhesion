@@ -11,7 +11,7 @@ readxl 1.3.1
 
 cli 3.1.0
 
-config --> c'est un package R ?
+config --> à quoi ça correspond ?
 
 svglite 2.0.0
 
