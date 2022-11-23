@@ -17,10 +17,12 @@ optparse
 
 config
 
-## script description
+## USAGE
 
-_All the path must be provided in the config.yml file_
-Multiple config can be saved, the **"default"** configuration is currently used
+### Run preparation
+All the path must be provided in the _config.yml_ file.
+
+Multiple config can be saved, the **"default"** configuration is currently used.
 
 #### concatenation
 ``` shell
