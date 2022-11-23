@@ -1,0 +1,34 @@
+Pipeline:
+
+1.concatenation_data.R 
+# rassembler plusieurs fichiers de data en un seul. 
+#Gestion des id en doublon. à faire: les nommer _1 et _2 puis ne garder que les _1
+
+2.chargement_donnees_data_complete.R 
+#gestion des commentaires : on garde les "ok", "0s", "5min".
+#création de fichier unique par id
+#recalibrage de la courbe autour de 0
+#à faire : créer une colonne supplémentaire 'protocole' a côté de commentaire qui indique "ok", "0s", "5min" et autres protocoles indiqué dans un fichier tiers
+#je peux t'envoyer bientôt ce fichier, dis moi si tu en as besoin rapidement et je le fais au plus vite
+
+3.index_definition_complete.R
+#segmentation des courbes en 6 parties
+
+4.interpolation_complete.R
+#interpolation de la zone de recul à partir index3 (je ne suis pas sûre)
+#calcul d'integrale sur la zone recule < 0
+#calcul d'incertitude sur l'incertitude par deux méthodes
+#à faire pour Manon : pb de signe à modifier
+#calcul de distance entre index5 et index1
+
+5.represention_especes.R
+#courbes groupées par espèces
+
+6.representation.R
+#courbes individuelles avec segmentation des index visible
+
+7.integral_analysis.r
+#script fait par Manon, à modifier en fonction des figures demandées par François
+#
+
+#other scripts have been used to generate figures but are not necessary for the data analysis pipeline
