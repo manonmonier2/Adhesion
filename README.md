@@ -17,14 +17,18 @@ optparse
 
 config
 
+## Script description
+
+_concatenation_data.R_: ...
+
 ## USAGE
 
-### Run preparation
+### Preparation
 All the path must be provided in the _config.yml_ file.
 
 Multiple config can be saved, the **"default"** configuration is currently used.
 
 #### concatenation
 ``` shell
-Rscript concatenation_data.R -i [rep with all batch] -o [path to concatenate data]
+Rscript concatenation_data.R
 ```
