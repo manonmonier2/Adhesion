@@ -21,4 +21,14 @@ Pipeline:
 #à faire pour Manon : pb de signe à modifier
 #calcul de distance entre index5 et index1
 
-5.
+5.represention_especes.R
+#courbes groupées par espèces
+
+6.representation.R
+#courbes individuelles avec segmentation des index visible
+
+7.integral_analysis.r
+#script fait par Manon, à modifier en fonction des figures demandées par François
+#
+
+#other scripts have been used to generate figures but are not necessary for the data analysis pipeline
