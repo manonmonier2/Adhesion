@@ -7,38 +7,17 @@ library(optparse)
 ### PARAMETERS
 
 option_list = list(
-  make_option(c("-b", "--batches"), type="character", help="path to batches data files", metavar="character"),
-  make_option(c("-cf", "--concatenate_file"), type="character", help="path to the created concatenate file", metavar="character")
+  make_option(c("-b", "--batches"), type="character", help="Path to batches data files", metavar="character"),
+  make_option(c("-c", "--concatenate_file"), type="character", help="Path to the created concatenate file", metavar="character"),
+  make_option(c("-i", "--concatenate_id_file"), type="character", help="Path to the created concatenate id file", metavar="character")
 ); 
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser);
 
-path = opt$path
-run = opt$run
-version = opt$version
-method = opt$method
-reference = opt$reference
-iteration = opt$iteration
-test_run = opt$test_run
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+path_data = opt$batches
+path_output_file_data = opt$concatenate_file
+path_output_file_id = opt$concatenate_id_file
 
 path_data = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/batch/"
 path_output_file_data = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/data_complete.csv"
