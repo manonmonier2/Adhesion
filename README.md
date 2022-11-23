@@ -21,7 +21,7 @@ config
 
 _All the path must be provided in the config.yml file_
 
-#### concatenatoion
+#### concatenation
 ``` shell
 Rscript concatenation_data.R -i [rep with all batch] -o [path to concatenate data]
 ```
