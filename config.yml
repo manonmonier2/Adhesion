@@ -1,4 +1,9 @@
 default:
+  # Absolute path to batches data files.
   batches: C:/Users/jean-/OneDrive/Bureau/Manon/data/batch/
+  
+  # Absolute path to the created concatenate file
   concatenate_file: C:/Users/jean-/OneDrive/Bureau/Manon/dev/data_concatenate.csv
+  
+  # Absolute path to the created concatenate id file
   concatenate_id_file: C:/Users/jean-/OneDrive/Bureau/Manon/dev/id_concatenate.csv
