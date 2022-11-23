@@ -3,6 +3,8 @@ Pipeline:
 1.concatenation_data.R 
 # rassembler plusieurs fichiers de data en un seul. 
 #Gestion des id en doublon. à faire: les nommer _1 et _2 puis ne garder que les _1
+#a faire : concaténer avec fichier espèces,températures etc en fonction de l'id. On pourrait en discuter pour imaginer la forme du tableau
+#a faire : homogéneiser les données, par exemple D.melanogaster et pas D.malanogaster
 
 2.chargement_donnees_data_complete.R 
 #gestion des commentaires : on garde les "ok", "0s", "5min".
@@ -31,4 +33,4 @@ Pipeline:
 #script fait par Manon, à modifier en fonction des figures demandées par François
 #
 
-#other scripts have been used to generate figures but are not necessary for the data analysis pipeline
+#other scripts have been used to generate figures that could be integrated in integral_analysis.R
