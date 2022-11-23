@@ -1,1 +1,18 @@
+Pipeline:
+
+1.concatenation_data.R 
+# rassembler plusieurs fichiers de data en un seul. 
+#Gestion des id en doublon. à faire: les nommer _1 et _2 puis ne garder que les _1
+
+2.chargement_donnees_data_complete.R 
+#gestion des commentaires : on garde les "ok", "0s", "5min".
+#création de fichier unique par id
+#recalibrage de la courbe autour de 0
+#à faire : créer une colonne supplémentaire 'protocole' a côté de commentaire qui indique "ok", "0s", "5min" et autres protocoles indiqué dans un fichier tiers
+
+3.
+
+
+
+
 Concatenation_data : ne garder que les id_1 pour ne pas avoir de doublons
