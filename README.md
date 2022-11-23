@@ -7,8 +7,6 @@ R version 4.1.2 (2021-11-01)
 
 ### R package
 
-_Manon écrit la version des packages_
-
 readxl 1.3.1
 
 cli 3.1.0
