@@ -15,7 +15,7 @@ readxl, cli, config
 
 **_concatenation_data.R_**
 
-	Merges all the batch files present in the input directory (**batches**). 
+	\tMerges all the batch files present in the input directory (**batches**). 
 
 	The merged files are return in **concatenate_file** for the data file and **concatenate_id_file** for the id file.
 
