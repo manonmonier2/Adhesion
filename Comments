@@ -6,6 +6,8 @@ Pipeline:
 #a faire : concaténer avec fichier espèces,températures etc en fonction de l'id. On pourrait en discuter pour imaginer la forme du tableau
 #a faire : homogéneiser les données, par exemple D.melanogaster et pas D.malanogaster
 
+(jn) sur la gestion des doublons, vérifier les commentaires (par ex, ne pas jeter un _2 si le _1 à un commentaire d'erreur)
+
 2.chargement_donnees_data_complete.R 
 #gestion des commentaires : on garde les "ok", "0s", "5min".
 #création de fichier unique par id
