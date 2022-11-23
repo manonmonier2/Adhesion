@@ -9,10 +9,16 @@ Pipeline:
 #création de fichier unique par id
 #recalibrage de la courbe autour de 0
 #à faire : créer une colonne supplémentaire 'protocole' a côté de commentaire qui indique "ok", "0s", "5min" et autres protocoles indiqué dans un fichier tiers
+#je peux t'envoyer bientôt ce fichier, dis moi si tu en as besoin rapidement et je le fais au plus vite
 
-3.
+3.index_definition_complete.R
+#segmentation des courbes en 6 parties
 
+4.interpolation_complete.R
+#interpolation de la zone de recul à partir index3 (je ne suis pas sûre)
+#calcul d'integrale sur la zone recule < 0
+#calcul d'incertitude sur l'incertitude par deux méthodes
+#à faire pour Manon : pb de signe à modifier
+#calcul de distance entre index5 et index1
 
-
-
-Concatenation_data : ne garder que les id_1 pour ne pas avoir de doublons
+5.
