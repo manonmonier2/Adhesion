@@ -3,11 +3,14 @@
 
 ## requirements
 
-PATRIC Command Line Interface (https://docs.patricbrc.org//cli_tutorial/cli_installation.html#cli-installation)
+R (version ?)
 
-python >= 3.8.8
+### R package
 
-bash
+_Manon écrit la version des packages_
+readxl
+cli
+optparse
 
 ### _Python_ mods
 os
