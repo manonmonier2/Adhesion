@@ -2,11 +2,11 @@ Pipeline:
 
 1.concatenation_data.R 
 # rassembler plusieurs fichiers de data en un seul. 
-#Gestion des id en doublon. à faire: les nommer _1 et _2 puis ne garder que les _1 (jn) sur la gestion des doublons, vérifier les commentaires ? (par ex, ne pas jeter un _2 si le _1 à un commentaire d'erreur)
-
+#Gestion des id en doublon. à faire: les nommer _1 et _2 puis ne garder que les _1 
 #a faire : concaténer avec fichier espèces,températures etc en fonction de l'id. On pourrait en discuter pour imaginer la forme du tableau (jn) Quel fichier contient toutes les infos sur les espèces ?
 #a faire : homogéneiser les données, par exemple D.melanogaster et pas D.malanogaster
 
+(jn) sur la gestion des doublons, vérifier les commentaires ? (par ex, ne pas jeter un _2 si le _1 à un commentaire d'erreur)
 
 2.chargement_donnees_data_complete.R 
 #gestion des commentaires : on garde les "ok", "0s", "5min".
