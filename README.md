@@ -9,13 +9,7 @@ R (version ?)
 
 _Manon écrit la version des packages_
 
-readxl
-
-cli
-
-optparse
-
-config
+readxl, cli, config
 
 ## Script description
 
