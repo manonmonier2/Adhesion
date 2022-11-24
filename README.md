@@ -9,7 +9,7 @@ R version 4.1.2 (2021-11-01)
 
 _Manon écrit la version des packages_
 
-eadxl 1.3.1, cli 3.1.0, config --> à quoi ça correspond ? (JN) Package servant à la gestion du fichier config, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8
+eadxl 1.3.1, cli 3.1.0, config, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8
 
 ## Script description
 
@@ -20,6 +20,8 @@ Merges all the batch files present in the input directory (**[batches]**).
 The merged files are return in **[concatenate_file]** for the data file and **[concatenate_id_file]** for the id file.
 
 No id correction is done at this stage.
+
+(MM) Je peux commencer la description des autres scripts
 
 ## USAGE
 
