@@ -21,7 +21,21 @@ The merged files are return in **[concatenate_file]** for the data file and **[c
 
 No id correction is done at this stage.
 
-(MM) Je peux commencer la description des autres scripts
+
+**_chargement_donnees_data_complete.R_**
+
+Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
+
+Creates a unique file per id
+
+Recalibrate curves at axis y=0
+
+Creates variable colums for each different protocol
+
+Homogenization of species and strain names
+
+
+
 
 ## USAGE
 
