@@ -3,11 +3,14 @@ rm(list = ls())
 library(readxl)
 library(cli)
 
-path_data = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/data_complete.csv"
-path_id = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/id_complete.csv"
-path_id_edit = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/id_complete_edit.csv"
+# load config file
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
 
-path_output = "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_03_03_22_all_data/Manon/data/data_curve_complete/"
+# retrieve parameters
+path_data = opt$concatenate_file
+path_id = opt$concatenate_id_file
+path_id_edit = opt$corrected_id_file
+path_output = opt$data_curve
 
 comment_accepted = c("ok", "0s", "5min")
 
@@ -77,7 +80,7 @@ for (i in seq(1, ncol(data), by = 3)) {# seq permet de prendre une séquence de 
   }
   
   # ecrire les donnees de la pupe
-  file_path = paste(path_output, list_id[pupe_id], ".csv", sep = "")
+  file_path = paste0(path_output, "/", list_id[pupe_id], ".csv")
   write.table(pupe_data, file = file_path, quote = F, col.names = T, row.names = F, sep = "\t")
 }
 
