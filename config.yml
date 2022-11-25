@@ -7,3 +7,11 @@ default:
   
   # Absolute path to the created concatenate id file
   concatenate_id_file: C:/Users/jean-/OneDrive/Bureau/Manon/dev/id_concatenate.csv
+  
+  # Absolute path to the created corrected id file
+  corrected_id_file: C:/Users/jean-/OneDrive/Bureau/Manon/dev/id_corrected.csv
+  
+  # Absolute path to the created data file
+  data_curve: C:/Users/jean-/OneDrive/Bureau/Manon/dev/data_curve
+
+
