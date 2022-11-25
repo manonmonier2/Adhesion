@@ -22,8 +22,9 @@ merge_id = c()
 merge_comment = c()
 
 for (infile in list_infile){
-  sheet1 = read_excel(infile, sheet = 1)
-  sheet2 = read_excel(infile, sheet = 2)
+  
+  sheet1 =  (read_excel(infile, sheet = 1))
+  sheet2 = (read_excel(infile, sheet = 2))
   
   list_id = sheet2$Sample_ID
   list_comment = sheet2$`Comment on this sample`
@@ -65,7 +66,9 @@ merge_comment_id = data.frame(
   "Comment on this sample" = merge_comment,
   "Sample_ID" = merge_id)
 
-
+# write the output files (create repository if necessary)
+dir.create(dirname(path_output_file_data), showWarnings = FALSE)
 write.table(merge_pupe_data, file=path_output_file_data, row.names = F, quote = F, sep = "\t")
+dir.create(dirname(path_output_file_id), showWarnings = FALSE)
 write.table(merge_comment_id, file=path_output_file_id, row.names = F, quote = F, sep = "\t")
 
