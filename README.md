@@ -34,6 +34,23 @@ Creates variable colums for each different protocol
 
 Homogenization of species and strain names
 
+**_index_definition_complete.R_**
+
+Segmentation of curves in six parts
+
+**_interpolation_complete.R_**
+
+Interpolation of the curve from XX to XX
+
+Integrate calculation on the negative part of the curve
+
+Uncertainty calculation
+
+Distance calculation between index5 and index1
+
+**_represention_especes.R_**
+
+Curves represented by group of species
 
 
 
