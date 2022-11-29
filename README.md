@@ -7,7 +7,6 @@ R version 4.1.2 (2021-11-01)
 
 ### R package
 
-_Manon écrit la version des packages_
 
 eadxl 1.3.1, cli 3.1.0, config, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8
 
@@ -51,6 +50,7 @@ Distance calculation between index5 and index1
 **_represention_especes.R_**
 
 Curves represented by group of species
+
 
 
 
