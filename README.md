@@ -21,7 +21,7 @@ The merged files are return in **[concatenate_file]** for the data file and **[c
 No id correction is done at this stage.
 
 
-**_chargement_donnees_data_complete.R_**
+**_load_data.R_**
 
 Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
 
@@ -33,7 +33,7 @@ Creates variable colums for each different protocol
 
 Homogenization of species and strain names
 
-**_index_definition_complete.R_**
+**_index_definition.R_**
 
 Segmentation of curves in six parts
 
