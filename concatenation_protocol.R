@@ -15,11 +15,15 @@ path_output_file = opt$concatenate_protocol_file
 list_infile = list.files(path_data, pattern = ".xlsx$", full.names = T)
 
 #
-raw_name = c("Drosohila_hydei", "Drosophila.nanoptera", "Drosophila_malanogaster", "Drosophila_pachae", "Drosophila_Virilis")
-correct_name = c("Drosophila_hydei", "Drosophila_nanoptera", "Drosophila_melanogaster", "Drosophila_pachea", "Drosophila_virilis")
+raw_name = c("Drosohila_hydei", "Drosophila.nanoptera", "Drosophila_malanogaster", "Drosophila_pachae", "Drosophila_Virilis", "Scaptodrosophila_lebanonen", "Drosophila_nanoptera")
+correct_name = c("Drosophila_hydei", "Drosophila_nannoptera", "Drosophila_melanogaster", "Drosophila_pachea", "Drosophila_virilis", "Scaptodrosophila_lebanonensis", "Drosophila_nannoptera")
 
-raw_comment = c("cuticle_broked", "cuticule_broke", "cuticule broke", "cuticle broke", "no_tape","no_scotch", "two_pupae_too_close", "2 at 1 time", "not detached", "not normal", "pbm_machine")
-correct_comment = c("cuticle_broke", "cuticle_broke", "cuticle_broke", "cuticle_broke", "no_adhesive_paper","no_adhesive_paper", "two_pupae", "2_at_1_time", "not_detached", "not_normal", "pb_machine")
+raw_comment = c("cuticle_broked", "cuticule_broke", "cuticule broke", "cuticle broke", "no_tape","no_scotch", "two_pupae_too_close", "2 at 1 time", "not detached", "not normal", "pbm_machine", "attached_from_the_bottom", "2_at_1_time", "pb_0", "pb_NA", "not_normal", "noscotch_notbroken", "tape_attached")
+correct_comment = c("cuticle_broke", "cuticle_broke", "cuticle_broke", "cuticle_broke", "no_adhesive_paper", "no_adhesive_paper", "two_pupae", "two_pupae", "not_detached", "pb_machine", "pb_machine", "attached_at_the_bottom", "two_pupae", "pb_machine", "pb_machine", "pb_machine", "no_adhesive_paper", "pb_scotch")
+
+temp = data.frame(raw = raw_comment,
+                  correct = correct_comment)
+#
 
 data_df = data.frame()
 protocol_vect = c()
@@ -56,13 +60,20 @@ for (infile in list_infile){
   if (basename(infile) == "Manon_results_file.xlsx"){
     protocol_vect = c(protocol_vect, rep("default", nrow(sheet)))
   } else {
-    protocol_vect = c(protocol_vect, sheet[, 16])
+    protocol_vect = c(protocol_vect, unlist(sheet[, 16]))
   }
 }
 
 sort(unique(protocol_vect))
 
-final_df = cbind(data_df, protocol = protocol_df[1, ])
+sort(unique(data_df$Comment))
+table(data_df$Comment)
+
+sort(unique(data_df$Species))
+
+protocol_df = data.frame()
+unique(protocol_vect)
+
 
 # colnames(merge_pupe_data) = rep(c("Time", "Load", "Extension"), times = length(merge_id))
 # 
