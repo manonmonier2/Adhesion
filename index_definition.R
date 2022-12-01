@@ -30,7 +30,6 @@ opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$pat
 path_data = opt$data_curve
 path_id = opt$corrected_id_file
 path_output = opt$index_path
-comment_accepted = unlist(strsplit(opt$comment_accepted, ","))
 
 dir.create(path_output, showWarnings = FALSE)
 
@@ -153,18 +152,16 @@ for(id in list_id){
   # index 4
   if (tail(file_id$`Comment.on.this.sample`[list_id == id], 1) == '5min') {
     index_3_4_time_gap = 300
-  }
-  
-  if (tail(file_id$`Comment.on.this.sample`[list_id == id], 1) == 'ok') {
-    index_3_4_time_gap = 10
-  }
-  
-  zone_4_lim = data$time[index_3] + index_3_4_time_gap
-  index_4 = which(data$time >= zone_4_lim)[1]
-  
-  if (tail(file_id$`Comment.on.this.sample`[list_id == id], 1) == '0s') {
+    zone_4_lim = data$time[index_3] + index_3_4_time_gap
+    index_4 = which(data$time >= zone_4_lim)[1]
+  } else if (tail(file_id$`Comment.on.this.sample`[list_id == id], 1) == '0s') {
     index_4 = index_3
+  } else {
+    index_3_4_time_gap = 10
+    zone_4_lim = data$time[index_3] + index_3_4_time_gap
+    index_4 = which(data$time >= zone_4_lim)[1]
   }
+  
   
   ## noise 4
   
