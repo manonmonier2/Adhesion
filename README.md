@@ -12,13 +12,18 @@ eadxl 1.3.1, cli 3.1.0, config, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8
 
 ## Script description
 
-**_concatenation_data.R_**
+**_concatenation_batch.R_**
 
-Merges all the batch files present in the input directory (**[batches]**). 
+Merges all the batch files present in the input directory (**[batch/raw]**). 
 
 The merged files are return in **[concatenate_file]** for the data file and **[concatenate_id_file]** for the id file.
 
 No id correction is done at this stage.
+
+
+**_concatenation_protocol.R_**
+
+Merges all the protocol files present in the input directory (**[protocol/raw]**). 
 
 
 **_load_data.R_**
