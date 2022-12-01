@@ -20,6 +20,10 @@ The merged files are return in **[concatenate_file]** for the data file and **[c
 
 No id correction is done at this stage.
 
+MM: 2022032405 : changer commentaire par pb_machine
+
+
+
 
 **_concatenation_protocol.R_**
 
