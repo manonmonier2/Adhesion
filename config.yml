@@ -14,8 +14,9 @@ default:
   # Absolute path to the created directory containing one file by id
   data_curve: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/data_by_id_corrected
   
-  # List (comma separated, no space) of accepted comment
-  comment_accepted: ok,0s,5min
+  # List (comma separated, no space) of accepted comment (to add: not_detached, cuticle_broke)
+  # comment_accepted: ok,0s  ,5min ,not_detached, cuticle_broke 
+  comment_accepted: not_detached, cuticle_broke 
   
   # Absolute path to the created directory containing one file by index result
   index_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/index
