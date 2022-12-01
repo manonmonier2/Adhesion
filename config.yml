@@ -26,3 +26,10 @@ default:
   # Absolute path to the created directory containing the integral files
   integral_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/integral
   
+  # Absolute path to protocol data files. The first 15 columns must have exactly the same name. If a 16th column is present, it contains the protocol
+  protocol: C:/Users/jean-/OneDrive/Documents/Adhesion/data/protocol/raw
+  
+  # Absolute path to the created concatenate protocol file
+  concatenate_protocol_file: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/protocol/protocol_concatenate.csv
+  
+  
