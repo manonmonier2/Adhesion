@@ -12,7 +12,7 @@ path_data = opt$concatenate_file
 path_id = opt$concatenate_id_file
 path_id_edit = opt$corrected_id_file
 path_output = opt$data_curve
-comment_accepted = unlist(strsplit(opt$comment_accepted, ","))
+comment_accepted = gsub(" +$", "", gsub("^ +", "", unlist(strsplit(opt$comment_accepted, ","))))
 
 dir.create(path_output, showWarnings = FALSE)
 
