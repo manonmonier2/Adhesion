@@ -104,16 +104,12 @@ This script also contains the correspondence table between the protocols and the
 **_load_data.R_**
 
 From the concatenated batches file **[concatenate_file]**, the corresponding id file **[concatenate_id_file]** and the concatenated metadata file **[concatenate_metadata]**,
-creates an unique batch file per id.
+creates an unique batch file per id (write in **[batch_by_id]**).
 
 For now, this id must be shared and unique in **[concatenate_id_file]** and **[concatenate_metadata]**.
 Without this condition, we have no explicit link between batches and metadata.
 
 Recalibrate curves at axis y=0
-
-Creates variable colums for each different protocol
-
-Homogenization of species and strain names
 
 **_index_definition.R_**
 
