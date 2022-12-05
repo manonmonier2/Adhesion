@@ -29,7 +29,57 @@ MM: 2022032405 : changer commentaire par pb_machine
 Merges all the metadata files present in the input directory **[metadata]**.
 The merged file is returned in **[concatenate_metadata]**.
 
-At this stage, corrections are made to species names, comments, protocols and stocks.
+At this stage, corrections are made to :
+species name:
+|        **raw_name**        |        **correct_name**       |
+|:--------------------------:|:-----------------------------:|
+| Drosohila_hydei            | Drosophila_hydei              |
+| Drosophila.nanoptera       | Drosophila_nannoptera         |
+| Drosophila_malanogaster    | Drosophila_melanogaster       |
+| Drosophila_pachae          | Drosophila_pachea             |
+| Drosophila_Virilis         | Drosophila_virilis            |
+| Scaptodrosophila_lebanonen | Scaptodrosophila_lebanonensis |
+| Drosophila_nanoptera       | Drosophila_nannoptera         |
+
+comment:
+|      **raw_comment**     |   **correct_comment**  |
+|:------------------------:|:----------------------:|
+| cuticle_broked           | cuticle_broke          |
+| cuticule_broke           | cuticle_broke          |
+| cuticule broke           | cuticle_broke          |
+| cuticle broke            | cuticle_broke          |
+| no_tape                  | no_adhesive_paper      |
+| no_scotch                | no_adhesive_paper      |
+| two_pupae_too_close      | two_pupae              |
+| 2 at 1 time              | two_pupae              |
+| not detached             | not_detached           |
+| not normal               | pb_machine             |
+| pbm_machine              | pb_machine             |
+| attached_from_the_bottom | attached_at_the_bottom |
+| 2_at_1_time              | two_pupae              |
+| pb_0                     | pb_machine             |
+| pb_NA                    | pb_machine             |
+| not_normal               | pb_machine             |
+| noscotch_notbroken       | no_adhesive_paper      |
+| tape_attached            | pb_scotch              |
+
+protocol:
+| **raw_protocol** | **correct_protocol** |
+|:----------------:|:--------------------:|
+| noscotch         | no_scotch            |
+| nocond           | no_cond              |
+| strong           | strongforce          |
+| scotch_fin       | strongtape           |
+| tesa             | default              |
+
+stock:
+| **raw_stock** | **correct_stock** |
+|:-------------:|:-----------------:|
+| biar001       | Iso_001           |
+| Biar001       | Iso_001           |
+| biariso001    | Iso_001           |
+| biariso003    | Iso_003           |
+| biarmipes     | G224              |
 
 This script also contains the correspondence table between the protocols and the conditions in the form of a boolean table. This table is not written for the moment.
 
