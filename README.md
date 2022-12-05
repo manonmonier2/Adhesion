@@ -113,11 +113,11 @@ Recalibrate curves at axis y=0
 
 **_index_definition.R_**
 
-Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
-
 Segmentation of curves in six parts
 
 **_interpolation_complete.R_**
+
+Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
 
 Interpolation of the curve from XX to XX
 
