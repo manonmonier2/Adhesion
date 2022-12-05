@@ -33,7 +33,22 @@ At this stage, corrections are made to species names, comments, protocols and st
 
 This script also contains the correspondence table between the protocols and the conditions in the form of a boolean table. This table is not written for the moment.
 
-@ Add a table of conversions in the readme (line 22 to 37 of concatenation_metadata.R)
+| cond1 | cond2 | cond3 | div3  | x3    | 0s    | 5min  | no_scotch | strongforce | 3japf | no_cond | water | strongtape | scotch_fin_strong_force | default |
+|-------|-------|-------|-------|-------|-------|-------|-----------|-------------|-------|---------|-------|------------|-------------------------|---------|
+| TRUE  | TRUE  | TRUE  | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | TRUE  | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | TRUE      | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
+| FALSE | TRUE  | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | FALSE | TRUE  | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | TRUE  | FALSE | TRUE  | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | TRUE  | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | TRUE  | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | TRUE        | FALSE | FALSE   | FALSE | FALSE      | TRUE                    | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | TRUE  | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | TRUE    | FALSE | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | TRUE  | FALSE      | FALSE                   | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | TRUE       | TRUE                    | FALSE   |
+| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | TRUE    |
+
 
 **_load_data.R_**
 
