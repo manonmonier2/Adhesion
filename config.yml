@@ -8,18 +8,27 @@ default:
   # Absolute path to the created concatenate id file
   concatenate_id_file: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/concatenate/id_concatenate.csv
   
-  # Absolute path to the created corrected id file
-  corrected_id_file: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/corrected/id_corrected.csv
+  # Absolute path to metadata files. The first 15 columns must have exactly the same name. If a 16th column is present, it contains the protocol
+  metadata: C:/Users/jean-/OneDrive/Documents/Adhesion/data/metadata/raw
+  
+  # Absolute path to the created concatenate metadata fileconcatenate_file
+  concatenate_metadata: C:/Users/jean-/OneDrive/Documents/Adhesion/data/metadata/metadata_concatenate.csv
+  
+  # Absolute path to the created restricted metadata fileconcatenate_file
+  concatenate_metadata_restricted: C:/Users/jean-/OneDrive/Documents/Adhesion/data/metadata/metadata_concatenate_restricted.csv
   
   # Absolute path to the created directory containing one file by id
-  data_curve: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/data_by_id_corrected
+  batch_by_id: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/batch_by_id
   
-  # List (comma separated, no space) of accepted comment (to add: not_detached, cuticle_broke)
-  # comment_accepted: ok,0s  ,5min ,not_detached, cuticle_broke 
-  comment_accepted: not_detached, cuticle_broke 
+  # List (comma separated, no space) of accepted comment
+  # comment_accepted: ok
+  comment_accepted: ok,not_detached, cuticle_broke
+  
+  # List (comma separated, no space) of accepted protocol
+  protocol_accepted: 0s,5min,default
   
   # Absolute path to the created directory containing one file by index result
-  index_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/index
+  index_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/index/index.csv
   
   # Absolute path to the created directory containing the plots (load_time)
   plot_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/plot
@@ -27,10 +36,5 @@ default:
   # Absolute path to the created directory containing the integral files
   integral_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/integral
   
-  # Absolute path to protocol data files. The first 15 columns must have exactly the same name. If a 16th column is present, it contains the protocol
-  protocol: C:/Users/jean-/OneDrive/Documents/Adhesion/data/protocol/raw
-  
-  # Absolute path to the created concatenate protocol file
-  concatenate_protocol_file: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/protocol/protocol_concatenate.csv
   
   
