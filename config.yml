@@ -14,9 +14,6 @@ default:
   # Absolute path to the created concatenate metadata fileconcatenate_file
   concatenate_metadata: C:/Users/jean-/OneDrive/Documents/Adhesion/data/metadata/metadata_concatenate.csv
   
-  # Absolute path to the created restricted metadata fileconcatenate_file
-  concatenate_metadata_restricted: C:/Users/jean-/OneDrive/Documents/Adhesion/data/metadata/metadata_concatenate_restricted.csv
-  
   # Absolute path to the created directory containing one file by id
   batch_by_id: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/batch_by_id
   
