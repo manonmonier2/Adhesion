@@ -15,7 +15,6 @@ concatenate_metadata_file = opt$concatenate_metadata
 
 # Output
 path_batch_by_id = opt$batch_by_id
-restricted_metadata_file = opt$concatenate_metadata_restricted
 
 #### MAIN
 
@@ -38,8 +37,6 @@ for (i in 1:length(metadata$Sample_ID)){
 
 # restrict the data to the selected id
 restricted_metadata = metadata[which(metadata$Sample_ID %in% list_unique_id), ]
-
-write.table(restricted_metadata, restricted_metadata_file, col.names = T, row.names = F, quote = F, sep = "\t")
 
 # extract data curve from the concatenate batch file
 dir.create(path_batch_by_id, showWarnings = FALSE)
