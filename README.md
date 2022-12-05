@@ -29,8 +29,9 @@ MM: 2022032405 : changer commentaire par pb_machine
 Merges all the metadata files present in the input directory **[metadata]**.
 The merged file is returned in **[concatenate_metadata]**.
 
-At this stage, corrections are made to :
-species name:
+At this stage, corrections are made to:
+
+**Species**
 |        **raw_name**        |        **correct_name**       |
 |:--------------------------:|:-----------------------------:|
 | Drosohila_hydei            | Drosophila_hydei              |
@@ -41,7 +42,7 @@ species name:
 | Scaptodrosophila_lebanonen | Scaptodrosophila_lebanonensis |
 | Drosophila_nanoptera       | Drosophila_nannoptera         |
 
-comment:
+**Comment**
 |      **raw_comment**     |   **correct_comment**  |
 |:------------------------:|:----------------------:|
 | cuticle_broked           | cuticle_broke          |
@@ -63,7 +64,7 @@ comment:
 | noscotch_notbroken       | no_adhesive_paper      |
 | tape_attached            | pb_scotch              |
 
-protocol:
+**protocol**
 | **raw_protocol** | **correct_protocol** |
 |:----------------:|:--------------------:|
 | noscotch         | no_scotch            |
@@ -72,7 +73,7 @@ protocol:
 | scotch_fin       | strongtape           |
 | tesa             | default              |
 
-stock:
+**Stock**
 | **raw_stock** | **correct_stock** |
 |:-------------:|:-----------------:|
 | biar001       | Iso_001           |
