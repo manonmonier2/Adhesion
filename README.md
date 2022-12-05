@@ -40,7 +40,7 @@ This script also contains the correspondence table between the protocols and the
 From the concatenated batches file **[concatenate_file]**, the corresponding id file **[concatenate_id_file]** and the concatenated metadata file **[concatenate_metadata]**,
 creates an unique batch file per id.
 
-!!! For now, this id must be shared and unique in **[concatenate_id_file]** and **[concatenate_metadata]** !!!
+For now, this id must be shared and unique in **[concatenate_id_file]** and **[concatenate_metadata]**.
 Without this condition, we have no explicit link between batches and metadata.
 
 Recalibrate curves at axis y=0
