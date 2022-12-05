@@ -17,7 +17,7 @@ gg_color_hue = function(n) {
 opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
 
 # retrieve parameters
-path_metadata_file = opt$concatenate_metadata_restricted
+path_metadata_file = opt$concatenate_metadata
 plot_path = opt$plot_path
 path_index = opt$index_path
 path_batch_by_id = opt$batch_by_id
