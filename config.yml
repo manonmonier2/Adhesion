@@ -33,5 +33,42 @@ default:
   # Absolute path to the created directory containing the integral files
   integral_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/integral
   
+portable:
+  # Absolute path to batches data files.
+  batches: C:\Users\jean-noel.lorenzi\/Documents/Adhesion/data/batch/raw
+  
+  # Absolute path to the created concatenate file
+  concatenate_file: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/batch/concatenate/data_concatenate.csv
+  
+  # Absolute path to the created concatenate id file
+  concatenate_id_file: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/batch/concatenate/id_concatenate.csv
+  
+  # Absolute path to metadata files. The first 15 columns must have exactly the same name. If a 16th column is present, it contains the protocol
+  metadata: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/metadata/raw
+  
+  # Absolute path to the created concatenate metadata fileconcatenate_file
+  concatenate_metadata: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/metadata/metadata_concatenate.csv
+  
+  # Absolute path to the created directory containing one file by id
+  batch_by_id: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/batch/batch_by_id
+  
+  # List (comma separated, no space) of accepted comment
+  # comment_accepted: ok
+  comment_accepted: ok,not_detached, cuticle_broke
+  
+  # List (comma separated, no space) of accepted protocol
+  protocol_accepted: 0s,5min,default
+  
+  # Absolute path to the created directory containing one file by index result
+  index_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/index/index.csv
+  
+  # Absolute path to the created directory containing the plots (load_time)
+  plot_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/plot
+  
+  # Absolute path to the created directory containing the integral files
+  integral_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/integral
+  
+  
+  
   
   
