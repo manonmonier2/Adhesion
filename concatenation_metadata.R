@@ -121,4 +121,20 @@ data_df = cbind(data_df, protocol_df)
 dir.create(dirname(path_output_file), showWarnings = FALSE)
 write.table(data_df, file=path_output_file, row.names = F, quote = F, sep = "\t")
 
+temp = data.frame(raw_name = raw_name,
+                  correct_name = correct_name)
+write.table(temp, file=paste0(dirname(path_output_file), "/species_name_correction.csv"), row.names = F, quote = F, sep = "\t")
 
+temp = data.frame(raw_comment = raw_comment,
+                  correct_comment = correct_comment)
+write.table(temp, file=paste0(dirname(path_output_file), "/comment_correction.csv"), row.names = F, quote = F, sep = "\t")
+
+temp = data.frame(raw_protocol = raw_protocol,
+                  correct_protocol = correct_protocol)
+write.table(temp, file=paste0(dirname(path_output_file), "/protocol_correction.csv"), row.names = F, quote = F, sep = "\t")
+
+temp = data.frame(raw_stock = raw_stock,
+                  correct_stock = correct_stock)
+write.table(temp, file=paste0(dirname(path_output_file), "/stock_correction.csv"), row.names = F, quote = F, sep = "\t")
+
+write.table(df_protocol_to_condition, file=paste0(dirname(path_output_file), "/protocol_condition.csv"), quote = F, sep = "\t")
