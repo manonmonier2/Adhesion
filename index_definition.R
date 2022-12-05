@@ -29,7 +29,7 @@ opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$pat
 # retrieve parameters
 # Input
 path_data = opt$batch_by_id
-path_metadata_file = opt$concatenate_metadata_restricted
+path_metadata_file = opt$concatenate_metadata
 
 # Output
 path_output = opt$index_path
