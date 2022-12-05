@@ -11,12 +11,13 @@ R version 4.1.2 (2021-11-01)
 eadxl 1.3.1, cli 3.1.0, config, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8
 
 ## Script description
+All the word between "[" "]" reference to a parameter in the config.yml file.
 
 **_concatenation_batch.R_**
 
-Merges all the batch files present in the input directory (**[batch/raw]**). 
+Merges all the batch files present in the input directory (**[batches]**). 
 
-The merged files are return in **[concatenate_file]** for the data file and **[concatenate_id_file]** for the id file.
+The merged files are returned in **[concatenate_file]** for the data file and **[concatenate_id_file]** for the id file.
 
 No id correction is done at this stage.
 
@@ -25,14 +26,19 @@ MM: 2022032405 : changer commentaire par pb_machine
 
 
 
-**_concatenation_protocol.R_**
+**_concatenation_metadata.R_**
 
-Merges all the protocol files present in the input directory (**[protocol/raw]**). 
+Merges all the metadata files present in the input directory (**[metadata]**).
+The merged file is returned in **[concatenate_metadata]**.
 
+At this stage, corrections are made to species names, comments, protocols and stocks.
+
+This script also contains the correspondence table between the protocols and the conditions in the form of a boolean table. This table is not written for the moment.
+
+@ Add a table of conversions in the readme (line 22 to 37 of concatenation_metadata.R)
 
 **_load_data.R_**
 
-Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
 
 Creates a unique file per id
 
@@ -43,6 +49,8 @@ Creates variable colums for each different protocol
 Homogenization of species and strain names
 
 **_index_definition.R_**
+
+Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
 
 Segmentation of curves in six parts
 
