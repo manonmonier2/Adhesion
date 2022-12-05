@@ -84,21 +84,21 @@ At this stage, corrections are made to:
 
 This script also contains the correspondence table between the protocols and the conditions in the form of a boolean table. This table is not written for the moment.
 
-| cond1 | cond2 | cond3 | div3  | x3    | 0s    | 5min  | no_scotch | strongforce | 3japf | no_cond | water | strongtape | scotch_fin_strong_force | default |
-|-------|-------|-------|-------|-------|-------|-------|-----------|-------------|-------|---------|-------|------------|-------------------------|---------|
-| TRUE  | TRUE  | TRUE  | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | TRUE  | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | TRUE      | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
-| FALSE | TRUE  | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | FALSE | TRUE  | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | TRUE  | FALSE | TRUE  | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | TRUE  | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | TRUE  | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | TRUE        | FALSE | FALSE   | FALSE | FALSE      | TRUE                    | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | TRUE  | FALSE   | FALSE | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | TRUE    | FALSE | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | TRUE  | FALSE      | FALSE                   | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | TRUE       | TRUE                    | FALSE   |
-| FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE | FALSE     | FALSE       | FALSE | FALSE   | FALSE | FALSE      | FALSE                   | TRUE    |
+|                | **cond1** | **cond2** | **cond3** | **div3** | **x3** | **0s** | **5min** | **no_scotch** | **strongforce** | **3japf** | **no_cond** | **water** | **strongtape** | **scotch_fin_strong_force** | **default** |
+|:--------------:|:---------:|:---------:|:---------:|:--------:|:------:|:------:|:--------:|:-------------:|:---------------:|:---------:|:-----------:|:---------:|:--------------:|:---------------------------:|:-----------:|
+|  **protocol1** | TRUE      | TRUE      | TRUE      | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | TRUE      | FALSE          | FALSE                       | FALSE       |
+|  **protocol2** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | TRUE          | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol3** | FALSE     | TRUE      | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol4** | FALSE     | FALSE     | FALSE     | TRUE     | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol5** | FALSE     | FALSE     | TRUE      | FALSE    | TRUE   | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol6** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | TRUE   | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol7** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | TRUE     | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol8** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | TRUE            | FALSE     | FALSE       | FALSE     | FALSE          | TRUE                        | FALSE       |
+|  **protocol9** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | TRUE      | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+| **protocol10** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | TRUE        | FALSE     | FALSE          | FALSE                       | FALSE       |
+| **protocol11** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | TRUE      | FALSE          | FALSE                       | FALSE       |
+| **protocol12** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | TRUE           | TRUE                        | FALSE       |
+| **protocol13** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | TRUE        |
 
 
 **_load_data.R_**
