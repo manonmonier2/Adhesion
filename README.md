@@ -11,11 +11,11 @@ R version 4.1.2 (2021-11-01)
 eadxl 1.3.1, cli 3.1.0, config, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8
 
 ## Script description
-All the word between "[" "]" reference to a parameter in the config.yml file.
+All the word between "[" "]" reference to a parameter in the _config.yml_ file.
 
 **_concatenation_batch.R_**
 
-Merges all the batch files present in the input directory (**[batches]**). 
+Merges all the batch files present in the input directory **[batches]**. 
 
 The merged files are returned in **[concatenate_file]** for the data file and **[concatenate_id_file]** for the id file.
 
@@ -24,11 +24,9 @@ No id correction is done at this stage.
 MM: 2022032405 : changer commentaire par pb_machine
 
 
-
-
 **_concatenation_metadata.R_**
 
-Merges all the metadata files present in the input directory (**[metadata]**).
+Merges all the metadata files present in the input directory **[metadata]**.
 The merged file is returned in **[concatenate_metadata]**.
 
 At this stage, corrections are made to species names, comments, protocols and stocks.
@@ -39,8 +37,11 @@ This script also contains the correspondence table between the protocols and the
 
 **_load_data.R_**
 
+From the concatenated batches file **[concatenate_file]**, the corresponding id file **[concatenate_id_file]** and the concatenated metadata file **[concatenate_metadata]**,
+creates an unique batch file per id.
 
-Creates a unique file per id
+!!! For now, this id must be shared and unique in **[concatenate_id_file]** and **[concatenate_metadata]** !!!
+Without this condition, we have no explicit link between batches and metadata.
 
 Recalibrate curves at axis y=0
 
