@@ -5,7 +5,7 @@ library("ggplot2")
 # library(svglite)
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -84,12 +84,15 @@ path_plot_species_time_load = paste0(path_plot_by_species, "/time_load/")
 dir.create(path_plot_species_extension_load, showWarnings = FALSE)
 dir.create(path_plot_species_time_load, showWarnings = FALSE)
 
-# un plot par espece
+# one plot by species
 for (focus_species in unique(gg_data$species)) {
   sub_gg_data = gg_data[gg_data$species == focus_species, ]
   p_tl = ggplot(data = sub_gg_data, aes(x = time, y = load, color = id, fill = id)) +
     geom_path() +
-    theme_minimal() + labs(title = focus_species) +
+    theme_minimal() + 
+    labs(title = gsub("_", " ", focus_species)) +
+    xlab("Time (s)") +
+    ylab("Load (Unit ?)") +
     # xlim(range_time) + 
     # ylim(range_load) +
     theme(legend.position = "none")
@@ -97,7 +100,10 @@ for (focus_species in unique(gg_data$species)) {
   
   p_el = ggplot(data = sub_gg_data, aes(x = extension, y = load, color = id, fill = id)) +
     geom_path() +
-    theme_minimal() + labs(title = focus_species) +
+    theme_minimal() + 
+    labs(title = gsub("_", " ", focus_species)) +
+    xlab("Extension (Unit ?)") +
+    ylab("Load (Unit ?)") +
     # xlim(range_extension) + 
     # ylim(range_load) +
     theme(legend.position = "none")
