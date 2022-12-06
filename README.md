@@ -143,5 +143,11 @@ Multiple config can be saved, the **"default"** configuration is currently used.
 
 #### Concatenation
 ``` shell
-Rscript concatenation_data.R
+Rscript concatenation_batch.R
 ```
+
+``` shell
+concatenation_metadata.R
+```
+
+#### 
