@@ -5,7 +5,7 @@ library("config")
 
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -14,10 +14,26 @@ path_data = opt$metadata
 # Output
 path_output_file = opt$concatenate_metadata
 
-#### MAIN
+#### FUNCTIONS
 
-# get all batch file (.xlsx file)
-list_infile = list.files(path_data, pattern = ".xlsx$", full.names = T)
+
+load_sheet1 = function(infile){
+  # load sheet 1
+  sheet =  read_excel(infile, sheet = 1)
+  
+  # deal with supplementary NA column (remove it)
+  sheet = sheet[, apply(sheet, 2, function(x) ! sum(is.na(x)) == nrow(sheet))]
+  
+  
+  # convert the date format to character
+  sheet$Time_on_substrate = as.character(sheet$Time_on_substrate)
+  sheet$Timestamp = as.character(sheet$Timestamp)
+  
+  return(sheet)
+}
+
+
+#### MAIN
 
 #
 raw_name = c("Drosohila_hydei", "Drosophila.nanoptera", "Drosophila_malanogaster", "Drosophila_pachae", "Drosophila_Virilis", "Scaptodrosophila_lebanonen", "Drosophila_nanoptera")
@@ -36,39 +52,39 @@ raw_stock = c("biar001", "Biar001", "biariso001", "biariso003", "biarmipes")
 correct_stock = c("Iso_001", "Iso_001", "Iso_001", "Iso_003", "G224")
 #
 
-data_df = data.frame()
-protocol_vect = c()
+# get all batch file (.xlsx file)
+list_infile = list.files(path_data, pattern = ".xlsx$", full.names = T)
+
+# Manon_results_file.xlsx contains all the metadata id, the others files contains protocol precision
+index_main_medadata = which(basename(list_infile) == "Manon_results_file.xlsx")
+data_df = load_sheet1(list_infile[index_main_medadata])[, 1:15]
+data_df = cbind(data_df, rep("default", nrow(data_df)))
+names(data_df)[names(data_df) == tail(names(data_df), 1)] = 'Protocol'
+list_infile = list_infile[-index_main_medadata]
+
+not_ok = c()
 
 for (infile in list_infile){
   
-  # load sheet 1
-  sheet =  read_excel(infile, sheet = 1)
+  sheet = load_sheet1(infile)
   
-  # deal with supplementary NA column (remove it)
-  sheet = sheet[, apply(sheet, 2, function(x) ! sum(is.na(x)) == nrow(sheet))]
-    
-  
-  # convert the date format to character
-  sheet$Time_on_substrate = as.character(sheet$Time_on_substrate)
-  sheet$Timestamp = as.character(sheet$Timestamp)
-  
-  # concatenate the first 15 columns
-  data_df = rbind(data_df, sheet[, 1:15])
-  colnames(data_df)
-  colnames(sheet)
-  
-  # detect the type of protocol (2 types: 'default' for 'Manon_results_file' or 'specific'. For 'specific', protocols are retrieved in protocol column (16))
-  if (basename(infile) == "Manon_results_file.xlsx"){
-    protocol_vect = c(protocol_vect, rep("default", nrow(sheet)))
-  } else {
-    
-    # protocol correction
-    list_protocol = unlist(sheet[, 16])
-    list_corrected_protocol = unlist(lapply(list_protocol, function(x) if(x %in% raw_protocol) {correct_protocol[x == raw_protocol]} else {x}))
-    sheet[, 16] = list_corrected_protocol
-    protocol_vect = c(protocol_vect, unlist(sheet[, 16]))
+  # browse sample id on the sheet
+  for (id in sheet$Sample_ID){
+    hit = which(data_df$Sample_ID == id)
+    hit_in_sheet = which(sheet$Sample_ID == id)
+    # one hit in each file
+    if (length(hit) == 1 && length(hit_in_sheet) == 1){
+      if (data_df$Protocol[hit] != "default"){
+        break("duplicate between protocol files")
+      }
+      data_df[hit, ] = sheet[hit_in_sheet, 1:16]
+    } else {
+      not_ok = c(not_ok, id)
+    }
   }
 }
+
+write.table(not_ok, file=paste0(dirname(path_output_file), "/id_not_found_in_manon_results.log"), row.names = F, col.names = F, quote = F, sep = "\t")
 
 # rename species
 list_species_name = data_df$Species
@@ -91,6 +107,11 @@ list_stock = data_df$Stock
 list_corrected_stock = unlist(lapply(1:length(data_df$Species), function(x) if(data_df$Species[x] %in% species_with_incorrect_stock) {correct_stock_by_species[data_df$Species[x] == species_with_incorrect_stock]} else {data_df$Stock[x]}))
 data_df$Stock = list_corrected_stock
 
+# protocol correction
+list_protocol = data_df$Protocol
+list_corrected_protocol = unlist(lapply(list_protocol, function(x) if(x %in% raw_protocol) {correct_protocol[x == raw_protocol]} else {x}))
+data_df$Protocol = list_corrected_protocol
+
 df_protocol_to_condition = data.frame(
   "cond1" = c(T,F,F,F,F,F,F,F,F,F,F,F,F),
   "cond2" = c(T,F,T,F,F,F,F,F,F,F,F,F,F),
@@ -111,11 +132,22 @@ df_protocol_to_condition = data.frame(
 )
 
 rownames(df_protocol_to_condition) = paste0("protocol",1:(nrow(df_protocol_to_condition)))
+df_protocol_to_condition = as.data.frame(t(df_protocol_to_condition))
 
-protocol_df = as.data.frame(do.call(rbind, lapply(protocol_vect, function(x) x == colnames(df_protocol_to_condition))))
+protocol_df = data.frame()
+for (protocol in colnames(df_protocol_to_condition)){
+  focus_condition = rownames(df_protocol_to_condition)[df_protocol_to_condition[, protocol]]
+  temp = rep(F, length(data_df$Protocol))
+  for (cond in focus_condition){
+    temp[which(data_df$Protocol == cond)] = T
+  }
+  protocol_df = rbind(protocol_df, temp)
+}
+
+protocol_df = as.data.frame(t(protocol_df))
 colnames(protocol_df) = colnames(df_protocol_to_condition)
 
-data_df = cbind(data_df, protocol_df)
+data_df = cbind(data_df[, -16], protocol_df)
 
 # write the output file (create repository if necessary)
 dir.create(dirname(path_output_file), showWarnings = FALSE)
