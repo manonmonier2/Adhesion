@@ -14,7 +14,7 @@ suppression_derniere_valeur = function(vect) {
 ###
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -223,7 +223,7 @@ tab_int = data.frame("id" = vect_id,
 file_path = paste(path_integral, "/integral.csv", sep = "")
 write.table(tab_int, file = file_path, quote = F, col.names = T, row.names = F, sep = "\t")
 
-file_path_not_ok = paste(path_integral, "/integral_id_not_running.csv", sep = "")
+file_path_not_ok = paste(path_integral, "/integral_id_not_running.log", sep = "")
 write.table(not_ok, file = file_path_not_ok, row.names = F, col.names = F, quote = F)
 
 
