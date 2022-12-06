@@ -5,7 +5,7 @@ library("config")
 library("cli")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -60,8 +60,9 @@ for (i in seq(1, ncol(batches), by = 3)) {
   temp = pupe_data$load[1:20]
   sigma_temp = sd(pupe_data$load[1:20], na.rm = T)
   
-  # do not recalibrate the data if the noise sigma is less than 0.01
+  # do not recalibrate the data if the noise sigma is less than 0.01 (ie strong noise)
   if (sigma_temp <= 0.01) {
+    # print("ok1")
     new_start = which(abs(temp) >= (0.5 * sigma_temp))[1]
     new_index = new_start:length(pupe_data$load)
     pupe_data = data.frame("time" = pupe_data$time[new_index],
@@ -73,7 +74,7 @@ for (i in seq(1, ncol(batches), by = 3)) {
                            "extension" = pupe_data$extension)
   }
   
-  # write pupe data
+  # write pupa data
   file_path = paste0(path_batch_by_id, "/", current_id, ".csv")
   write.table(pupe_data, file = file_path, quote = F, col.names = T, row.names = F, sep = "\t")
 }
