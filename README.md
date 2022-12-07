@@ -111,6 +111,9 @@ Without this condition, we have no explicit link between batches and metadata.
 
 Recalibrate curves at axis y=0
 
+If sigma of noise is > 0.01 it means there is a peak in the first values (accident during experiment). In this situation, we do not recalibrate.
+If sigma of noise is < 0.01 there is no peak, we can recalibrate.
+
 **_index_definition.R_**
 
 Segmentation of curves in six parts
