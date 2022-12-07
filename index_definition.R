@@ -71,7 +71,8 @@ for(id in list_id){
     expr = {
       # if (id %in% not_ok) next
       data = read.table(paste(path_data, "/",id, '.csv', sep = ""), sep = "\t", header = T)
-      plot(data$time, data$load, type = "l")
+      # plot(data$time, data$load, type = "l")
+      # plot(data$time, data$extension, type = "l")
       
       # get experience time
       exp_time = max(data$time)#duree de l'exp
@@ -266,7 +267,8 @@ for(id in list_id){
   # retrieve the not running id
   if (length(run) == 1){
     if (run %in% list_id) {
-      not_ok = c(not_ok, run)
+      comment = metadata_file$Comment[metadata_file$Sample_ID == run]
+      not_ok = c(not_ok, paste0(run, '\t', comment))
     }
   }
 }
