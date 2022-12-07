@@ -3,7 +3,6 @@ rm(list = ls())
 library("readxl")
 library("config")
 
-
 # load config file
 opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
@@ -25,9 +24,12 @@ load_sheet1 = function(infile){
   sheet = sheet[, apply(sheet, 2, function(x) ! sum(is.na(x)) == nrow(sheet))]
   
   
-  # convert the date format to character
-  sheet$Time_on_substrate = as.Date(sheet$Time_on_substrate)
-  sheet$Timestamp = as.Date(sheet$Timestamp)
+  # # convert the date format to character
+  # sheet$Time_on_substrate = as.Date(sheet$Time_on_substrate)
+  # sheet$Timestamp = as.Date(sheet$Timestamp)
+  # 
+  # convertToDateTime(sheet$Time_on_substrate)
+  
   
   return(sheet)
 }
@@ -57,18 +59,6 @@ list_infile = list.files(path_data, pattern = ".xlsx$", full.names = T)
 
 # Manon_results_file.xlsx contains all the metadata id, the others files contains protocol precision
 index_main_medadata = which(basename(list_infile) == "Manon_results_file.xlsx")
-
-###
-# load sheet 1
-sheet =  read_excel(list_infile[index_main_medadata], sheet = 1)
-
-# deal with supplementary NA column (remove it)
-sheet = sheet[, apply(sheet, 2, function(x) ! sum(is.na(x)) == nrow(sheet))]
-
-
-# convert the date format to character
-sheet$Time_on_substrate = as.Date(sheet$Time_on_substrate)
-sheet$Timestamp = as.Date(sheet$Timestamp)
 
 data_df = load_sheet1(list_infile[index_main_medadata])[, 1:15]
 data_df = cbind(data_df, rep("default", nrow(data_df)))
