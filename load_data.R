@@ -62,7 +62,6 @@ for (i in seq(1, ncol(batches), by = 3)) {
   
   # do not recalibrate the data if the noise sigma is less than 0.01 (ie strong noise)
   if (sigma_temp <= 0.01) {
-    # print("ok1")
     new_start = which(abs(temp) >= (0.5 * sigma_temp))[1]
     new_index = new_start:length(pupe_data$load)
     pupe_data = data.frame("time" = pupe_data$time[new_index],
