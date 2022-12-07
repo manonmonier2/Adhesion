@@ -22,18 +22,44 @@ path_batch_by_id = opt$batch_by_id
 metadata = read.table(concatenate_metadata_file, sep = "\t", header = T, check.names = F)
 concatenate_id = read.table(concatenate_id_file, header = T)
 
-# work only with id present and unique in the metadata and id concatenate file
+# not_ok_batches = c()
+# # work only with id present and unique in the metadata and id concatenate file
+# list_unique_id = c()
+# for (i in 1:length(metadata$Sample_ID)){
+#   nb_hit_id_file = length(which(concatenate_id$Sample_ID == metadata$Sample_ID[i]))
+#   # check unicity in the id file
+#   if (nb_hit_id_file == 1){
+#     nb_hit_metadata_file = length(which(metadata$Sample_ID == metadata$Sample_ID[i]))
+#     if (nb_hit_metadata_file == 1){
+#       list_unique_id = c(list_unique_id, metadata$Sample_ID[i])
+#     } else {
+#       not_ok_batches = c(not_ok_batches, metadata$Sample_ID[i])
+#     }
+#   } else {
+#     not_ok_batches = c(not_ok_batches, metadata$Sample_ID[i])
+#   }
+# }
+
+not_ok_batches = c()
+# work only with id present and unique in the id concatenate and metadata file
 list_unique_id = c()
-for (i in 1:length(metadata$Sample_ID)){
-  nb_hit_id_file = length(which(concatenate_id$Sample_ID == metadata$Sample_ID[i]))
+for (i in 1:length(concatenate_id$Sample_ID)){
+  nb_hit_metadata_file = length(which(metadata$Sample_ID == concatenate_id$Sample_ID[i]))
   # check unicity in the id file
-  if (nb_hit_id_file == 1){
-    nb_hit_metadata_file = length(which(metadata$Sample_ID == metadata$Sample_ID[i]))
+  if (nb_hit_metadata_file == 1){
+    nb_hit_id_file = length(which(concatenate_id$Sample_ID == concatenate_id$Sample_ID[i]))
     if (nb_hit_metadata_file == 1){
-      list_unique_id = c(list_unique_id, metadata$Sample_ID[i])
+      list_unique_id = c(list_unique_id, concatenate_id$Sample_ID[i])
+    } else {
+      not_ok_batches = c(not_ok_batches, concatenate_id$Sample_ID[i])
     }
+  } else {
+    not_ok_batches = c(not_ok_batches, concatenate_id$Sample_ID[i])
   }
 }
+
+
+write.table(not_ok_batches, file=paste0(dirname(concatenate_id_file), "/id_batches_error.log"), row.names = F, col.names = F, quote = F, sep = "\t")
 
 # restrict the data to the selected id
 restricted_metadata = metadata[which(metadata$Sample_ID %in% list_unique_id), ]
