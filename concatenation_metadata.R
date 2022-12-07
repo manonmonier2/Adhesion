@@ -26,8 +26,8 @@ load_sheet1 = function(infile){
   
   
   # convert the date format to character
-  sheet$Time_on_substrate = as.character(sheet$Time_on_substrate)
-  sheet$Timestamp = as.character(sheet$Timestamp)
+  sheet$Time_on_substrate = as.Date(sheet$Time_on_substrate)
+  sheet$Timestamp = as.Date(sheet$Timestamp)
   
   return(sheet)
 }
@@ -57,6 +57,19 @@ list_infile = list.files(path_data, pattern = ".xlsx$", full.names = T)
 
 # Manon_results_file.xlsx contains all the metadata id, the others files contains protocol precision
 index_main_medadata = which(basename(list_infile) == "Manon_results_file.xlsx")
+
+###
+# load sheet 1
+sheet =  read_excel(list_infile[index_main_medadata], sheet = 1)
+
+# deal with supplementary NA column (remove it)
+sheet = sheet[, apply(sheet, 2, function(x) ! sum(is.na(x)) == nrow(sheet))]
+
+
+# convert the date format to character
+sheet$Time_on_substrate = as.Date(sheet$Time_on_substrate)
+sheet$Timestamp = as.Date(sheet$Timestamp)
+
 data_df = load_sheet1(list_infile[index_main_medadata])[, 1:15]
 data_df = cbind(data_df, rep("default", nrow(data_df)))
 names(data_df)[names(data_df) == tail(names(data_df), 1)] = 'Protocol'
@@ -132,6 +145,10 @@ df_protocol_to_condition = data.frame(
 )
 
 rownames(df_protocol_to_condition) = paste0("protocol",1:(nrow(df_protocol_to_condition)))
+
+condition_df = as.data.frame(do.call(rbind, lapply(data_df$Protocol, function(x) x == colnames(df_protocol_to_condition))))
+colnames(condition_df) = colnames(df_protocol_to_condition)
+
 df_protocol_to_condition = as.data.frame(t(df_protocol_to_condition))
 
 protocol_df = data.frame()
@@ -147,7 +164,9 @@ for (protocol in colnames(df_protocol_to_condition)){
 protocol_df = as.data.frame(t(protocol_df))
 colnames(protocol_df) = colnames(df_protocol_to_condition)
 
-data_df = cbind(data_df[, -16], protocol_df)
+data_df = data_df[, -16]
+data_df = cbind(data_df, protocol_df)
+data_df = cbind(data_df, condition_df)
 
 # write the output file (create repository if necessary)
 dir.create(dirname(path_output_file), showWarnings = FALSE)
