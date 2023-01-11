@@ -14,7 +14,7 @@ gg_color_hue = function(n) {
 ###
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
 
 # retrieve parameters
 path_metadata_file = opt$concatenate_metadata
@@ -40,8 +40,8 @@ dir.create(path_output_el, showWarnings = FALSE)
 list_id = df$id
 for (id in list_id){
   current_comment = metadata$Comment[which(metadata$Sample_ID == id)]
-  # skip non accepted comment
-  if(! current_comment %in% comment_accepted) next
+  # # skip non accepted comment
+  # if(! current_comment %in% comment_accepted) next
   
   sample = read.table(paste0(path_batch_by_id, "/", id, '.csv'), sep = "\t", header = T)
   index_sample = which(df$id == id)

@@ -6,7 +6,7 @@ library("dplyr")
 # library(svglite)
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
 
 # retrieve parameters
 # Input
@@ -61,4 +61,27 @@ ggplot(gg_data %>% filter(Comment == "ok")
   theme_bw()
 
 
+### test error bar (centrer sur la mediane (par espèce))
+
+# raideur_moyenne
+ggplot(gg_data %>% filter(Comment == "ok")
+       , aes(x = detachment, y = raideur_moyenne, color = Species)) +
+  geom_point() +
+  # geom_crossbar() +
+  geom_errorbar(ymin = 0.1, ymax = 0.1) +
+  # geom_errorbarh(aes(xmin = 0.1, xmax = 0.2)) +
+  theme_bw()
+
+# Create a simple example dataset
+df <- data.frame(
+  trt = factor(c(1, 1, 2, 2)),
+  resp = c(1, 5, 3, 4),
+  group = factor(c(1, 2, 1, 2)),
+  upper = c(1.1, 5.3, 3.3, 4.2),
+  lower = c(0.8, 4.6, 2.4, 3.6)
+)
+
+p = ggplot(df, aes(trt, resp, colour = group))
++ geom_crossbar(aes(ymin = lower, ymax = upper), width = 0.2)
++ geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2)
 

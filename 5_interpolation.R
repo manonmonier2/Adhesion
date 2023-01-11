@@ -14,7 +14,7 @@ suppression_derniere_valeur = function(vect) {
 ###
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
 
 # retrieve parameters
 # Input
@@ -94,7 +94,7 @@ for (id in list_id) {
       # if the detachment peak is greater than 0 (we go to the next one)
       if (length(which(! recule_zone_5$load > 0)) == 0){
         msg = paste("Pic de detachement positif: ", id, sep = "")
-        print(msg)
+        # print(msg)
         write(toString(msg), log_path, append=TRUE)
         next
       } else {
