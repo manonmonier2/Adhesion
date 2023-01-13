@@ -31,6 +31,12 @@ for (id in list_id){
   
   species_name = metadata$Species[which(metadata$Sample_ID == id)]
   
+  #
+  if (metadata$default[which(metadata$Sample_ID == id)] != T) {
+    next
+  }
+  #
+  
   sample = read.table(paste0(path_batch_by_id, "/", id, '.csv'), sep = "\t", header = T)
   
   # skip non running id
@@ -58,6 +64,11 @@ range_time = range(gg_data$time)
 range_load = range(gg_data$load)
 range_extension = range(gg_data$extension)
 
+#
+# range_extension[1] = -3
+# range_extension[2] = 0.5
+#
+
 p_tl_global = ggplot(data = gg_data, aes(x = time, y = load, color = species, fill = id)) +
   geom_path() +
   theme_minimal() + 
@@ -66,7 +77,7 @@ p_tl_global = ggplot(data = gg_data, aes(x = time, y = load, color = species, fi
   theme(legend.position = "none") +
   facet_wrap(species ~ ., scales = "free")
 
-ggsave(paste0(path_plot_by_species, "/time_load.pdf"), p_tl_global)
+ggsave(paste0(path_plot_by_species, "/time_load.pdf"), p_tl_global, width=16, height=8)
 
 p_el_global = ggplot(data = gg_data, aes(x = extension, y = load, color = species, fill = id)) +
   geom_path() +
@@ -76,7 +87,7 @@ p_el_global = ggplot(data = gg_data, aes(x = extension, y = load, color = specie
   theme(legend.position = "none") +
   facet_wrap(species ~ ., scales = "free")
 
-ggsave(paste0(path_plot_by_species, "/extension_load.pdf"), p_el_global)
+ggsave(paste0(path_plot_by_species, "/extension_load.pdf"), p_el_global,  width=16, height=8)
 
 path_plot_species_extension_load = paste0(path_plot_by_species, "/extension_load/")
 path_plot_species_time_load = paste0(path_plot_by_species, "/time_load/")
