@@ -4,7 +4,7 @@ library("readxl")
 library("config")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -80,7 +80,7 @@ for (infile in list_infile){
       if (data_df$Protocol[hit] != "default"){
         break("duplicate between protocol files")
       }
-      data_df[hit, ] = sheet[hit_in_sheet, 1:16]
+      data_df[hit, 16] = sheet[hit_in_sheet, 16]
     } else {
       not_ok = c(not_ok, id)
     }
@@ -95,10 +95,10 @@ list_corrected_species_name = unlist(lapply(list_species_name, function(x) if(x 
 data_df$Species = list_corrected_species_name
 
 # comment correction
+colnames(data_df)[which(colnames(data_df) == "Comment on this sample")] = "Comment"
 list_comment = data_df$Comment
 list_corrected_comment = unlist(lapply(list_comment, function(x) if(x %in% raw_comment) {correct_comment[x == raw_comment]} else {x}))
 data_df$Comment = list_corrected_comment
-
 
 # stock correction by stock
 list_stock = data_df$Stock
@@ -115,48 +115,49 @@ list_protocol = data_df$Protocol
 list_corrected_protocol = unlist(lapply(list_protocol, function(x) if(x %in% raw_protocol) {correct_protocol[x == raw_protocol]} else {x}))
 data_df$Protocol = list_corrected_protocol
 
-df_protocol_to_condition = data.frame(
-  "cond1" = c(T,F,F,F,F,F,F,F,F,F,F,F,F),
-  "cond2" = c(T,F,T,F,F,F,F,F,F,F,F,F,F),
-  "cond3" = c(T,F,F,F,T,F,F,F,F,F,F,F,F),
-  "div3" = c(F,F,F,T,F,F,F,F,F,F,F,F,F),
-  "x3" = c(F,F,F,F,T,F,F,F,F,F,F,F,F),
-  "0s" = c(F,F,F,F,F,T,F,F,F,F,F,F,F),
-  "5min" = c(F,F,F,F,F,F,T,F,F,F,F,F,F),
-  "no_scotch" = c(F,T,F,F,F,F,F,F,F,F,F,F,F),
-  "strongforce" = c(F,F,F,F,F,F,F,T,F,F,F,F,F),
-  "3japf" = c(F,F,F,F,F,F,F,F,T,F,F,F,F),
-  "no_cond" = c(F,F,F,F,F,F,F,F,F,T,F,F,F),
-  "water" = c(T,F,F,F,F,F,F,F,F,F,T,F,F),
-  "strongtape" = c(F,F,F,F,F,F,F,F,F,F,F,T,F),
-  "scotch_fin_strong_force" = c(F,F,F,F,F,F,F,T,F,F,F,T,F),
-  "default" = c(F,F,F,F,F,F,F,F,F,F,F,F,T),
-  check.names=FALSE
-)
 
-rownames(df_protocol_to_condition) = paste0("protocol",1:(nrow(df_protocol_to_condition)))
+# df_protocol_to_condition = data.frame(
+#   "cond1" = c(T,F,F,F,F,F,F,F,F,F,F,F,F),
+#   "cond2" = c(T,F,T,F,F,F,F,F,F,F,F,F,F),
+#   "cond3" = c(T,F,F,F,T,F,F,F,F,F,F,F,F),
+#   "div3" = c(F,F,F,T,F,F,F,F,F,F,F,F,F),
+#   "x3" = c(F,F,F,F,T,F,F,F,F,F,F,F,F),
+#   "0s" = c(F,F,F,F,F,T,F,F,F,F,F,F,F),
+#   "5min" = c(F,F,F,F,F,F,T,F,F,F,F,F,F),
+#   "no_scotch" = c(F,T,F,F,F,F,F,F,F,F,F,F,F),
+#   "strongforce" = c(F,F,F,F,F,F,F,T,F,F,F,F,F),
+#   "3japf" = c(F,F,F,F,F,F,F,F,T,F,F,F,F),
+#   "no_cond" = c(F,F,F,F,F,F,F,F,F,T,F,F,F),
+#   "water" = c(T,F,F,F,F,F,F,F,F,F,T,F,F),
+#   "strongtape" = c(F,F,F,F,F,F,F,F,F,F,F,T,F),
+#   "scotch_fin_strong_force" = c(F,F,F,F,F,F,F,T,F,F,F,T,F),
+#   "default" = c(F,F,F,F,F,F,F,F,F,F,F,F,T),
+#   check.names=FALSE
+# )
+# 
+# rownames(df_protocol_to_condition) = paste0("protocol",1:(nrow(df_protocol_to_condition)))
+# 
+# condition_df = as.data.frame(do.call(rbind, lapply(data_df$Protocol, function(x) x == colnames(df_protocol_to_condition))))
+# colnames(condition_df) = colnames(df_protocol_to_condition)
+# 
+# df_protocol_to_condition = as.data.frame(t(df_protocol_to_condition))
+# 
+# protocol_df = data.frame()
+# for (protocol in colnames(df_protocol_to_condition)){
+#   focus_condition = rownames(df_protocol_to_condition)[df_protocol_to_condition[, protocol]]
+#   temp = rep(F, length(data_df$Protocol))
+#   for (cond in focus_condition){
+#     temp[which(data_df$Protocol == cond)] = T
+#   }
+#   protocol_df = rbind(protocol_df, temp)
+# }
 
-condition_df = as.data.frame(do.call(rbind, lapply(data_df$Protocol, function(x) x == colnames(df_protocol_to_condition))))
-colnames(condition_df) = colnames(df_protocol_to_condition)
+# protocol_df = as.data.frame(t(protocol_df))
+# colnames(protocol_df) = colnames(df_protocol_to_condition)
 
-df_protocol_to_condition = as.data.frame(t(df_protocol_to_condition))
-
-protocol_df = data.frame()
-for (protocol in colnames(df_protocol_to_condition)){
-  focus_condition = rownames(df_protocol_to_condition)[df_protocol_to_condition[, protocol]]
-  temp = rep(F, length(data_df$Protocol))
-  for (cond in focus_condition){
-    temp[which(data_df$Protocol == cond)] = T
-  }
-  protocol_df = rbind(protocol_df, temp)
-}
-
-protocol_df = as.data.frame(t(protocol_df))
-colnames(protocol_df) = colnames(df_protocol_to_condition)
-
-data_df = data_df[, -16]
-data_df = cbind(data_df, protocol_df)
-data_df = cbind(data_df, condition_df)
+# data_df = data_df[, -16]
+# data_df = cbind(data_df, protocol_df)
+# data_df = cbind(data_df, condition_df)
 
 # write the output file (create repository if necessary)
 dir.create(dirname(path_output_file), showWarnings = FALSE)
@@ -178,4 +179,4 @@ temp = data.frame(raw_stock = raw_stock,
                   correct_stock = correct_stock)
 write.table(temp, file=paste0(dirname(path_output_file), "/stock_correction.csv"), row.names = F, quote = F, sep = "\t")
 
-write.table(df_protocol_to_condition, file=paste0(dirname(path_output_file), "/protocol_condition.csv"), quote = F, sep = "\t")
+# write.table(df_protocol_to_condition, file=paste0(dirname(path_output_file), "/protocol_condition.csv"), quote = F, sep = "\t")
