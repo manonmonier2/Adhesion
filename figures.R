@@ -58,7 +58,7 @@ for (id in gg_data$Sample_ID){
   
   detachment_force = c(detachment_force, current_detachment_force)
   energy = c(energy, current_energy)
-  rigidity = c(rigidity, current_rigidity) 
+  rigidity = c(rigidity, current_rigidity)
   position_difference = c(position_difference, current_position_difference)
   detachment_position = c(detachment_position, current_detachment_position)
 }
@@ -73,38 +73,74 @@ gg_data = cbind(gg_data,
 gg_stat = gg_data %>%
   filter(Comment == "ok") %>%
   group_by(Species)%>% 
-  summarise(Mean_detachment = mean(detachment_force), 
-            Max_detachment = max(detachment_force), 
-            Min_detachment = min(detachment_force), 
-            Median_detachment = median(detachment_force), 
-            Std_detachment = sd(detachment_force),
+  summarise(Mean_detachment = mean(detachment_force, na.rm = T), 
+            Max_detachment = max(detachment_force, na.rm = T), 
+            Min_detachment = min(detachment_force, na.rm = T), 
+            Median_detachment = median(detachment_force, na.rm = T), 
+            Std_detachment = sd(detachment_force, na.rm = T),
             
-            Mean_energy = mean(energy), 
-            Max_energy = max(energy), 
-            Min_energy = min(energy), 
-            Median_energy = median(energy), 
-            Std_energy = sd(energy),
+            Mean_energy = mean(energy, na.rm = T), 
+            Max_energy = max(energy, na.rm = T), 
+            Min_energy = min(energy, na.rm = T), 
+            Median_energy = median(energy, na.rm = T), 
+            Std_energy = sd(energy, na.rm = T),
             
-            Mean_rigidity = mean(rigidity), 
-            Max_rigidity = max(rigidity), 
-            Min_rigidity = min(rigidity), 
-            Median_rigidity = median(rigidity), 
-            Std_rigidity = sd(rigidity),
+            Mean_rigidity = mean(rigidity, na.rm = T), 
+            Max_rigidity = max(rigidity, na.rm = T), 
+            Min_rigidity = min(rigidity, na.rm = T), 
+            Median_rigidity = median(rigidity, na.rm = T), 
+            Std_rigidity = sd(rigidity, na.rm = T),
             
-            Mean_position_difference = mean(position_difference), 
-            Max_position_difference = max(position_difference), 
-            Min_position_difference = min(position_difference), 
-            Median_position_difference = median(position_difference), 
-            Std_position_difference = sd(position_difference),
+            Mean_position_difference = mean(position_difference, na.rm = T), 
+            Max_position_difference = max(position_difference, na.rm = T), 
+            Min_position_difference = min(position_difference, na.rm = T), 
+            Median_position_difference = median(position_difference, na.rm = T), 
+            Std_position_difference = sd(position_difference, na.rm = T),
             
-            Mean_detachment_position = mean(detachment_position), 
-            Max_detachment_position = max(detachment_position), 
-            Min_detachment_position = min(detachment_position), 
-            Median_detachment_position = median(detachment_position), 
-            Std_detachment_position = sd(detachment_position)
+            Mean_detachment_position = mean(detachment_position, na.rm = T), 
+            Max_detachment_position = max(detachment_position, na.rm = T), 
+            Min_detachment_position = min(detachment_position, na.rm = T), 
+            Median_detachment_position = median(detachment_position, na.rm = T), 
+            Std_detachment_position = sd(detachment_position, na.rm = T)
             )
 
 attach(gg_stat)#force R a considerer 'detachment position' etc comme des colonnes
+
+gg_stat_protocol_drosophila_melanogaster = gg_data %>%
+  filter(Comment == "ok" & Species == "Drosophila_melanogaster") %>%
+  group_by(Protocol)%>% 
+  summarise(Mean_detachment = mean(detachment_force, na.rm = T), 
+            Max_detachment = max(detachment_force, na.rm = T), 
+            Min_detachment = min(detachment_force, na.rm = T), 
+            Median_detachment = median(detachment_force, na.rm = T), 
+            Std_detachment = sd(detachment_force, na.rm = T),
+            
+            Mean_energy = mean(energy, na.rm = T), 
+            Max_energy = max(energy, na.rm = T), 
+            Min_energy = min(energy, na.rm = T), 
+            Median_energy = median(energy, na.rm = T), 
+            Std_energy = sd(energy, na.rm = T),
+            
+            Mean_rigidity = mean(rigidity, na.rm = T), 
+            Max_rigidity = max(rigidity, na.rm = T), 
+            Min_rigidity = min(rigidity, na.rm = T), 
+            Median_rigidity = median(rigidity, na.rm = T), 
+            Std_rigidity = sd(rigidity, na.rm = T),
+            
+            Mean_position_difference = mean(position_difference, na.rm = T), 
+            Max_position_difference = max(position_difference, na.rm = T), 
+            Min_position_difference = min(position_difference, na.rm = T), 
+            Median_position_difference = median(position_difference, na.rm = T), 
+            Std_position_difference = sd(position_difference, na.rm = T),
+            
+            Mean_detachment_position = mean(detachment_position, na.rm = T), 
+            Max_detachment_position = max(detachment_position, na.rm = T), 
+            Min_detachment_position = min(detachment_position, na.rm = T), 
+            Median_detachment_position = median(detachment_position, na.rm = T), 
+            Std_detachment_position = sd(detachment_position, na.rm = T)
+  )
+attach(gg_stat_protocol_drosophila_melanogaster)
+
 
 # one parameter plot
 ## by species
@@ -116,7 +152,7 @@ p = ggplot(gg_data %>% filter(Comment == "ok"),
        aes(x = Species, y = detachment_force, fill = Species)) +
   geom_boxplot() +
   coord_flip() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   ylab("Detachment force") +
   xlab("Species")
 
@@ -128,7 +164,7 @@ p = ggplot(gg_data %>% filter(Comment == "ok"),
            aes(x = Species, y = energy, fill = Species)) +
   geom_boxplot() +
   coord_flip() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   ylab("Energy") +
   xlab("Species")
 
@@ -140,7 +176,7 @@ p = ggplot(gg_data %>% filter(Comment == "ok"),
            aes(x = Species, y = rigidity, fill = Species)) +
   geom_boxplot() +
   coord_flip() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   ylab("Rigidity") +
   xlab("Species")
 
@@ -152,7 +188,7 @@ p = ggplot(gg_data %>% filter(Comment == "ok"),
            aes(x = Species, y = position_difference, fill = Species)) +
   geom_boxplot() +
   coord_flip() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   ylab("Position difference") +
   xlab("Species")
 
@@ -164,7 +200,7 @@ p = ggplot(gg_data %>% filter(Comment == "ok"),
            aes(x = Species, y = detachment_position, fill = Species)) +
   geom_boxplot() +
   coord_flip() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   ylab("Detachment position") +
   xlab("Species")
 
@@ -181,7 +217,7 @@ p = ggplot(gg_data %>% filter(Comment == "ok"),
            aes(x = Protocol, y = detachment_force, fill = Protocol)) +
   geom_boxplot() +
   coord_flip() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   ylab("Detachment force") +
   xlab("Protocol")
 
@@ -196,7 +232,7 @@ dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE
 p = ggplot(gg_data %>% filter(Comment == "ok"),
        aes(x = Protocol, y = detachment_force, fill = Protocol)) +
   geom_boxplot() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   theme(axis.text.x=element_blank(),
         axis.ticks.x=element_blank(),
         plot.title = element_text(hjust = 0.5)) +
@@ -213,7 +249,7 @@ ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/detachme
 p = ggplot(gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster"),
            aes(x = Protocol, y = detachment_force, fill = Protocol)) +
   geom_boxplot() +
-  theme_bw() +
+  theme_bw(base_size = 22) +
   theme(plot.title = element_text(hjust = 0.5)) +
   ylab("Detachment force") +
   xlab("Protocol") +
@@ -233,15 +269,15 @@ dir.create(plot_path_two_parameters_by_species, showWarnings = FALSE, recursive 
 p = ggplot(gg_stat, 
            aes(x = Median_detachment, y = Median_energy, color = Species)) +
   geom_point(size = 5, shape = 3) +
-  geom_errorbar(xmin = Min_detachment, xmax = Max_detachment) +
-  geom_errorbar(ymin = Min_energy, ymax = Max_energy) +
+  geom_errorbar(xmin = Median_detachment - Std_detachment, xmax = Median_detachment + Std_detachment) +
+  geom_errorbar(ymin = Median_energy - Std_energy, ymax = Median_energy + Std_energy) +
   xlim(min(Min_detachment), max(Max_detachment)) +
   ylim(min(Min_energy), max(Max_energy)) +
   geom_point(gg_data %>% filter(Comment == "ok"), 
              mapping = aes(x = detachment_force, y = energy), alpha = 0.3) +
   xlab("Detachment force") +
   ylab("Energy") +
-  theme_bw() 
+  theme_bw(base_size = 22) 
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_detachment_force_y_energy", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -258,7 +294,7 @@ p = ggplot(gg_stat,
              mapping = aes(x = detachment_force, y = rigidity), alpha = 0.3) +
   xlab("Detachment force") +
   ylab("Rigidity") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_detachment_force_y_rigidity", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -275,7 +311,7 @@ p = ggplot(gg_stat,
              mapping = aes(x = detachment_force, y = position_difference), alpha = 0.3) +
   xlab("Detachment force") +
   ylab("Position difference") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_detachment_force_y_position_difference", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -293,7 +329,7 @@ p = ggplot(gg_stat,
              mapping = aes(x = detachment_force, y = detachment_position), alpha = 0.3) +
   xlab("Detachment force") +
   ylab("Detachment position") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_detachment_force_y_detachment_position", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -310,7 +346,7 @@ p = ggplot(gg_stat,
              mapping = aes(x = energy, y = rigidity), alpha = 0.3) +
   xlab("Energy") +
   ylab("Rigidity") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_energy_y_rigidity", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -327,7 +363,7 @@ p = ggplot(gg_stat,
              mapping = aes(x = energy, y = position_difference), alpha = 0.3) +
   xlab("Energy") +
   ylab("Position difference") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_energy_y_position_difference", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -344,7 +380,7 @@ p = ggplot(gg_stat,
              mapping = aes(x = energy, y = detachment_position), alpha = 0.3) +
   xlab("Energy") +
   ylab("Detachment position") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_energy_y_detachment_position", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -361,7 +397,7 @@ p = ggplot(gg_stat,
              mapping = aes(x = rigidity, y = position_difference), alpha = 0.3) +
   xlab("Rigidity") +
   ylab("Position difference") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_rigidity_y_position_difference", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -378,7 +414,7 @@ p = ggplot(gg_stat,
              mapping = aes(x = rigidity, y = detachment_position), alpha = 0.3) +
   xlab("Rigidity") +
   ylab("Detachment position") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_rigidity_y_detachment_position", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
@@ -395,9 +431,81 @@ p = ggplot(gg_stat,
              mapping = aes(x = position_difference, y = detachment_position), alpha = 0.3) +
   xlab("Position difference") +
   ylab("Detachment position") +
-  theme_bw()
+  theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_position_difference_y_detachment_position", ".pdf"), 
        plot=p, width=16, height=8, device = "pdf")
 
+## x: detachment force y: energy by protocol for Drosophila melanogaster
+plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
+dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
 
+gg_stat_protocol_drosophila_melanogaster$Median_energy = abs(gg_stat_protocol_drosophila_melanogaster$Median_energy)
+gg_stat_protocol_drosophila_melanogaster$Std_energy = abs(gg_stat_protocol_drosophila_melanogaster$Std_energy)
+
+gg_stat_protocol_drosophila_melanogaster$Median_detachment = abs(gg_stat_protocol_drosophila_melanogaster$Median_detachment)
+gg_stat_protocol_drosophila_melanogaster$Std_detachment = abs(gg_stat_protocol_drosophila_melanogaster$Std_detachment)
+
+gg_data$detachment_force = abs(gg_data$detachment_force)
+
+p = ggplot(gg_stat_protocol_drosophila_melanogaster, 
+           aes(x = Median_detachment, y = Median_energy, color = Protocol)) +
+  geom_point(size = 1) +
+  geom_errorbar(xmin = abs(Median_detachment - Std_detachment), xmax = abs(Median_detachment + Std_detachment)) +
+  geom_errorbar(ymin = abs(Median_energy - Std_energy), ymax = abs(Median_energy + Std_energy)) +
+  geom_point(gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster"), 
+             mapping = aes(x = detachment_force, y = energy), alpha = 0.3) +
+  # scale_x_continuous(trans='log10') +
+  # scale_y_continuous(trans='log10') +
+  coord_trans(x = "log10", y = "log10") +
+  xlab("Detachment force") +
+  ylab("Energy") +
+  theme_bw(base_size = 22) +
+  ggtitle("x: Detachment force, y: Energy by protocol for Drosophila melanogaster")
+
+ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_detachment_force_y_energy_Drosophila_melanogaster", ".pdf"), 
+       plot=p, width=16, height=8, device = "pdf")
+
+# table(metadata$Protocol[metadata$Species == "Drosophila_melanogaster"])
+# 
+# temp = metadata %>% filter(Species == "Drosophila_melanogaster" & Comment == "ok") 
+# table(temp$Protocol)
+# 
+# 
+# temp = gg_data %>% filter(Comment == "ok") %>% group_by(Species) %>% 
+#   summarise(table(Protocol))
+# 
+# 
+# list_protocol = unique(gg_data$Protocol)
+# list_species = unique(gg_data$Species)
+# df_res = data.frame()
+# for(species in sort(list_species)){
+#   handler = gg_data %>% filter(Comment == "ok" & Species == species)
+#   new_row = c()
+#   for(protocol in list_protocol){
+#     new_row = c(new_row, sum(handler$Protocol == protocol))
+#   }
+#   df_res = rbind(df_res, new_row)
+# }
+# 
+# colnames(df_res) = list_protocol
+# rownames(df_res) = list_species
+# 
+# 
+# list_protocol = unique(metadata$Protocol)
+# list_species = unique(metadata$Species)
+# df_res_metadata = data.frame()
+# for(species in sort(list_species)){
+#   handler = metadata %>% filter(Comment == "ok" & Species == species)
+#   new_row = c()
+#   for(protocol in list_protocol){
+#     new_row = c(new_row, sum(handler$Protocol == protocol))
+#   }
+#   df_res_metadata = rbind(df_res_metadata, new_row)
+# }
+# 
+# colnames(df_res_metadata) = list_protocol
+# rownames(df_res_metadata) = list_species
+# 
+# write.table(df_res, paste0(plot_path, "/table_nb_pupe_apres_index_comment_ok.csv"), sep = "\t")
+# write.table(df_res_metadata, paste0(plot_path, "/table_nb_pupe_avant_index_comment_ok.csv"), sep = "\t")
