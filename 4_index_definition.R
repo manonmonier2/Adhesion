@@ -267,7 +267,8 @@ for(id in list_id){
   if (length(run) == 1){
     if (run %in% list_id) {
       comment = metadata_file$Comment[metadata_file$Sample_ID == run]
-      not_ok = c(not_ok, paste0(run, '\t', comment))
+      species = metadata_file$Species[metadata_file$Sample_ID == run]
+      not_ok = c(not_ok, paste0(run, '\t', comment, '\t', species))
     }
   }
 }
