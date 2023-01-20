@@ -257,7 +257,7 @@ for (i in 1:length(parameter_list)){
   }
 }
 
-## x: detachment force y: energy by protocol for Drosophila melanogaster
+## by protocol for Drosophila melanogaster
 plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
 dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
 
