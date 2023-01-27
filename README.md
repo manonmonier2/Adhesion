@@ -118,6 +118,48 @@ If sigma of noise is < 0.01 there is no peak, we can recalibrate.
 
 Segmentation of curves in six parts
 
+From the unique batch file per id (**[batch_by_id]**), we define for each id the following values:
+
+sigma_1_temp = standard deviation of the force over the 20 first values.
+
+index_1 : We use the curve portion from the beginning until the curve reaches 3*sigma_1_temp. From this vector, index_1 is defined when the curve reaches sigma_1_temp 
+
+noise_1 is the median from the first value until index_1
+
+index_2 : 
+for the protocol '5min': index_2 is reached when the force is maximal
+for other protocols : index_2 is reached when the extension is maximal
+
+index_3: we use the vector of values from index_2 until the end
+
+when the force values are increasing over three successive values, index_3 is defined
+
+if the time gap between index_2 and index_3 is longer than 1sec : 
+
+**detect_index_3 : je n'ai pas compris pourquoi la fonction retourne i-5**
+
+index_4 : 
+
+for the protocol '5min': index_4 is defined 300 seconds after index_3
+
+for the protocol '0s': index_4 = index_3
+
+for other protocols : index_4 is defined 10 seconds after index_3
+
+noise_4 : 
+
+amp_noise_6_temp : for the last 50 values, we calculate the aplitude of the force
+
+index_5 : 
+
+if the lowest force value is higher than 3*amp_noise_6_temp
+
+index_6 : defined as the last value
+
+noise_1 is the median from index_5 until index_6
+
+creates an index file with all the id (write in **[batch_by_id]**).
+
 **_interpolation_complete.R_**
 
 Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
