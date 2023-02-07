@@ -4,7 +4,7 @@ library("readxl")
 library("config")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
 
 # retrieve parameters
 # Input
@@ -50,11 +50,11 @@ correct_protocol = c("no_scotch", "no_cond", "strongforce", "strongtape", "defau
 species_with_incorrect_stock = c("Drosophila_takahashii", "Drosophila_pachea", "Drosophila_nannoptera", "Drosophila_pseudoobscura", "Drosophila_eugracilis", "Drosophila_elegans", "Drosophila_prostipennis", "Drosophila_funebris", "Drosophila_rhopaloa", "Drosophila_kurseongensis", "Scaptodrosophila_lebanonensis", "Zaprionus_lachaisei", "Drosophila_malerkotliana", "Zaprionus_indianus", "Drosophila_ananassae", "Drosophila_immigrans", "Drosophila_hydei", "Drosophila_quadraria", "Drosophila_tropicalis", "Drosophila_virilis")
 correct_stock_by_species = c("14022-0311.07", "15090-1698.01_14.2", "15090-1692.00", "14011-0121.94", "Prud_homme_Gompel", "14027-0461.03", "14022-0291.00", "M_Monier", "BaVi067", "SaPa058", "J_David", "S_Prigent", "S_Prigent", "S_Prigent", "Prud_homme_Gompel", "F_Borne", "F_Borne", "J_David", "S_Prigent", "15010-1051.86")
 
-raw_stock = c("biar001", "Biar001", "biariso001", "biariso003", "biarmipes")
-correct_stock = c("Iso_001", "Iso_001", "Iso_001", "Iso_003", "G224")
+raw_stock = c("biar001", "Biar001", "biariso001", "biariso003", "biarmipes", "Virilis", "Scalaris", "Lachaisei", "Nanoptera", "Pachea", "CantonS", "canronS", "Hydei", "Immigrans", "Malerkotliana", "maleskotliana", "Md221", "suzvincennes", "Indianus", "Kuseongensis", "Kurseongensis")
+correct_stock = c("Iso_001", "Iso_001", "Iso_001", "Iso_003", "G224", "virilis", "scalaris", "lachaisei", "nanoptera", "pachea", "cantonS", "cantonS", "hydei", "immigrans", "malerkotliana", "malerkotliana", "md221", "suzukii_vincennes", "indianus", "kurseongensis", "kurseongensis")
 #
 
-# get all batch file (.xlsx file)
+# get all metadata file (.xlsx file)
 list_infile = list.files(path_data, pattern = ".xlsx$", full.names = T)
 
 # Manon_results_file.xlsx contains all the metadata id, the others files contains protocol precision
@@ -66,6 +66,9 @@ names(data_df)[names(data_df) == tail(names(data_df), 1)] = 'Protocol'
 list_infile = list_infile[-index_main_medadata]
 
 not_ok = c()
+
+# check for flora metadata (.csv file)
+list_infile_flora = list.files(path_data, pattern = ".csv$", full.names = T)
 
 for (infile in list_infile){
   
@@ -83,6 +86,42 @@ for (infile in list_infile){
       data_df[hit, 16] = sheet[hit_in_sheet, 16]
     } else {
       not_ok = c(not_ok, id)
+    }
+  }
+}
+
+
+# flora metadata
+for (infile_flora in list_infile_flora) {
+  sheet = read.table(infile_flora, header = T, sep = ",")
+  
+  for(row in 1:nrow(sheet)) {
+    handler_row_df = c(
+      sheet[row, 1], 
+      "Flora", 
+      sheet[row, 3], 
+      sheet[row, 2], 
+      NA, 
+      sheet[row, 4], 
+      sheet[row, 5], 
+      sheet[row, 6],
+      sheet[row, 7],
+      NA,
+      NA,
+      sheet[row, 8],
+      as.Date(sheet[row, 9]),
+      sheet[row, 11], 
+      NA,
+      "default"
+    )
+    
+    hit = which(sheet[, 1] == sheet[row, 1])
+    hit_in_data_df = which(data_df$Sample_ID == sheet[row, 1])
+    # one hit in each file
+    if (length(hit) == 1 && length(hit_in_data_df) == 0){
+      data_df = rbind(data_df, handler_row_df)
+    } else {
+      not_ok = c(not_ok, sheet[row, 1])
     }
   }
 }
