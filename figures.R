@@ -23,7 +23,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -34,7 +34,7 @@ plot_path = opt$plot_path
 path_integral = opt$integral_path
 
 index_table = read.table(path_index, header = T, sep = "\t")
-metadata = read.table(path_metadata_file, sep = ",", header = T, fileEncoding = "UTF-7")
+metadata = read.table(path_metadata_file, sep = "\t", header = T)
 energy_table = read.table(paste0(path_integral, "/integral.csv"), header = T, sep = "\t")
 
 list_id = index_table$id
@@ -91,6 +91,9 @@ colnames(gg_data)[22:26] = c("log10_detachment_force", "log10_energy", "log10_ri
 
 # exclusion of flora data
 gg_data = gg_data %>% filter(Experimenter != "Flora")
+
+# exclusion of default condition for melanogaster
+gg_data = gg_data %>% filter((Protocol != "default" & Species == "Drosophila_melanogaster") | Species != "Drosophila_melanogaster") #on retire les default de melano
 
 parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "detachment_position",
                    "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position")
@@ -158,9 +161,6 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 
 for (i in 1:length(parameter_list)){
   
-  #calculations for one way anova
-  
-  
   
   #plot
   p = ggplot(gg_data %>% filter(Comment == "ok"),
@@ -223,6 +223,51 @@ for (i in 1:length(parameter_list)){
 ### by protocol for Drosophila_melanogaster
 for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster")
+  
+  # if (parameter_list[i] == "detachment_force"){
+  #   temp_data = temp_data %>% filter(Protocol != "cond2")
+  # }
+  
+  test_stat = c()
+  
+  # shapiro
+  res_shapiro_global = shapiro.test(temp_data$detachment_force)
+  shapiro_global_handler = res_shapiro_global$p.value >= 0.01
+  test_stat = c(test_stat, shapiro_global_handler)
+
+  
+  # bartlett
+  res_bartlett = bartlett.test(detachment_force ~ Protocol, temp_data)
+  
+  bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
+  test_stat = c(test_stat, bartlett_reject)
+  
+  # anova
+  aov_res = aov(detachment_force ~ Protocol, temp_data)
+  anova_res = anova(aov_res)
+  anova_handler = anova_res$`Pr(>F)`[1] >= 0.01
+  
+  test_stat = c(test_stat, anova_handler)
+  
+  # kruskal wallis
+  kruskal_res = kruskal.test(detachment_force ~ Protocol, temp_data)
+  kruskal_handler = kruskal_res$p.value >= 0.01
+  
+  test_stat = c(test_stat, anova_handler)
+  
+  names(test_stat) = c("shapiro", "bartlett", "anova", "kruskal-wallis")
+  
+  # Tukey
+  library(agricolae)
+  tukey_res = TukeyHSD(aov_res)
+  HSD_res = HSD.test(aov_res, "Protocol", group = T)
+  
+  # Dunn
+  library(dunn.test)
+  
+  
+  ###
+  
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i], fill = "Protocol")) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
