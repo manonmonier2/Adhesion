@@ -23,7 +23,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -34,7 +34,7 @@ plot_path = opt$plot_path
 path_integral = opt$integral_path
 
 index_table = read.table(path_index, header = T, sep = "\t")
-metadata = read.table(path_metadata_file, sep = "\t", header = T)
+metadata = read.table(path_metadata_file, sep = ",", header = T, fileEncoding = "UTF-7")
 energy_table = read.table(paste0(path_integral, "/integral.csv"), header = T, sep = "\t")
 
 list_id = index_table$id
@@ -61,7 +61,7 @@ for (id in gg_data$Sample_ID){
   } else {
     current_energy = NA
   }
-    
+  
   current_rigidity = (sample$load[current_index$index_2] - sample$load[current_index$index_1]) / (sample$extension[current_index$index_2] - sample$extension[current_index$index_1])
   current_position_difference = abs(sample$extension[current_index$index_1] - sample$extension[current_index$index_5])
   current_detachment_position = sample$extension[current_index$index_5]
@@ -84,7 +84,7 @@ gg_data = cbind(gg_data,
                 log10_na(rigidity),
                 log10_na(position_difference),
                 log10_na(detachment_position)
-                )
+)
 
 colnames(gg_data)[22:26] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position")
 
@@ -156,9 +156,16 @@ plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_specie
 dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
+  
+  #calculations for one way anova
+  
+  
+  
+  #plot
   p = ggplot(gg_data %>% filter(Comment == "ok"),
-             aes_string(x = "Species", y = parameter_list[i], fill = "Species")) +
-    geom_boxplot() +
+             aes_string(x = "Species", y = parameter_list[i])) +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) + 
     coord_flip() +
     theme_bw(base_size = 18) +
     ylab(lab_list[i]) +
@@ -176,7 +183,8 @@ dir.create(plot_path_one_parameter_by_protocol, showWarnings = FALSE, recursive 
 for (i in 1:length(parameter_list)){
   p = ggplot(gg_data %>% filter(Comment == "ok"),
              aes_string(x = "Protocol", y = parameter_list[i], fill = "Protocol")) +
-    geom_boxplot() +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     coord_flip() +
     theme_bw(base_size = 22) +
     ylab(lab_list[i]) +
@@ -195,7 +203,8 @@ for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% filter(Comment == "ok") # on fait un temp_data car on calcule le min et le max
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i], fill = "Protocol")) +
-    geom_boxplot() +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 15) +
     theme(axis.text.x=element_blank(),
           axis.ticks.x=element_blank(),
@@ -215,7 +224,8 @@ for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster")
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i], fill = "Protocol")) +
-    geom_boxplot() +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 22) +
     theme(plot.title = element_text(hjust = 0.5)) +
     ylab(lab_list[i]) +
@@ -237,6 +247,13 @@ for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
     if (i == j) next
     
+    #incertitude
+    # incertitude_detachment_force = moy(index_table$med_noise_1)
+    # incertitude_rigidity = 
+    # incertitude_energy = moy(energy_table$aire_index5_moins1)
+    # incertitude_detachment_position = sqrt(2)*
+    # 
+    #plot
     p = ggplot(gg_stat_by_species, 
                aes_string(x = paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Species")) +
       geom_point(size = 5, shape = 3) +
@@ -248,6 +265,7 @@ for (i in 1:length(parameter_list)){
       ylim(min(gg_stat_by_species[[paste0("min_", parameter_list[j])]], na.rm = T), max(gg_stat_by_species[[paste0("max_", parameter_list[j])]], na.rm = T)) +
       geom_point(gg_data %>% filter(Comment == "ok"), 
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+      #geom_vline(xintercept=) +
       xlab(lab_list[i]) +
       ylab(lab_list[j]) +
       theme_bw(base_size = 22) 
