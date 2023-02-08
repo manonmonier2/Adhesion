@@ -156,3 +156,4 @@ cython_debug/
 
 #ignore the data directory
 data/
+data.zip
