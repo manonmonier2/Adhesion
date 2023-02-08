@@ -3,6 +3,9 @@ rm(list = ls())
 library("config")
 library("ggplot2")
 library("dplyr")
+library("rcompanion")
+library("agricolae")
+library("FSA")
 
 #### FUNCTIONS ####
 
@@ -10,6 +13,7 @@ n_fun <- function(data){
   y_pos = max(data) + (max(data) - min(data)) * 0.1
   return(data.frame(y = y_pos, label = paste0("n = ",length(data))))
 }
+
 
 log10_na = function(vect){
   log_vect = c()
@@ -23,7 +27,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -44,6 +48,7 @@ for (id in list_id){
 }
 
 
+
 # parameters calculation
 detachment_force = c()
 rigidity = c()
@@ -61,9 +66,9 @@ for (id in gg_data$Sample_ID){
   } else {
     current_energy = NA
   }
-    
+  
   current_rigidity = (sample$load[current_index$index_2] - sample$load[current_index$index_1]) / (sample$extension[current_index$index_2] - sample$extension[current_index$index_1])
-  current_position_difference = abs(sample$extension[current_index$index_1] - sample$extension[current_index$index_5])
+  current_position_difference = sample$extension[current_index$index_1] - sample$extension[current_index$index_5]
   current_detachment_position = sample$extension[current_index$index_5]
   
   detachment_force = c(detachment_force, current_detachment_force)
@@ -84,12 +89,15 @@ gg_data = cbind(gg_data,
                 log10_na(rigidity),
                 log10_na(position_difference),
                 log10_na(detachment_position)
-                )
+)
 
 colnames(gg_data)[22:26] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position")
 
 # exclusion of flora data
 gg_data = gg_data %>% filter(Experimenter != "Flora")
+
+# exclusion of default condition for melanogaster
+gg_data = gg_data %>% filter((Protocol != "default" & Species == "Drosophila_melanogaster") | Species != "Drosophila_melanogaster") #on retire les default de melano
 
 parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "detachment_position",
                    "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position")
@@ -156,9 +164,13 @@ plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_specie
 dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
+  
+  
+  #plot
   p = ggplot(gg_data %>% filter(Comment == "ok"),
-             aes_string(x = "Species", y = parameter_list[i], fill = "Species")) +
-    geom_boxplot() +
+             aes_string(x = "Species", y = parameter_list[i])) +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) + 
     coord_flip() +
     theme_bw(base_size = 18) +
     ylab(lab_list[i]) +
@@ -176,7 +188,8 @@ dir.create(plot_path_one_parameter_by_protocol, showWarnings = FALSE, recursive 
 for (i in 1:length(parameter_list)){
   p = ggplot(gg_data %>% filter(Comment == "ok"),
              aes_string(x = "Protocol", y = parameter_list[i], fill = "Protocol")) +
-    geom_boxplot() +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     coord_flip() +
     theme_bw(base_size = 22) +
     ylab(lab_list[i]) +
@@ -195,7 +208,8 @@ for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% filter(Comment == "ok") # on fait un temp_data car on calcule le min et le max
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i], fill = "Protocol")) +
-    geom_boxplot() +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 15) +
     theme(axis.text.x=element_blank(),
           axis.ticks.x=element_blank(),
@@ -213,15 +227,82 @@ for (i in 1:length(parameter_list)){
 ### by protocol for Drosophila_melanogaster
 for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster")
+  
+  # if (parameter_list[i] == "detachment_force"){
+  #   temp_data = temp_data %>% filter(Protocol != "cond2")
+  # }
+  
+  test_stat = c()
+  
+  # shapiro
+  res_shapiro_global = shapiro.test(temp_data[, which(colnames(temp_data) == parameter_list[i])])
+  shapiro_global_handler = res_shapiro_global$p.value >= 0.01
+  test_stat = c(test_stat, shapiro_global_handler)
+
+  
+  # bartlett
+  res_bartlett = bartlett.test(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, temp_data)
+  bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
+  test_stat = c(test_stat, bartlett_reject)
+  
+  # anova
+  aov_res = aov(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, temp_data)
+  anova_res = anova(aov_res)
+  anova_handler = anova_res$`Pr(>F)`[1] >= 0.01
+  
+  test_stat = c(test_stat, anova_handler)
+  
+  # kruskal wallis
+  kruskal_res = kruskal.test(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, temp_data)
+  kruskal_handler = kruskal_res$p.value >= 0.01
+  
+  test_stat = c(test_stat, anova_handler)
+  
+  names(test_stat) = c("shapiro", "bartlett", "anova", "kruskal-wallis")
+  
+  # Tukey
+  tukey_res = TukeyHSD(aov_res, conf.level = 0.99)
+  HSD_res = HSD.test(aov_res, "Protocol", group = T)
+  tukey_group = HSD_res$groups
+  tukey_group = cbind(rownames(tukey_group), tukey_group[, -1])#on extrait les noms de ligne et on les place dans une nouvelle colonne à gauche avec cbind
+  #puis on append le tableau de resultats tukey_group auquel on retire les moyennes en colonne 1
+  colnames(tukey_group) = c("Protocol", "groups")
+  tukey_group = as.data.frame(tukey_group)
+  
+    
+  # Dunn
+  dunn_res = dunnTest(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, data = temp_data)
+  
+  dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res)
+  dunn_group = dunn_group[, -3]
+  colnames(dunn_group) = c("Protocol", "groups")
+  dunn_group$Protocol[which(dunn_group$Protocol == "s")] = "0s" #dans les resultats de dunn '0s' est affiche 's' donc on modifie
+  dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
+  #order est donne pour lignes car on veut ordonner lignes
+  ###
+  
+  used_test = NA
+  if (test_stat["shapiro"] & test_stat["bartlett"]){
+    gg_data_test = tukey_group
+    used_test = "Tukey"
+  } else {
+    gg_data_test = dunn_group
+    used_test = "Dunn"
+  }
+    
+  
+  temp_data$Protocol = factor(temp_data$Protocol, levels = gg_data_test$Protocol)
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i], fill = "Protocol")) +
-    geom_boxplot() +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 22) +
-    theme(plot.title = element_text(hjust = 0.5)) +
+    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
     ylab(lab_list[i]) +
     xlab("Protocol") +
     stat_summary(fun.data = n_fun, geom = "text") +
-    ggtitle(paste0(lab_list[i], " by protocol for Drosophila melanogaster")) +
+    geom_text(data = gg_data_test, aes(x = Protocol, label = groups, y = min(temp_data[, which(colnames(temp_data) == parameter_list[i])]))) +
+    ggtitle(paste0(lab_list[i], " by protocol for Drosophila melanogaster"), subtitle = paste0(used_test, " test, P-value <= 0.01")) +
     facet_wrap(Species ~ ., scales = "free")
   
   ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/", parameter_list[i], "_Drosophila_melanogaster", ".pdf"), 
@@ -237,6 +318,13 @@ for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
     if (i == j) next
     
+    #incertitude
+    # incertitude_detachment_force = moy(index_table$med_noise_1)
+    # incertitude_rigidity = 
+    # incertitude_energy = moy(energy_table$aire_index5_moins1)
+    # incertitude_detachment_position = sqrt(2)*
+    # 
+    #plot
     p = ggplot(gg_stat_by_species, 
                aes_string(x = paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Species")) +
       geom_point(size = 5, shape = 3) +
@@ -248,6 +336,7 @@ for (i in 1:length(parameter_list)){
       ylim(min(gg_stat_by_species[[paste0("min_", parameter_list[j])]], na.rm = T), max(gg_stat_by_species[[paste0("max_", parameter_list[j])]], na.rm = T)) +
       geom_point(gg_data %>% filter(Comment == "ok"), 
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+      #geom_vline(xintercept=) +
       xlab(lab_list[i]) +
       ylab(lab_list[j]) +
       theme_bw(base_size = 22) 
