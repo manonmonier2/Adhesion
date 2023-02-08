@@ -11,33 +11,158 @@ R version 4.1.2 (2021-11-01)
 eadxl 1.3.1, cli 3.1.0, config, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8
 
 ## Script description
+All the word between "[" "]" reference to a parameter in the _config.yml_ file.
 
-**_concatenation_data.R_**
+**_concatenation_batch.R_**
 
-Merges all the batch files present in the input directory (**[batches]**). 
+Merges all the batch files present in the input directory **[batches]**. 
 
-The merged files are return in **[concatenate_file]** for the data file and **[concatenate_id_file]** for the id file.
+The merged files are returned in **[concatenate_file]** for the data file and **[concatenate_id_file]** for the id file.
 
 No id correction is done at this stage.
 
+MM: 2022032405 : changer commentaire par pb_machine
 
-**_chargement_donnees_data_complete.R_**
 
-Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
+**_concatenation_metadata.R_**
 
-Creates a unique file per id
+Merges all the metadata files present in the input directory **[metadata]**.
+The merged file is returned in **[concatenate_metadata]**.
+
+At this stage, corrections are made to:
+
+**Species**
+|        **raw_name**        |        **correct_name**       |
+|:--------------------------:|:-----------------------------:|
+| Drosohila_hydei            | Drosophila_hydei              |
+| Drosophila.nanoptera       | Drosophila_nannoptera         |
+| Drosophila_malanogaster    | Drosophila_melanogaster       |
+| Drosophila_pachae          | Drosophila_pachea             |
+| Drosophila_Virilis         | Drosophila_virilis            |
+| Scaptodrosophila_lebanonen | Scaptodrosophila_lebanonensis |
+| Drosophila_nanoptera       | Drosophila_nannoptera         |
+
+**Comment**
+|      **raw_comment**     |   **correct_comment**  |
+|:------------------------:|:----------------------:|
+| cuticle_broked           | cuticle_broke          |
+| cuticule_broke           | cuticle_broke          |
+| cuticule broke           | cuticle_broke          |
+| cuticle broke            | cuticle_broke          |
+| no_tape                  | no_adhesive_paper      |
+| no_scotch                | no_adhesive_paper      |
+| two_pupae_too_close      | two_pupae              |
+| 2 at 1 time              | two_pupae              |
+| not detached             | not_detached           |
+| not normal               | pb_machine             |
+| pbm_machine              | pb_machine             |
+| attached_from_the_bottom | attached_at_the_bottom |
+| 2_at_1_time              | two_pupae              |
+| pb_0                     | pb_machine             |
+| pb_NA                    | pb_machine             |
+| not_normal               | pb_machine             |
+| noscotch_notbroken       | no_adhesive_paper      |
+| tape_attached            | pb_scotch              |
+
+**protocol**
+| **raw_protocol** | **correct_protocol** |
+|:----------------:|:--------------------:|
+| noscotch         | no_scotch            |
+| nocond           | no_cond              |
+| strong           | strongforce          |
+| scotch_fin       | strongtape           |
+| tesa             | default              |
+
+**Stock**
+| **raw_stock** | **correct_stock** |
+|:-------------:|:-----------------:|
+| biar001       | Iso_001           |
+| Biar001       | Iso_001           |
+| biariso001    | Iso_001           |
+| biariso003    | Iso_003           |
+| biarmipes     | G224              |
+
+This script also contains the correspondence table between the protocols and the conditions in the form of a boolean table. This table is not written for the moment.
+
+|                | **cond1** | **cond2** | **cond3** | **div3** | **x3** | **0s** | **5min** | **no_scotch** | **strongforce** | **3japf** | **no_cond** | **water** | **strongtape** | **scotch_fin_strong_force** | **default** |
+|:--------------:|:---------:|:---------:|:---------:|:--------:|:------:|:------:|:--------:|:-------------:|:---------------:|:---------:|:-----------:|:---------:|:--------------:|:---------------------------:|:-----------:|
+|  **protocol1** | TRUE      | TRUE      | TRUE      | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | TRUE      | FALSE          | FALSE                       | FALSE       |
+|  **protocol2** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | TRUE          | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol3** | FALSE     | TRUE      | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol4** | FALSE     | FALSE     | FALSE     | TRUE     | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol5** | FALSE     | FALSE     | TRUE      | FALSE    | TRUE   | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol6** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | TRUE   | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol7** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | TRUE     | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+|  **protocol8** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | TRUE            | FALSE     | FALSE       | FALSE     | FALSE          | TRUE                        | FALSE       |
+|  **protocol9** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | TRUE      | FALSE       | FALSE     | FALSE          | FALSE                       | FALSE       |
+| **protocol10** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | TRUE        | FALSE     | FALSE          | FALSE                       | FALSE       |
+| **protocol11** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | TRUE      | FALSE          | FALSE                       | FALSE       |
+| **protocol12** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | TRUE           | TRUE                        | FALSE       |
+| **protocol13** | FALSE     | FALSE     | FALSE     | FALSE    | FALSE  | FALSE  | FALSE    | FALSE         | FALSE           | FALSE     | FALSE       | FALSE     | FALSE          | FALSE                       | TRUE        |
+
+
+**_load_data.R_**
+
+From the concatenated batches file **[concatenate_file]**, the corresponding id file **[concatenate_id_file]** and the concatenated metadata file **[concatenate_metadata]**,
+creates an unique batch file per id (write in **[batch_by_id]**).
+
+For now, this id must be shared and unique in **[concatenate_id_file]** and **[concatenate_metadata]**.
+Without this condition, we have no explicit link between batches and metadata.
 
 Recalibrate curves at axis y=0
 
-Creates variable colums for each different protocol
+If sigma of noise is > 0.01 it means there is a peak in the first values (accident during experiment). In this situation, we do not recalibrate.
+If sigma of noise is < 0.01 there is no peak, we can recalibrate.
 
-Homogenization of species and strain names
-
-**_index_definition_complete.R_**
+**_index_definition.R_**
 
 Segmentation of curves in six parts
 
+From the unique batch file per id (**[batch_by_id]**), we define for each id the following values:
+
+sigma_1_temp = standard deviation of the force over the 20 first values.
+
+index_1 : We use the curve portion from the beginning until the curve reaches 3*sigma_1_temp. From this vector, index_1 is defined when the curve reaches sigma_1_temp 
+
+noise_1 is the median from the first value until index_1
+
+index_2 : 
+for the protocol '5min': index_2 is reached when the force is maximal
+for other protocols : index_2 is reached when the extension is maximal
+
+index_3: we use the vector of values from index_2 until the end
+
+when the force values are increasing over three successive values, index_3 is defined
+
+if the time gap between index_2 and index_3 is longer than 1sec : 
+
+**detect_index_3 : je n'ai pas compris pourquoi la fonction retourne i-5**
+
+index_4 : 
+
+for the protocol '5min': index_4 is defined 300 seconds after index_3
+
+for the protocol '0s': index_4 = index_3
+
+for other protocols : index_4 is defined 10 seconds after index_3
+
+noise_4 : 
+
+amp_noise_6_temp : for the last 50 values, we calculate the aplitude of the force
+
+index_5 : 
+
+if the lowest force value is higher than 3*amp_noise_6_temp
+
+index_6 : defined as the last value
+
+noise_1 is the median from index_5 until index_6
+
+creates an index file with all the id (write in **[batch_by_id]**).
+
 **_interpolation_complete.R_**
+
+Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
 
 Interpolation of the curve from XX to XX
 
@@ -65,5 +190,11 @@ Multiple config can be saved, the **"default"** configuration is currently used.
 
 #### Concatenation
 ``` shell
-Rscript concatenation_data.R
+Rscript concatenation_batch.R
 ```
+
+``` shell
+concatenation_metadata.R
+```
+
+#### 
