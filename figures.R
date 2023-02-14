@@ -27,7 +27,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
 
 # retrieve parameters
 # Input
@@ -103,6 +103,7 @@ parameter_list = c("detachment_force", "energy", "rigidity", "position_differenc
                    "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position")
 lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Detachment position",
              "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Detachment position)")
+unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm")
 species_list = unique(gg_data$Species)
 protocol_list = unique(gg_data$Protocol)
 stat_list = c("mean", "max", "min", "median", "sd")
@@ -173,7 +174,7 @@ for (i in 1:length(parameter_list)){
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) + 
     coord_flip() +
     theme_bw(base_size = 18) +
-    ylab(lab_list[i]) +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     xlab("Species")
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
@@ -192,7 +193,7 @@ for (i in 1:length(parameter_list)){
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     coord_flip() +
     theme_bw(base_size = 22) +
-    ylab(lab_list[i]) +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     xlab("Protocol")
   
   ggsave(file = paste0(plot_path_one_parameter_by_protocol, "/", parameter_list[i], ".pdf"), 
@@ -214,7 +215,7 @@ for (i in 1:length(parameter_list)){
     theme(axis.text.x=element_blank(),
           axis.ticks.x=element_blank(),
           plot.title = element_text(hjust = 0.5)) +
-    ylab(lab_list[i]) +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     xlab("Protocol") +
     ylim(min(temp_data[[parameter_list[i]]]), max(temp_data[[parameter_list[i]]])) +
     ggtitle(paste0(lab_list[i], " by protocol and species")) +
@@ -298,7 +299,7 @@ for (i in 1:length(parameter_list)){
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 22) +
     theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
-    ylab(lab_list[i]) +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     xlab("Protocol") +
     stat_summary(fun.data = n_fun, geom = "text") +
     geom_text(data = gg_data_test, aes(x = Protocol, label = groups, y = min(temp_data[, which(colnames(temp_data) == parameter_list[i])]))) +
@@ -337,8 +338,8 @@ for (i in 1:length(parameter_list)){
       geom_point(gg_data %>% filter(Comment == "ok"), 
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       #geom_vline(xintercept=) +
-      xlab(lab_list[i]) +
-      ylab(lab_list[j]) +
+      xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+      ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       theme_bw(base_size = 22) 
     
     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], ".pdf"), 
@@ -362,8 +363,8 @@ for (i in 1:length(parameter_list)){
                     ymax = gg_stat_melano[[paste0("median_", parameter_list[j])]] + gg_stat_melano[[paste0("sd_", parameter_list[j])]]) +
       geom_point(gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster"), 
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
-      xlab(lab_list[i]) +
-      ylab(lab_list[j]) +
+      xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+      ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       theme_bw(base_size = 22) +
       ggtitle(paste0("x: ", lab_list[i], " y: ", lab_list[j] ," by protocol for Drosophila melanogaster"))
     
