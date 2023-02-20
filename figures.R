@@ -302,7 +302,7 @@ for (i in 1:length(parameter_list)){
     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     xlab("Protocol") +
     stat_summary(fun.data = n_fun, geom = "text") +
-    geom_text(data = gg_data_test, aes(x = Protocol, label = groups, y = min(temp_data[, which(colnames(temp_data) == parameter_list[i])]))) +
+    geom_text(data = gg_data_test, aes(x = Protocol, label = groups, y = min(temp_data[, which(colnames(temp_data) == parameter_list[i])], na.rm = T))) +
     ggtitle(paste0(lab_list[i], " by protocol for Drosophila melanogaster"), subtitle = paste0(used_test, " test, P-value <= 0.01")) +
     facet_wrap(Species ~ ., scales = "free")
   
