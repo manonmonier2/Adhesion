@@ -103,7 +103,7 @@ This script also contains the correspondence table between the protocols and the
 
 **_load_data.R_**
 
-From the concatenated batches file **[concatenate_file]**, the corresponding id file **[concatenate_id_file]** and the concatenated metadata file **[concatenate_metadata]**,
+From the concatenated batches file **[concatenate_file]**, the corresponding id file **[concatenate_id_file]** and the concatenated batch file **[concatenate_file]**,
 creates an unique batch file per id (write in **[batch_by_id]**).
 
 For now, this id must be shared and unique in **[concatenate_id_file]** and **[concatenate_metadata]**.
@@ -158,24 +158,42 @@ index_6 : defined as the last value
 
 noise_1 is the median from index_5 until index_6
 
-creates an index file with all the id (write in **[batch_by_id]**).
+creates an index file with all the id (writes in **[batch_by_id]**).
 
 **_interpolation_complete.R_**
 
-Selects data according to the variable 'comments' in **[nom du fichier avec les donnees espèces, temperature etc]**
+Definition of compression curve from index_1 to index_2 
+Interpolation and integration of compression curve
 
-Interpolation of the curve from XX to XX
 
-Integrate calculation on the negative part of the curve
+Definition of decompression curve from index_2 to index_5
+Interpolation and integration of decompression curve
+
+Difference of integration between compression and decompression curve
+
+creates an integration file with integration of compression, decompression and difference between compression and decompression integration (writes in **[integral]**).
 
 Uncertainty calculation
 
-Distance calculation between index5 and index1
+**_represention_by_id.R_**
 
-**_represention_especes.R_**
+Curves of every id:
+
+f(extension)=load
+f(time)=load
+
+**_represention_by_species.R_**
 
 Curves represented by group of species
 
+**_figures.R_**
+
+parameters calculation:
+detachment_force : minimal value between index_4 and index_5
+energy : difference_integrales
+rigidity : difference of force between index_2 and index_1 / difference of extension between index_2 and index_1
+position_difference : difference of extension between index_1 and index_5
+detachment_position : extension at index_5
 
 
 
