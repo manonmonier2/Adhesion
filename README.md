@@ -182,6 +182,8 @@ Curves of every id:
 f(extension)=load
 f(time)=load
 
+writes in **[load_extension]** and **[load_time]**
+
 **_represention_by_species.R_**
 
 Curves represented by group of species
@@ -195,7 +197,11 @@ rigidity : difference of force between index_2 and index_1 / difference of exten
 position_difference : difference of extension between index_1 and index_5
 detachment_position : extension at index_5
 
+One parameter plots: boxplots for all species and all protocols for D. melanogaster
+Two parameters plots: scatterplot for all species and all protocols for D. melanogaster
+Superposition of curves according to their protocols
 
+writes in **[one_parameter]** ; **[two_parameters]** and **[superposition]**
 
 ## USAGE
 
