@@ -117,7 +117,7 @@ for(row in 1:nrow(sheet)) {
     "Timestamp" = NA,
     "force_detachment_mN" = sheet[row, "force_detachment_mN"],
     "Time_on_substrate" = NA,
-    "Protocol" = NA
+    "Protocol" = "no_cond"
   )
   
   # check id unicity
