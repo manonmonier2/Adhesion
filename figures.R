@@ -92,8 +92,8 @@ gg_data = cbind(gg_data,
 
 colnames(gg_data)[22:26] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position")
 
-# exclusion of flora data
-gg_data = gg_data %>% filter(Experimenter != "Flora")
+# # exclusion of flora data
+# gg_data = gg_data %>% filter(Experimenter != "Flora")
 
 # exclusion of default condition for melanogaster
 gg_data = gg_data %>% filter((Protocol != "default" & Species == "Drosophila_melanogaster") | Species != "Drosophila_melanogaster") #on retire les default de melano
