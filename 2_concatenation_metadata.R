@@ -4,7 +4,7 @@ library("readxl")
 library("config")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "default")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -65,6 +65,12 @@ data_df = cbind(data_df, rep("default", nrow(data_df)))
 names(data_df)[names(data_df) == tail(names(data_df), 1)] = 'Protocol'
 list_infile = list_infile[-index_main_medadata]
 
+# pupa_adhesion_print.xlsx contains all the metadata id for Flora's data
+index_flora_medadata = which(basename(list_infile) == "pupa_adhesion_print.xlsx")
+path_flora_metadata = list_infile[index_flora_medadata]
+
+list_infile = list_infile[-index_flora_medadata]
+
 not_ok = c()
 
 # check for flora metadata (.csv file)
@@ -92,39 +98,39 @@ for (infile in list_infile){
 
 
 # flora metadata
-for (infile_flora in list_infile_flora) {
-  sheet = read.table(infile_flora, header = T, sep = ",")
+sheet = as.data.frame(load_sheet1(path_flora_metadata))
+
+for(row in 1:nrow(sheet)) {
+  handler_row_df = c(
+    "Sample_ID" = sheet[row, "Sample_ID"],
+    "Experimenter" = "Flora",
+    "Species" = sheet[row, "Species"],
+    "Stock" = sheet[row, "Stock"],
+    "Load at Minimum Load(N)" = NA,
+    "Temperature_assay_°C(°C)" = sheet[row, "Temperature_assay"],
+    "Temperature_culture_°C(°C)" = sheet[row, "Temperature_culture"],
+    "Humidity_%" = sheet[row, "Humidity_."],
+    "Pressure" = sheet[row, "Pressure_mba"],
+    "Type of substrate" = NA,
+    "Substrate number" = NA,
+    "Comment on this sample" = sheet[row, "Comment_on_this_sample"],
+    "Timestamp" = NA,
+    "force_detachment_mN" = sheet[row, "force_detachment_mN"],
+    "Time_on_substrate" = NA,
+    "Protocol" = "no_cond"
+  )
   
-  for(row in 1:nrow(sheet)) {
-    handler_row_df = c(
-      sheet[row, 1], 
-      "Flora", 
-      sheet[row, 3], 
-      sheet[row, 2], 
-      NA, 
-      sheet[row, 4], 
-      sheet[row, 5], 
-      sheet[row, 6],
-      sheet[row, 7],
-      NA,
-      NA,
-      sheet[row, 8],
-      as.Date(sheet[row, 9]),
-      sheet[row, 11], 
-      NA,
-      "default"
-    )
-    
-    hit = which(sheet[, 1] == sheet[row, 1])
-    hit_in_data_df = which(data_df$Sample_ID == sheet[row, 1])
-    # one hit in each file
-    if (length(hit) == 1 && length(hit_in_data_df) == 0){
-      data_df = rbind(data_df, handler_row_df)
-    } else {
-      not_ok = c(not_ok, sheet[row, 1])
-    }
+  # check id unicity
+  hit = which(sheet[row, 1] %in% sheet[, 1])
+  hit_in_data_df = which(data_df$Sample_ID == sheet[row, 1])
+  # one hit in each file
+  if (length(hit) == 1 && length(hit_in_data_df) == 0){
+    data_df = rbind(data_df, handler_row_df)
+  } else {
+    not_ok = c(not_ok, sheet[row, 1])
   }
 }
+
 
 write.table(not_ok, file=paste0(dirname(path_output_file), "/id_not_found_in_manon_results.log"), row.names = F, col.names = F, quote = F, sep = "\t")
 
