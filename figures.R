@@ -48,7 +48,6 @@ for (id in list_id){
 }
 
 
-
 # parameters calculation
 detachment_force = c()
 rigidity = c()
