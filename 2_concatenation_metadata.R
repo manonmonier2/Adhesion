@@ -2,6 +2,7 @@ rm(list = ls())
 
 library("readxl")
 library("config")
+library("dplyr")
 
 # load config file
 opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
@@ -9,6 +10,7 @@ opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$pat
 # retrieve parameters
 # Input
 path_data = opt$metadata
+path_imagej = opt$imagej_path
 
 # Output
 path_output_file = opt$concatenate_metadata
@@ -22,14 +24,6 @@ load_sheet1 = function(infile){
   
   # deal with supplementary NA column (remove it)
   sheet = sheet[, apply(sheet, 2, function(x) ! sum(is.na(x)) == nrow(sheet))]
-  
-  
-  # # convert the date format to character
-  # sheet$Time_on_substrate = as.Date(sheet$Time_on_substrate)
-  # sheet$Timestamp = as.Date(sheet$Timestamp)
-  # 
-  # convertToDateTime(sheet$Time_on_substrate)
-  
   
   return(sheet)
 }
@@ -160,54 +154,6 @@ list_protocol = data_df$Protocol
 list_corrected_protocol = unlist(lapply(list_protocol, function(x) if(x %in% raw_protocol) {correct_protocol[x == raw_protocol]} else {x}))
 data_df$Protocol = list_corrected_protocol
 
-
-# df_protocol_to_condition = data.frame(
-#   "cond1" = c(T,F,F,F,F,F,F,F,F,F,F,F,F),
-#   "cond2" = c(T,F,T,F,F,F,F,F,F,F,F,F,F),
-#   "cond3" = c(T,F,F,F,T,F,F,F,F,F,F,F,F),
-#   "div3" = c(F,F,F,T,F,F,F,F,F,F,F,F,F),
-#   "x3" = c(F,F,F,F,T,F,F,F,F,F,F,F,F),
-#   "0s" = c(F,F,F,F,F,T,F,F,F,F,F,F,F),
-#   "5min" = c(F,F,F,F,F,F,T,F,F,F,F,F,F),
-#   "no_scotch" = c(F,T,F,F,F,F,F,F,F,F,F,F,F),
-#   "strongforce" = c(F,F,F,F,F,F,F,T,F,F,F,F,F),
-#   "3japf" = c(F,F,F,F,F,F,F,F,T,F,F,F,F),
-#   "no_cond" = c(F,F,F,F,F,F,F,F,F,T,F,F,F),
-#   "water" = c(T,F,F,F,F,F,F,F,F,F,T,F,F),
-#   "strongtape" = c(F,F,F,F,F,F,F,F,F,F,F,T,F),
-#   "scotch_fin_strong_force" = c(F,F,F,F,F,F,F,T,F,F,F,T,F),
-#   "default" = c(F,F,F,F,F,F,F,F,F,F,F,F,T),
-#   check.names=FALSE
-# )
-# 
-# rownames(df_protocol_to_condition) = paste0("protocol",1:(nrow(df_protocol_to_condition)))
-# 
-# condition_df = as.data.frame(do.call(rbind, lapply(data_df$Protocol, function(x) x == colnames(df_protocol_to_condition))))
-# colnames(condition_df) = colnames(df_protocol_to_condition)
-# 
-# df_protocol_to_condition = as.data.frame(t(df_protocol_to_condition))
-# 
-# protocol_df = data.frame()
-# for (protocol in colnames(df_protocol_to_condition)){
-#   focus_condition = rownames(df_protocol_to_condition)[df_protocol_to_condition[, protocol]]
-#   temp = rep(F, length(data_df$Protocol))
-#   for (cond in focus_condition){
-#     temp[which(data_df$Protocol == cond)] = T
-#   }
-#   protocol_df = rbind(protocol_df, temp)
-# }
-
-# protocol_df = as.data.frame(t(protocol_df))
-# colnames(protocol_df) = colnames(df_protocol_to_condition)
-
-# data_df = data_df[, -16]
-# data_df = cbind(data_df, protocol_df)
-# data_df = cbind(data_df, condition_df)
-
-# write the output file (create repository if necessary)
-dir.create(dirname(path_output_file), showWarnings = FALSE)
-write.table(data_df, file=path_output_file, row.names = F, quote = F, sep = "\t")
-
 temp = data.frame(raw_name = raw_name,
                   correct_name = correct_name)
 write.table(temp, file=paste0(dirname(path_output_file), "/species_name_correction.csv"), row.names = F, quote = F, sep = "\t")
@@ -224,4 +170,58 @@ temp = data.frame(raw_stock = raw_stock,
                   correct_stock = correct_stock)
 write.table(temp, file=paste0(dirname(path_output_file), "/stock_correction.csv"), row.names = F, quote = F, sep = "\t")
 
-# write.table(df_protocol_to_condition, file=paste0(dirname(path_output_file), "/protocol_condition.csv"), quote = F, sep = "\t")
+
+# Integration of the imageJ results
+
+list_imagej_file = list.files(path_imagej, full.names = T)
+
+concatenate_data_imagej = data.frame()
+for(imagej_file in list_imagej_file){
+  imagej_data = read.table(imagej_file, sep = ",", header = T)
+  
+  imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
+  
+  imagej_image_type = sub(".*_type_+(.+).csv$", "\\1", 
+                          basename(imagej_file))
+  
+  if(imagej_image_type == basename(imagej_file)) {
+    imagej_image_type = "no_type_found"
+  }
+ 
+  concatenate_data_imagej = rbind(concatenate_data_imagej,
+                                  cbind(imagej_id, imagej_data))
+}
+
+colnames(concatenate_data_imagej)[1] = "Sample_ID"
+
+id_not_running = c()
+# id not in metadata
+id_not_in_metadata = which(! concatenate_data_imagej$Sample_ID %in% 
+                         data_df$Sample_ID)
+
+if(length(id_not_in_metadata) > 0){
+  id_not_running = c(id_not_running, 
+                     concatenate_data_imagej$Sample_ID[id_not_in_metadata])
+  concatenate_data_imagej = concatenate_data_imagej[-id_not_in_metadata, ]
+}
+
+# id not unique in imageJ
+count_by_id = table(concatenate_data_imagej$Sample_ID)
+not_unique_id = names(count_by_id[which(count_by_id > 1)])
+
+if(length(not_unique_id) > 0){
+  id_not_running = c(id_not_running, 
+                     unique(concatenate_data_imagej$Sample_ID[not_unique_id]))
+  concatenate_data_imagej = concatenate_data_imagej[-which(concatenate_data_imagej$Sample_ID %in% 
+                                   not_unique_id), ]
+}
+
+write.table(id_not_running, file = paste0(dirname(path_imagej), "/imagej_id_not_running.log"), row.names = F, col.names = F, quote = F)
+
+
+data_df = base::merge(data_df, concatenate_data_imagej, 
+                           by = "Sample_ID", all = T)
+
+# write the output file (create repository if necessary)
+dir.create(dirname(path_output_file), showWarnings = FALSE)
+write.table(data_df, file=path_output_file, row.names = F, quote = F, sep = "\t")
