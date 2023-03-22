@@ -61,7 +61,8 @@ for (id in gg_data$Sample_ID){
   current_metadata = metadata[metadata$Sample_ID == id, ]
   current_index = index_table[index_table$id == id, ]
   
-  current_detachment_force = - min(sample$load[current_index$index_4:current_index$index_5])
+  current_detachment_force = -min(sample$load[current_index$index_4:current_index$index_5])
+
   if(length(which(energy_table$id == id)) == 1) {
     current_energy = energy_table$difference_integrales[energy_table$id == id]
   } else {
