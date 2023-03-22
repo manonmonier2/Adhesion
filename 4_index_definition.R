@@ -292,6 +292,20 @@ df = data.frame("id"= list_id_df,
                 "sd_noise_6" = list_sd_noise_6,
                 "true_index_5" = list_true_index_5)
 
+# Manual correction
+
+tryCatch(expr = {df[which(df$id == "2022050406"), "index_1"] = 237})
+
+tryCatch(expr = {df[which(df$id == "2022050240"), "index_1"] = 203})
+tryCatch(expr = {df[which(df$id == "2022021129"), "index_4"] = 419})
+
+tryCatch(expr = {
+  df[which(df$id == "2022032412"), "index_2"] = 278
+  df[which(df$id == "2022032412"), "index_3"] = 281
+  df[which(df$id == "2022032412"), "index_4"] = 320
+  df[which(df$id == "2022032412"), "index_5"] = 325
+  })
+
 write.table(df, file = path_output, quote = F, col.names = T, row.names = F, sep = "\t")
 
 write.table(not_ok, file = paste0(dirname(path_output), "/index_id_not_running.log"), row.names = F, col.names = F, quote = F)

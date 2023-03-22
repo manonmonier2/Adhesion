@@ -33,6 +33,9 @@ default:
   # Absolute path to the created directory containing the integral files
   integral_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/integral
   
+  # Absolute path to the created directory containing the imageJ files
+  imagej_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/imageJ
+  
 portable:
   # Absolute path to batches data files.
   batches: C:\Users\jean-noel.lorenzi\/Documents/Adhesion/data/batch/raw
@@ -67,4 +70,8 @@ portable:
   
   # Absolute path to the created directory containing the integral files
   integral_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/integral
+  
+  # Absolute path to the created directory containing the imageJ files
+  imagej_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/imageJ/raw
+  
   
