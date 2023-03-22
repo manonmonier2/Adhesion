@@ -6,6 +6,7 @@ library("dplyr")
 library("rcompanion")
 library("agricolae")
 library("FSA")
+library("ggpubr")
 
 #### FUNCTIONS ####
 
@@ -27,7 +28,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -60,7 +61,7 @@ for (id in gg_data$Sample_ID){
   current_metadata = metadata[metadata$Sample_ID == id, ]
   current_index = index_table[index_table$id == id, ]
   
-  current_detachment_force = min(sample$load[current_index$index_4:current_index$index_5])
+  current_detachment_force = - min(sample$load[current_index$index_4:current_index$index_5])
   if(length(which(energy_table$id == id)) == 1) {
     current_energy = energy_table$difference_integrales[energy_table$id == id]
   } else {
@@ -95,10 +96,7 @@ gg_data = cbind(gg_data,
                 log10_na(pression_extension)
 )
 
-colnames(gg_data)[23:28] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position", "log10_pression_extension")
-
-# # exclusion of flora data
-# gg_data = gg_data %>% filter(Experimenter != "Flora")
+colnames(gg_data)[(ncol(gg_data) - 5) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position", "log10_pression_extension")
 
 # exclusion of default condition for melanogaster
 gg_data = gg_data %>% filter((Protocol != "default" & Species == "Drosophila_melanogaster") | Species != "Drosophila_melanogaster") #on retire les default de melano
@@ -170,16 +168,17 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 
 for (i in 1:length(parameter_list)){
   
-  
   #plot
-  p = ggplot(gg_data %>% filter(Comment == "ok"),
-             aes_string(x = "Species", y = parameter_list[i])) +
+  p = gg_data %>% 
+    filter(((Species == "Drosophila_melanogaster" & Protocol == "default") | 
+             Species != "Drosophila_melanogaster") & Comment == "ok") %>%
+    ggplot(aes_string(x = "Species", y = parameter_list[i], fill = "Protocol")) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
-    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) + 
-    coord_flip() +
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") + 
     theme_bw(base_size = 18) +
     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    xlab("Species")
+    xlab("Species") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
   
@@ -230,12 +229,9 @@ for (i in 1:length(parameter_list)){
 }
 
 ### by protocol for Drosophila_melanogaster
+list_plot = list()
 for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster")
-  
-  # if (parameter_list[i] == "detachment_force"){
-  #   temp_data = temp_data %>% filter(Protocol != "cond2")
-  # }
   
   test_stat = c()
   
@@ -298,7 +294,7 @@ for (i in 1:length(parameter_list)){
   
   temp_data$Protocol = factor(temp_data$Protocol, levels = gg_data_test$Protocol)
   p = ggplot(temp_data,
-             aes_string(x = "Protocol", y = parameter_list[i], fill = "Protocol")) +
+             aes_string(x = "Protocol", y = parameter_list[i])) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 22) +
@@ -306,13 +302,20 @@ for (i in 1:length(parameter_list)){
     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     xlab("Protocol") +
     stat_summary(fun.data = n_fun, geom = "text") +
-    geom_text(data = gg_data_test, aes(x = Protocol, label = groups, y = min(temp_data[, which(colnames(temp_data) == parameter_list[i])], na.rm = T))) +
-    ggtitle(paste0(lab_list[i], " by protocol for Drosophila melanogaster"), subtitle = paste0(used_test, " test, P-value <= 0.01")) +
-    facet_wrap(Species ~ ., scales = "free")
+    geom_text(data = gg_data_test, aes_string(x = "Protocol", label = "groups", y = min(temp_data[, which(colnames(temp_data) == parameter_list[i])], na.rm = T))) +
+    ggtitle(paste0(lab_list[i], " by protocol for Drosophila melanogaster"), subtitle = paste0(used_test, " test, P-value <= 0.01"))
   
   ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/", parameter_list[i], "_Drosophila_melanogaster", ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
+  
+  if (! grepl("^log10_", parameter_list[i])){
+    list_plot[[parameter_list[i]]] = p + coord_flip()
+  }
 }
+
+p = ggarrange(plotlist = list_plot, common.legend = T)
+ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
+       plot=p, width=40, height=20, device = "pdf")
 
 # two parameters plot
 ## by species
