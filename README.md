@@ -41,6 +41,8 @@ At this stage, corrections are made to:
 | Drosophila_Virilis         | Drosophila_virilis            |
 | Scaptodrosophila_lebanonen | Scaptodrosophila_lebanonensis |
 | Drosophila_nanoptera       | Drosophila_nannoptera         |
+| Drosophila_lachaisei       | Zaprionus_lachaisei           |
+| Drosophila yakuba          | Drosophila_yakuba             |
 
 **Comment**
 |      **raw_comment**     |   **correct_comment**  |
