@@ -28,7 +28,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -62,7 +62,7 @@ for (id in gg_data$Sample_ID){
   current_index = index_table[index_table$id == id, ]
   
   current_detachment_force = -min(sample$load[current_index$index_4:current_index$index_5])
-
+  
   if(length(which(energy_table$id == id)) == 1) {
     current_energy = energy_table$difference_integrales[energy_table$id == id]
   } else {
@@ -71,14 +71,14 @@ for (id in gg_data$Sample_ID){
   
   current_rigidity = (sample$load[current_index$index_2] - sample$load[current_index$index_1]) / (sample$extension[current_index$index_2] - sample$extension[current_index$index_1])
   current_position_difference = sample$extension[current_index$index_1] - sample$extension[current_index$index_5]
-  current_detachment_position = sample$extension[current_index$index_5]
+  
   current_pression_extension = sample$extension[current_index$index_2] - sample$extension[current_index$index_1]
   
   detachment_force = c(detachment_force, current_detachment_force)
   energy = c(energy, current_energy)
   rigidity = c(rigidity, current_rigidity)
   position_difference = c(position_difference, current_position_difference)
-  detachment_position = c(detachment_position, current_detachment_position)
+  
   pression_extension =c(pression_extension, current_pression_extension)
 }
 
@@ -87,26 +87,24 @@ gg_data = cbind(gg_data,
                 energy,
                 rigidity,
                 position_difference,
-                detachment_position,
                 pression_extension,
                 log10_na(detachment_force),
                 log10_na(energy),
                 log10_na(rigidity),
                 log10_na(position_difference),
-                log10_na(detachment_position),
                 log10_na(pression_extension)
 )
 
-colnames(gg_data)[(ncol(gg_data) - 5) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position", "log10_pression_extension")
+colnames(gg_data)[(ncol(gg_data) - 4) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension")
 
 # exclusion of default condition for melanogaster
 gg_data = gg_data %>% filter((Protocol != "default" & Species == "Drosophila_melanogaster") | Species != "Drosophila_melanogaster") #on retire les default de melano
 
-parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "detachment_position", "pression_extension",
-                   "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_detachment_position")
-lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Detachment position", "Pression extension",
-             "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Detachment position)", "log(Pression extension")
-unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm", "mm")
+parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "pression_extension",
+                   "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference")
+lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Pression extension",
+             "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Pression extension")
+unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm")
 species_list = unique(gg_data$Species)
 protocol_list = unique(gg_data$Protocol)
 stat_list = c("mean", "max", "min", "median", "sd")
@@ -171,8 +169,8 @@ for (i in 1:length(parameter_list)){
   
   #plot
   p = gg_data %>% 
-    filter(((Species == "Drosophila_melanogaster" & Protocol == "default") | 
-             Species != "Drosophila_melanogaster") & Comment == "ok") %>%
+    filter(((Species == "Drosophila_melanogaster" & Protocol == "standard") | 
+              Species != "Drosophila_melanogaster") & Comment == "ok") %>%
     ggplot(aes_string(x = "Species", y = parameter_list[i], fill = "Protocol")) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") + 
@@ -385,7 +383,7 @@ for (i in 1:length(parameter_list)){
 plot_path_superposition = paste0(plot_path, "/superposition/")
 dir.create(plot_path_superposition, showWarnings = FALSE, recursive = T)
 
-temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & (Protocol == "no_cond" | Protocol == "strongforce"))
+temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & (Protocol == "standard" | Protocol == "0,25 N"))
 id_temp_data = temp_data$Sample_ID
 
 time_load_extension = data.frame()
@@ -416,7 +414,7 @@ for (id in id_temp_data){
 
 p_tl_global = ggplot(data = time_load_extension, aes(x = time, y = load, color = protocol, fill = protocol)) +
   geom_path() + labs(fill = protocol)
-  theme_minimal() + 
+theme_minimal() + 
   #xlim(range_time) + 
   #ylim(range_load) +
   theme(legend.position = "none")
@@ -430,7 +428,7 @@ ggsave(file = paste0(plot_path_superposition, "/superposition_nocond_strongforce
 plot_path_superposition = paste0(plot_path, "/superposition/")
 dir.create(plot_path_superposition, showWarnings = FALSE, recursive = T)
 
-temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & (Protocol == "cond3" | Protocol == "div3"))
+temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & (Protocol == "detached pupae and speed x3" | Protocol == "speed /3"))
 id_temp_data = temp_data$Sample_ID
 
 time_load_extension = data.frame()
@@ -443,8 +441,8 @@ for (id in id_temp_data){
   # if (parameter_list[i] == "detachment_force"){
   #   temp_data = temp_data %>% filter(Protocol != "cond2")
   # }
-  index_to_plot = as.numeric(index_table[index_sample,"index_4"]):as.numeric(index_table[index_sample,"index_5"])
-  valeur_index_2 = as.numeric(index_table[index_sample,"index_4"])
+  index_to_plot = as.numeric(index_table[index_sample,"index_1"]):as.numeric(index_table[index_sample,"index_5"])
+  valeur_index_2 = as.numeric(index_table[index_sample,"index_2"])
   Tnew = sample$time - sample$time[valeur_index_2]
   Tnew = Tnew[index_to_plot]
   Enew = sample$extension - sample$extension[valeur_index_2]
@@ -459,7 +457,7 @@ for (id in id_temp_data){
   time_load_extension = rbind(time_load_extension, temp_time_load_extension)
 }
 
-p_tl_global = ggplot(data = time_load_extension, aes(x = log10_na(time), y = load, color = protocol, fill = id)) +
+p_tl_global = ggplot(data = time_load_extension, aes(x = time, y = load, color = protocol, fill = id)) +
   geom_path() +
   theme_minimal() + 
   #xlim(range_time) + 
