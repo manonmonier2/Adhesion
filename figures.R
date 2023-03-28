@@ -28,7 +28,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -231,7 +231,7 @@ for (i in 1:length(parameter_list)){
 list_plot = list()
 for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster")
-  
+  temp_data$Protocol = as.factor(temp_data$Protocol)
   test_stat = c()
   
   # shapiro
@@ -273,10 +273,16 @@ for (i in 1:length(parameter_list)){
   # Dunn
   dunn_res = dunnTest(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, data = temp_data)
   
-  dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res)
+  dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res, 
+                       remove.zero = F,
+                       remove.space = T)
   dunn_group = dunn_group[, -3]
   colnames(dunn_group) = c("Protocol", "groups")
-  dunn_group$Protocol[which(dunn_group$Protocol == "s")] = "0s" #dans les resultats de dunn '0s' est affiche 's' donc on modifie
+  # correction of dunn group name (add space)
+  for(true_name in unique(temp_data$Protocol)){
+    dunn_name = gsub(" ", "", true_name)
+    dunn_group$Protocol[which(dunn_group$Protocol == dunn_name)] = true_name
+  }
   dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
   #order est donne pour lignes car on veut ordonner lignes
   ###
