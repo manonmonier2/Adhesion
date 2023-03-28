@@ -24,7 +24,7 @@ detect_index_3 = function(vect){
 
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -67,7 +67,7 @@ list_true_index_5 = c()
 not_ok = c()
 list_id = tools::file_path_sans_ext(list.files(path_data, pattern = ".*.csv$"))
 for(id in list_id){
-    run = tryCatch(
+  run = tryCatch(
     expr = {
       # if (id %in% not_ok) next
       data = read.table(paste(path_data, "/",id, '.csv', sep = ""), sep = "\t", header = T)
@@ -304,12 +304,11 @@ tryCatch(expr = {
   df[which(df$id == "2022032412"), "index_3"] = 281
   df[which(df$id == "2022032412"), "index_4"] = 320
   df[which(df$id == "2022032412"), "index_5"] = 325
-  })
+})
 
 write.table(df, file = path_output, quote = F, col.names = T, row.names = F, sep = "\t")
 
 write.table(not_ok, file = paste0(dirname(path_output), "/index_id_not_running.log"), row.names = F, col.names = F, quote = F)
-
 
 
 
