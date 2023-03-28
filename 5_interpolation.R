@@ -4,7 +4,7 @@ library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -61,13 +61,13 @@ for (name in list_id) {
         ties = "ordered",
         na.rm = T,
         rule = 2    # rule = 2 allow the interpolation function to not return NA
-        )
+      )
       
       # plot(data_compression$extension, data_compression$load, type = "l")
       # points(x = seq(min(data_compression$extension), max(data_compression$extension), 0.01),
       #        y = interpolation_compression(seq(min(data_compression$extension), max(data_compression$extension), 0.01)))
       # curve(interpolation_compression, from = min(data_compression$extension, na.rm = T), to = max(data_compression$extension, na.rm = T))
-
+      
       ## integration
       integration_limit = range(data_compression$extension, na.rm = T)
       integration_compression = integrate(
@@ -75,13 +75,13 @@ for (name in list_id) {
         lower = integration_limit[1], 
         upper = integration_limit[2],
         subdivisions = 2000
-        )
+      )
       
       
       # decompression zone
       ## definition: from contact to to maximum extension (index_2) to pupae full detachment (index_5)
       data_decompression = data.frame("load" = batch_data$load[batch_milestone$index_2 : batch_milestone$index_5],
-                                    "extension" = batch_data$extension[batch_milestone$index_2 : batch_milestone$index_5])
+                                      "extension" = batch_data$extension[batch_milestone$index_2 : batch_milestone$index_5])
       
       ## interpolation
       interpolation_decompression = approxfun(
@@ -95,7 +95,7 @@ for (name in list_id) {
       # points(x = seq(min(data_decompression$extension), max(data_decompression$extension), 0.01),
       #               y = interpolation_decompression(seq(min(data_decompression$extension), max(data_decompression$extension), 0.01)))
       # curve(interpolation_decompression, from = min(data_decompression$extension, na.rm = T), to = max(data_decompression$extension, na.rm = T))
-
+      
       ## integration
       integration_limit = range(data_decompression$extension, na.rm = T)
       integration_decompression = integrate(
@@ -103,7 +103,7 @@ for (name in list_id) {
         lower = integration_limit[1], 
         upper = integration_limit[2],
         subdivisions = 2000
-        )
+      )
       
       # save result for output
       vect_id = c(vect_id, name)
@@ -126,9 +126,9 @@ for (name in list_id) {
 }
 
 df_res = data.frame("id" = vect_id,
-                     "integrale_compression" = abs(vect_compression),
-                     "integrale_decompression" = abs(vect_decompression),
-                     "difference_integrales" = abs(vect_compression - vect_decompression))
+                    "integrale_compression" = abs(vect_compression),
+                    "integrale_decompression" = abs(vect_decompression),
+                    "difference_integrales" = abs(vect_compression - vect_decompression))
 
 file_path = paste(path_integral, "/integral.csv", sep = "")
 write.table(df_res, file = file_path, quote = F, col.names = T, row.names = F, sep = "\t")
