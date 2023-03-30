@@ -134,6 +134,41 @@ for (col_name in colnames(gg_stat_by_species)){
   gg_stat_by_species[[col_name]] = as.numeric(gg_stat_by_species[[col_name]])
 }
 
+## by protocol (protocol group by speed)
+gg_stat_by_protocol = data.frame()
+
+temp_gg_data = gg_data %>%
+  mutate(Protocol = replace(Protocol, Protocol == "speed /3", "1/3")) %>%
+  mutate(Protocol = replace(Protocol, Protocol == "standard", "1")) %>%
+  mutate(Protocol = replace(Protocol, 
+                            Protocol == "detached pupae", "1")) %>%
+  mutate(Protocol = replace(Protocol, Protocol == "speed x3", "3")) %>%
+  mutate(Protocol = replace(Protocol, 
+                            Protocol == "detached pupae and speed x3", "3"))
+
+protocol_list = unique(temp_gg_data$Protocol)
+for(protocol in sort(protocol_list)){
+  temp_protocol_data = temp_gg_data %>% filter(Comment == "ok" & Protocol == protocol)
+  stat_handler = c(protocol)
+  colnames_handler = c("Protocol")
+  for (i in 1:length(parameter_list)){
+    for (stat_function in stat_list){
+      stat_handler = c(stat_handler, 
+                       do.call(stat_function, list(temp_protocol_data[[parameter_list[i]]], na.rm = T)))
+      colnames_handler = c(colnames_handler,
+                           paste0(stat_function, "_", parameter_list[i]))
+    }
+  }
+  gg_stat_by_protocol = rbind(gg_stat_by_protocol, stat_handler)
+}
+colnames(gg_stat_by_protocol) = colnames_handler
+
+# force to numeric type
+for (col_name in colnames(gg_stat_by_protocol)){
+  if (col_name == "Protocol") next
+  gg_stat_by_protocol[[col_name]] = as.numeric(gg_stat_by_protocol[[col_name]])
+}
+
 ## for melanogaster by protocol
 
 gg_stat_melano = data.frame()
@@ -493,15 +528,18 @@ for (i in 1:length(parameter_list)){
     mutate(Protocol = replace(Protocol, 
                               Protocol == "detached pupae and speed x3", "3"))
   
-  p = ggplot(gg_stat_by_species, 
-             aes_string(x = paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Species")) +
+  temp_stat_data = gg_stat_by_protocol %>% 
+    filter(Protocol %in% c("1/3", "1", "3"))
+  
+  
+  p = ggplot(temp_stat_data, 
+             aes_string(x = "Protocol", 
+                        y =  paste0("median_", parameter_list[i]), 
+                        color = "Protocol")) +
     geom_point(size = 5, shape = 3) +
-    geom_errorbar(xmin = gg_stat_by_species[[paste0("median_", parameter_list[i])]] - gg_stat_by_species[[paste0("sd_", parameter_list[i])]],
-                  xmax = gg_stat_by_species[[paste0("median_", parameter_list[i])]] + gg_stat_by_species[[paste0("sd_", parameter_list[i])]]) +
-    geom_errorbar(ymin = gg_stat_by_species[[paste0("median_", parameter_list[j])]] - gg_stat_by_species[[paste0("sd_", parameter_list[j])]],
-                  ymax = gg_stat_by_species[[paste0("median_", parameter_list[j])]] + gg_stat_by_species[[paste0("sd_", parameter_list[j])]]) +
-    xlim(min(gg_stat_by_species[[paste0("min_", parameter_list[i])]], na.rm = T), max(gg_stat_by_species[[paste0("max_", parameter_list[i])]], na.rm = T)) +
-    ylim(min(gg_stat_by_species[[paste0("min_", parameter_list[j])]], na.rm = T), max(gg_stat_by_species[[paste0("max_", parameter_list[j])]], na.rm = T)) +
+    geom_errorbar(ymin = temp_stat_data[[paste0("median_", parameter_list[i])]] - temp_stat_data[[paste0("sd_", parameter_list[i])]],
+                  ymax = temp_stat_data[[paste0("median_", parameter_list[i])]] + temp_stat_data[[paste0("sd_", parameter_list[i])]]) +
+    ylim(min(temp_stat_data[[paste0("min_", parameter_list[i])]], na.rm = T), max(temp_stat_data[[paste0("max_", parameter_list[i])]], na.rm = T)) +
     geom_jitter(temp_data_speed, 
                mapping = aes_string(x = "Protocol", 
                                     y = parameter_list[i], 
