@@ -554,6 +554,34 @@ for (i in 1:length(parameter_list)){
          plot=p, width=16, height=8, device = "pdf")
 }
 
+#plot species protocol standard and strong force 0,25N
+plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
+dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
+
+for (i in 1:length(parameter_list)){
+
+  for (j in 1:length(parameter_list)){
+    if (i == j) next
+    temp_data_species_speed = gg_data %>% filter(Comment == "ok" & (Species == "Drosophila_melanogaster" & Protocol == "standard" & Comment == "ok"))
+    
+        p = ggplot(gg_stat_by_species,
+                    aes_string(paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Protocol")) +
+            geom_point(size = 1) +
+            geom_errorbar(xmin = gg_stat_melano[[paste0("median_", parameter_list[i])]] - gg_stat_melano[[paste0("sd_", parameter_list[i])]],
+                    xmax = gg_stat_melano[[paste0("median_", parameter_list[i])]] + gg_stat_melano[[paste0("sd_", parameter_list[i])]]) +
+            geom_errorbar(ymin = gg_stat_melano[[paste0("median_", parameter_list[j])]] - gg_stat_melano[[paste0("sd_", parameter_list[j])]],
+                    ymax = gg_stat_melano[[paste0("median_", parameter_list[j])]] + gg_stat_melano[[paste0("sd_", parameter_list[j])]]) +
+            geom_point(temp_data_species_speed, mapping = aes_string(x = which(temp_data_species_speed$Protocol == "standard"), y = which(temp_data_species_speed$Protocol == "strong tape and 0,25 N")), alpha = 0.3) +
+            xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+            ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+            theme_bw(base_size = 22) +
+            ggtitle(paste0("x: ", lab_list[i], " y: ", lab_list[j] ," standard and strong tape 0,25N"))
+
+            ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_parameter_and_speed", ".pdf"),
+              plot=p, width=16, height=8, device = "pdf")
+  }
+}
+
 #superposition D.melano no_cond et D.melano strongforce
 plot_path_superposition = paste0(plot_path, "/superposition/")
 dir.create(plot_path_superposition, showWarnings = FALSE, recursive = T)
