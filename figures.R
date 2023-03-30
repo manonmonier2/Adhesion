@@ -28,7 +28,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -189,35 +189,35 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 
 for (i in 1:length(parameter_list)){
   temp_data_species = gg_data %>% filter(Protocol == "standard" & Comment == "ok")
-
+  
   test_stat_species = c()
-
+  
   # shapiro
   res_shapiro_global = shapiro.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])])
   shapiro_global_handler = res_shapiro_global$p.value >= 0.01
   test_stat_species = c(test_stat_species, shapiro_global_handler)
-
-
+  
+  
   # bartlett
   res_bartlett = bartlett.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
   bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
   test_stat_species = c(test_stat_species, bartlett_reject)
-
+  
   # anova
   aov_res = aov(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
   anova_res = anova(aov_res)
   anova_handler = anova_res$`Pr(>F)`[1] >= 0.01
-
+  
   test_stat_species = c(test_stat_species, anova_handler)
-
+  
   # kruskal wallis
   kruskal_res = kruskal.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
   kruskal_handler = kruskal_res$p.value >= 0.01
-
+  
   test_stat_species = c(test_stat_species, anova_handler)
-
+  
   names(test_stat_species) = c("shapiro", "bartlett", "anova", "kruskal-wallis")
-
+  
   # Tukey
   tukey_res = TukeyHSD(aov_res, conf.level = 0.99)
   HSD_res = HSD.test(aov_res, "Species", group = T)
@@ -226,11 +226,11 @@ for (i in 1:length(parameter_list)){
   #puis on append le tableau de resultats tukey_group auquel on retire les moyennes en colonne 1
   colnames(tukey_group) = c("Protocol", "groups")
   tukey_group = as.data.frame(tukey_group)
-
-
+  
+  
   # Dunn
   dunn_res = dunnTest(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, data = temp_data_species)
-
+  
   dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res)
   dunn_group = dunn_group[, -3]
   colnames(dunn_group) = c("Protocol", "groups")
@@ -238,7 +238,7 @@ for (i in 1:length(parameter_list)){
   dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
   #order est donne pour lignes car on veut ordonner lignes
   ###
-
+  
   used_test = NA
   if (test_stat_species["shapiro"] & test_stat_species["bartlett"]){
     gg_data_test_species = tukey_group
@@ -247,8 +247,8 @@ for (i in 1:length(parameter_list)){
     gg_data_test_species = dunn_group
     used_test = "Dunn"
   }
-
-
+  
+  
   #plot
   temp_data_species$Protocol = factor(temp_data_species$Species, levels = gg_data_test_species$Species)
   p = ggplot(temp_data_species,
@@ -262,10 +262,10 @@ for (i in 1:length(parameter_list)){
     stat_summary(fun.data = n_fun, geom = "text") +
     geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
     ggtitle(paste0(lab_list[i], " by species"))
-
+  
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_standard_protocol", ".pdf"),
          plot=p, width=16, height=8, device = "pdf")
-
+  
 }
 
 
@@ -481,7 +481,7 @@ for (i in 1:length(parameter_list)){
               (Protocol == "stantard" | Protocol == "detached pupae") |
               (Protocol == "speed x3" | 
                  Protocol == "detached pupae and speed x3")
-            )
+    )
   
   # edit protocol name
   temp_data_speed = temp_data_speed %>%
@@ -493,16 +493,24 @@ for (i in 1:length(parameter_list)){
     mutate(Protocol = replace(Protocol, 
                               Protocol == "detached pupae and speed x3", "3"))
   
-  p = ggplot(temp_data_speed, 
-             aes_string(x = "Protocol", 
-                        y = parameter_list[i], 
-                        fill = "Protocol")) +
-    geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
-    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") + 
-    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    theme_bw(base_size = 22) +
-    ggtitle(paste0("x: ", lab_list[i], " y: speed protocol"))
-  
+  p = ggplot(gg_stat_by_species, 
+             aes_string(x = paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Species")) +
+    geom_point(size = 5, shape = 3) +
+    geom_errorbar(xmin = gg_stat_by_species[[paste0("median_", parameter_list[i])]] - gg_stat_by_species[[paste0("sd_", parameter_list[i])]],
+                  xmax = gg_stat_by_species[[paste0("median_", parameter_list[i])]] + gg_stat_by_species[[paste0("sd_", parameter_list[i])]]) +
+    geom_errorbar(ymin = gg_stat_by_species[[paste0("median_", parameter_list[j])]] - gg_stat_by_species[[paste0("sd_", parameter_list[j])]],
+                  ymax = gg_stat_by_species[[paste0("median_", parameter_list[j])]] + gg_stat_by_species[[paste0("sd_", parameter_list[j])]]) +
+    xlim(min(gg_stat_by_species[[paste0("min_", parameter_list[i])]], na.rm = T), max(gg_stat_by_species[[paste0("max_", parameter_list[i])]], na.rm = T)) +
+    ylim(min(gg_stat_by_species[[paste0("min_", parameter_list[j])]], na.rm = T), max(gg_stat_by_species[[paste0("max_", parameter_list[j])]], na.rm = T)) +
+    geom_jitter(temp_data_speed, 
+               mapping = aes_string(x = "Protocol", 
+                                    y = parameter_list[i], 
+                                    fill = "Protocol"), alpha = 0.3) +   scale_x_discrete("Protocol") +
+    #geom_vline(xintercept=) +
+    xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+    ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+    theme_bw(base_size = 22) 
+
   
   ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_speed_protocol", ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
@@ -576,7 +584,7 @@ for (id in id_temp_data){
   Tnew = Tnew[index_to_plot]
   Enew = sample$extension - sample$extension[valeur_index_2]
   Enew = Enew[index_to_plot]
- 
+  
   
   temp_time_load_extension = data.frame("time" = Tnew,
                                         "load" = sample$load[index_to_plot],
@@ -651,6 +659,10 @@ p_el_cond1_cond3_global = ggplot(data = time_load_extension_2, aes(x = extension
 
 ggsave(file = paste0(plot_path_superposition, "/superposition_ext_cond3_cond1_Drosophila_melanogaster", ".pdf"), 
        plot=p_el_cond1_cond3_global, width=16, height=8, device = "pdf")
+
+
+
+
 
 
 
