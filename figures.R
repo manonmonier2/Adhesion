@@ -499,7 +499,7 @@ for (i in 1:length(parameter_list)){
                         fill = "Protocol")) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") + 
-    ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+    ylab(paste0(lab_list[j], " (", unit_list[i], ")")) +
     theme_bw(base_size = 22) +
     ggtitle(paste0("x: ", lab_list[i], " y: speed protocol"))
   
