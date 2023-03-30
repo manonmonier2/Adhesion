@@ -28,7 +28,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -475,28 +475,37 @@ plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_p
 dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
+  temp_data_speed = gg_data %>% 
+    filter(Comment == "ok" & Species == "Drosophila_melanogaster") %>%
+    filter( (Protocol == "speed /3") |
+              (Protocol == "stantard" | Protocol == "detached pupae") |
+              (Protocol == "speed x3" | 
+                 Protocol == "detached pupae and speed x3")
+            )
   
-  for (j in 1:length(parameter_list)){
-    if (i == j) next
-    temp_data_speed = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & Protocol == "standard" & Protocol == "Detached pupae" & Protocol == "Speed /3" & Protocol == "Speed x3" & Protocol == "Detached pupae and speed x3")
-    
-        p = ggplot(temp_data_speed,
-                    aes_string(paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Protocol")) +
-            geom_point(size = 1) +
-          geom_errorbar(xmin = gg_stat_melano[[paste0("median_", parameter_list[i])]] - gg_stat_melano[[paste0("sd_", parameter_list[i])]],
-                    xmax = gg_stat_melano[[paste0("median_", parameter_list[i])]] + gg_stat_melano[[paste0("sd_", parameter_list[i])]]) +
-          geom_errorbar(ymin = gg_stat_melano[[paste0("median_", parameter_list[j])]] - gg_stat_melano[[paste0("sd_", parameter_list[j])]],
-                    ymax = gg_stat_melano[[paste0("median_", parameter_list[j])]] + gg_stat_melano[[paste0("sd_", parameter_list[j])]]) +
-          geom_point(gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster"), 
-                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
-          xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-          ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-          theme_bw(base_size = 22) +
-          ggtitle(paste0("x: ", lab_list[i], " y: ", lab_list[j] ," parameter and speed"))
-    
-        ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_parameter_and_speed", ".pdf"), 
-              plot=p, width=16, height=8, device = "pdf")
-  }
+  # edit protocol name
+  temp_data_speed = temp_data_speed %>%
+    mutate(Protocol = replace(Protocol, Protocol == "speed /3", "1/3")) %>%
+    mutate(Protocol = replace(Protocol, Protocol == "standard", "1")) %>%
+    mutate(Protocol = replace(Protocol, 
+                              Protocol == "detached pupae", "1")) %>%
+    mutate(Protocol = replace(Protocol, Protocol == "speed x3", "3")) %>%
+    mutate(Protocol = replace(Protocol, 
+                              Protocol == "detached pupae and speed x3", "3"))
+  
+  p = ggplot(temp_data_speed, 
+             aes_string(x = "Protocol", 
+                        y = parameter_list[i], 
+                        fill = "Protocol")) +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") + 
+    ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+    theme_bw(base_size = 22) +
+    ggtitle(paste0("x: ", lab_list[i], " y: speed protocol"))
+  
+  
+  ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_speed_protocol", ".pdf"), 
+         plot=p, width=16, height=8, device = "pdf")
 }
 
 #superposition D.melano no_cond et D.melano strongforce
