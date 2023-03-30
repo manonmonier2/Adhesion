@@ -28,7 +28,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -100,6 +100,18 @@ colnames(gg_data)[(ncol(gg_data) - 4) : ncol(gg_data)] = c("log10_detachment_for
 # exclusion of default condition for melanogaster
 gg_data = gg_data %>% filter((Protocol != "default" & Species == "Drosophila_melanogaster") | Species != "Drosophila_melanogaster") #on retire les default de melano
 
+# add column "speed" in gg_data
+gg_data = gg_data %>%
+  mutate(Speed = NA, 
+         .after = Protocol) %>%
+  mutate(Speed = replace(Speed, Protocol == "speed /3", "1/3")) %>%
+  mutate(Speed = replace(Speed, Protocol == "standard", "1")) %>%
+  mutate(Speed = replace(Speed, 
+                         Protocol == "detached pupae", "1")) %>%
+  mutate(Speed = replace(Speed, Protocol == "speed x3", "3")) %>%
+  mutate(Speed = replace(Speed, 
+                         Protocol == "detached pupae and speed x3", "3"))
+
 parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "pression_extension",
                    "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference")
 lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Pression extension",
@@ -134,40 +146,6 @@ for (col_name in colnames(gg_stat_by_species)){
   gg_stat_by_species[[col_name]] = as.numeric(gg_stat_by_species[[col_name]])
 }
 
-## by protocol (protocol group by speed)
-gg_stat_by_protocol = data.frame()
-
-temp_gg_data = gg_data %>%
-  mutate(Protocol = replace(Protocol, Protocol == "speed /3", "1/3")) %>%
-  mutate(Protocol = replace(Protocol, Protocol == "standard", "1")) %>%
-  mutate(Protocol = replace(Protocol, 
-                            Protocol == "detached pupae", "1")) %>%
-  mutate(Protocol = replace(Protocol, Protocol == "speed x3", "3")) %>%
-  mutate(Protocol = replace(Protocol, 
-                            Protocol == "detached pupae and speed x3", "3"))
-
-protocol_list = unique(temp_gg_data$Protocol)
-for(protocol in sort(protocol_list)){
-  temp_protocol_data = temp_gg_data %>% filter(Comment == "ok" & Protocol == protocol)
-  stat_handler = c(protocol)
-  colnames_handler = c("Protocol")
-  for (i in 1:length(parameter_list)){
-    for (stat_function in stat_list){
-      stat_handler = c(stat_handler, 
-                       do.call(stat_function, list(temp_protocol_data[[parameter_list[i]]], na.rm = T)))
-      colnames_handler = c(colnames_handler,
-                           paste0(stat_function, "_", parameter_list[i]))
-    }
-  }
-  gg_stat_by_protocol = rbind(gg_stat_by_protocol, stat_handler)
-}
-colnames(gg_stat_by_protocol) = colnames_handler
-
-# force to numeric type
-for (col_name in colnames(gg_stat_by_protocol)){
-  if (col_name == "Protocol") next
-  gg_stat_by_protocol[[col_name]] = as.numeric(gg_stat_by_protocol[[col_name]])
-}
 
 ## for melanogaster by protocol
 
@@ -510,45 +488,20 @@ plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_p
 dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
-  temp_data_speed = gg_data %>% 
-    filter(Comment == "ok" & Species == "Drosophila_melanogaster") %>%
-    filter( (Protocol == "speed /3") |
-              (Protocol == "stantard" | Protocol == "detached pupae") |
-              (Protocol == "speed x3" | 
-                 Protocol == "detached pupae and speed x3")
-    )
-  
-  # edit protocol name
-  temp_data_speed = temp_data_speed %>%
-    mutate(Protocol = replace(Protocol, Protocol == "speed /3", "1/3")) %>%
-    mutate(Protocol = replace(Protocol, Protocol == "standard", "1")) %>%
-    mutate(Protocol = replace(Protocol, 
-                              Protocol == "detached pupae", "1")) %>%
-    mutate(Protocol = replace(Protocol, Protocol == "speed x3", "3")) %>%
-    mutate(Protocol = replace(Protocol, 
-                              Protocol == "detached pupae and speed x3", "3"))
-  
-  temp_stat_data = gg_stat_by_protocol %>% 
-    filter(Protocol %in% c("1/3", "1", "3"))
-  
-  
-  p = ggplot(temp_stat_data, 
-             aes_string(x = "Protocol", 
-                        y =  paste0("median_", parameter_list[i]), 
-                        color = "Protocol")) +
-    geom_point(size = 5, shape = 3) +
-    geom_errorbar(ymin = temp_stat_data[[paste0("median_", parameter_list[i])]] - temp_stat_data[[paste0("sd_", parameter_list[i])]],
-                  ymax = temp_stat_data[[paste0("median_", parameter_list[i])]] + temp_stat_data[[paste0("sd_", parameter_list[i])]]) +
-    ylim(min(temp_stat_data[[paste0("min_", parameter_list[i])]], na.rm = T), max(temp_stat_data[[paste0("max_", parameter_list[i])]], na.rm = T)) +
-    geom_jitter(temp_data_speed, 
-               mapping = aes_string(x = "Protocol", 
-                                    y = parameter_list[i], 
-                                    fill = "Protocol"), alpha = 0.3) +   scale_x_discrete("Protocol") +
-    #geom_vline(xintercept=) +
-    xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-    theme_bw(base_size = 22) 
-
+   p = gg_data %>%
+     filter(Speed %in% c("1/3", "1", "3")) %>%
+     ggplot(aes_string(x = "Protocol", 
+                        y = parameter_list[i], 
+                        color = "Speed")) +
+     geom_boxplot() +
+     geom_jitter(mapping = aes_string(x = "Protocol", 
+                                      y = parameter_list[i], 
+                                      fill = "Protocol"), 
+                 alpha = 0.3,
+                 show.legend = F) +  
+     xlab("Protocol") +
+     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+     theme_bw(base_size = 22) 
   
   ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_speed_protocol", ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
