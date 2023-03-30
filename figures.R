@@ -28,7 +28,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -169,7 +169,7 @@ for (i in 1:length(parameter_list)){
   
   #plot
   p = gg_data %>% 
-    filter(((Species == "Drosophila_melanogaster" & Protocol == "standard") | 
+    filter(((Species == "Drosophila_melanogaster" & Protocol == "default") | 
               Species != "Drosophila_melanogaster") & Comment == "ok") %>%
     ggplot(aes_string(x = "Species", y = parameter_list[i], fill = "Protocol")) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
@@ -181,6 +181,91 @@ for (i in 1:length(parameter_list)){
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
   
+}
+
+## by species only standard protocol
+plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
+dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
+
+for (i in 1:length(parameter_list)){
+  temp_data_species = gg_data %>% filter(Protocol == "standard" & Comment == "ok")
+
+  test_stat_species = c()
+
+  # shapiro
+  res_shapiro_global = shapiro.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])])
+  shapiro_global_handler = res_shapiro_global$p.value >= 0.01
+  test_stat_species = c(test_stat_species, shapiro_global_handler)
+
+
+  # bartlett
+  res_bartlett = bartlett.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
+  bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
+  test_stat_species = c(test_stat_species, bartlett_reject)
+
+  # anova
+  aov_res = aov(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
+  anova_res = anova(aov_res)
+  anova_handler = anova_res$`Pr(>F)`[1] >= 0.01
+
+  test_stat_species = c(test_stat_species, anova_handler)
+
+  # kruskal wallis
+  kruskal_res = kruskal.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
+  kruskal_handler = kruskal_res$p.value >= 0.01
+
+  test_stat_species = c(test_stat_species, anova_handler)
+
+  names(test_stat_species) = c("shapiro", "bartlett", "anova", "kruskal-wallis")
+
+  # Tukey
+  tukey_res = TukeyHSD(aov_res, conf.level = 0.99)
+  HSD_res = HSD.test(aov_res, "Species", group = T)
+  tukey_group = HSD_res$groups
+  tukey_group = cbind(rownames(tukey_group), tukey_group[, -1])#on extrait les noms de ligne et on les place dans une nouvelle colonne à gauche avec cbind
+  #puis on append le tableau de resultats tukey_group auquel on retire les moyennes en colonne 1
+  colnames(tukey_group) = c("Protocol", "groups")
+  tukey_group = as.data.frame(tukey_group)
+
+
+  # Dunn
+  dunn_res = dunnTest(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, data = temp_data_species)
+
+  dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res)
+  dunn_group = dunn_group[, -3]
+  colnames(dunn_group) = c("Protocol", "groups")
+  dunn_group$Protocol[which(dunn_group$Protocol == "s")] = "0s" #dans les resultats de dunn '0s' est affiche 's' donc on modifie
+  dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
+  #order est donne pour lignes car on veut ordonner lignes
+  ###
+
+  used_test = NA
+  if (test_stat_species["shapiro"] & test_stat_species["bartlett"]){
+    gg_data_test_species = tukey_group
+    used_test = "Tukey"
+  } else {
+    gg_data_test_species = dunn_group
+    used_test = "Dunn"
+  }
+
+
+  #plot
+  temp_data_species$Protocol = factor(temp_data_species$Species, levels = gg_data_test_species$Species)
+  p = ggplot(temp_data_species,
+             aes_string(x = "Species", y = parameter_list[i])) +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") +
+    theme_bw(base_size = 22) +
+    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+    xlab("Species") +
+    stat_summary(fun.data = n_fun, geom = "text") +
+    geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
+    ggtitle(paste0(lab_list[i], " by species"))
+
+  ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_standard_protocol", ".pdf"),
+         plot=p, width=16, height=8, device = "pdf")
+
 }
 
 
@@ -453,7 +538,7 @@ for (id in id_temp_data){
   Tnew = Tnew[index_to_plot]
   Enew = sample$extension - sample$extension[valeur_index_2]
   Enew = Enew[index_to_plot]
-  
+ 
   
   temp_time_load_extension = data.frame("time" = Tnew,
                                         "load" = sample$load[index_to_plot],
@@ -471,6 +556,62 @@ p_tl_global = ggplot(data = time_load_extension, aes(x = time, y = load, color =
   theme(legend.position = "none")
 #facet_wrap(species ~ ., scales = "free")
 
-
 ggsave(file = paste0(plot_path_superposition, "/superposition_cond3_div3_Drosophila_melanogaster", ".pdf"), 
        plot=p_tl_global, width=16, height=8, device = "pdf")
+
+p_el_global = ggplot(data = time_load_extension, aes(x = extension, y = load, color = protocol, fill = id)) +
+  geom_path() +
+  theme_minimal() + 
+  #xlim(range_time) + 
+  #ylim(range_load) +
+  theme(legend.position = "none")
+
+
+ggsave(file = paste0(plot_path_superposition, "/superposition_ext_cond3_div3_Drosophila_melanogaster", ".pdf"), 
+       plot=p_tl_global, width=16, height=8, device = "pdf")
+
+#superposition D.melano cond1 et D.melano cond3
+plot_path_superposition = paste0(plot_path, "/superposition/")
+dir.create(plot_path_superposition, showWarnings = FALSE, recursive = T)
+
+temp_data_2 = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & (Protocol == "detached pupae" | Protocol == "detached pupae and speed x3"))
+id_temp_data_2 = temp_data_2$Sample_ID
+
+time_load_extension_2 = data.frame()
+
+for (id in id_temp_data_2){
+  sample = read.table(paste0(path_batch_by_id, "/", id, '.csv'), sep = "\t", header = T)
+  index_sample = which(index_table$id == id)
+  protocol_name = temp_data_2$Protocol[which(temp_data_2$Sample_ID == id)]
+  
+  # if (parameter_list[i] == "detachment_force"){
+  #   temp_data = temp_data %>% filter(Protocol != "cond2")
+  # }
+  index_to_plot = as.numeric(index_table[index_sample,"index_1"]):as.numeric(index_table[index_sample,"index_5"])
+  valeur_index_2 = as.numeric(index_table[index_sample,"index_2"])
+  Tnew = sample$time - sample$time[valeur_index_2]
+  Tnew = Tnew[index_to_plot]
+  Enew = sample$extension - sample$extension[valeur_index_2]
+  Enew = Enew[index_to_plot]
+  
+  
+  temp_time_load_extension = data.frame("time" = Tnew,
+                                        "load" = sample$load[index_to_plot],
+                                        "extension" = Enew, 
+                                        "protocol" = rep(protocol_name, length(index_to_plot)),
+                                        "id" = rep(id, length(index_to_plot)))
+  time_load_extension_2 = rbind(time_load_extension_2, temp_time_load_extension)
+}
+
+p_el_cond1_cond3_global = ggplot(data = time_load_extension_2, aes(x = extension, y = load, color = protocol, fill = id)) +
+  geom_path() +
+  theme_minimal() + 
+  #xlim(range_time) + 
+  #ylim(range_load) +
+  theme(legend.position = "none")
+#facet_wrap(species ~ ., scales = "free")
+
+ggsave(file = paste0(plot_path_superposition, "/superposition_ext_cond3_cond1_Drosophila_melanogaster", ".pdf"), 
+       plot=p_el_cond1_cond3_global, width=16, height=8, device = "pdf")
+
+
