@@ -146,7 +146,6 @@ for (col_name in colnames(gg_stat_by_species)){
   gg_stat_by_species[[col_name]] = as.numeric(gg_stat_by_species[[col_name]])
 }
 
-
 ## for melanogaster by protocol
 
 gg_stat_melano = data.frame()
@@ -483,23 +482,27 @@ for (i in 1:length(parameter_list)){
   }
 }
 
-#plot parameter and speed
-plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
-dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
+#plot parameter and speed for melano (comment == "ok")
+plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = 
+  paste0(plot_path, "/two_parameters/by_protocol_and_species/")
+dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, 
+           showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
    p = gg_data %>%
+     filter(Species == "Drosophila_melanogaster") %>%
+     filter(Comment == "ok") %>%
      filter(Speed %in% c("1/3", "1", "3")) %>%
-     ggplot(aes_string(x = "Protocol", 
+     ggplot(aes_string(x = "Speed", 
                         y = parameter_list[i], 
-                        color = "Speed")) +
+                        color = "Protocol")) +
      geom_boxplot() +
-     geom_jitter(mapping = aes_string(x = "Protocol", 
-                                      y = parameter_list[i], 
-                                      fill = "Protocol"), 
+     geom_jitter(mapping = aes_string(x = "Speed",
+                                      y = parameter_list[i],
+                                      fill = "Protocol"),
                  alpha = 0.3,
-                 show.legend = F) +  
-     xlab("Protocol") +
+                 show.legend = F) +
+     xlab("Speed") +
      ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
      theme_bw(base_size = 22) 
   
@@ -508,32 +511,66 @@ for (i in 1:length(parameter_list)){
 }
 
 #plot species protocol standard and strong force 0,25N
-plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
-dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
+plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
+dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
 
-for (i in 1:length(parameter_list)){
+species_to_keep = 
+  unique(gg_data$Species[which(gg_data$Protocol == 
+                                 "strong tape and 0,25 N")])[
+                                   unique(gg_data$Species[
+                                     which(gg_data$Protocol == 
+                                             "strong tape and 0,25 N")]) %in% 
+                                     unique(gg_data$Species[
+                                       which(gg_data$Protocol == "standard")])]
 
-  for (j in 1:length(parameter_list)){
-    if (i == j) next
-    temp_data_species_speed = gg_data %>% filter(Comment == "ok" & (Species == "Drosophila_melanogaster" & Protocol == "standard" & Comment == "ok"))
-    
-        p = ggplot(gg_stat_by_species,
-                    aes_string(paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Protocol")) +
-            geom_point(size = 1) +
-            geom_errorbar(xmin = gg_stat_melano[[paste0("median_", parameter_list[i])]] - gg_stat_melano[[paste0("sd_", parameter_list[i])]],
-                    xmax = gg_stat_melano[[paste0("median_", parameter_list[i])]] + gg_stat_melano[[paste0("sd_", parameter_list[i])]]) +
-            geom_errorbar(ymin = gg_stat_melano[[paste0("median_", parameter_list[j])]] - gg_stat_melano[[paste0("sd_", parameter_list[j])]],
-                    ymax = gg_stat_melano[[paste0("median_", parameter_list[j])]] + gg_stat_melano[[paste0("sd_", parameter_list[j])]]) +
-            geom_point(temp_data_species_speed, mapping = aes_string(x = which(temp_data_species_speed$Protocol == "standard"), y = which(temp_data_species_speed$Protocol == "strong tape and 0,25 N")), alpha = 0.3) +
-            xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-            ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-            theme_bw(base_size = 22) +
-            ggtitle(paste0("x: ", lab_list[i], " y: ", lab_list[j] ," standard and strong tape 0,25N"))
+temp_data = gg_data %>%
+    filter(Comment == "ok") %>%
+    filter(Species %in% species_to_keep) %>%
+    filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
+    group_by(Species, Protocol) %>% 
+    summarise(median = median(detachment_force),
+              sd = sd(detachment_force))
 
-            ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_parameter_and_speed", ".pdf"),
-              plot=p, width=16, height=8, device = "pdf")
-  }
-}
+  index_standard =which(temp_data$Protocol == "standard")
+  index_strong_tape_and_0.25_N = 
+    which(temp_data$Protocol == "strong tape and 0,25 N")
+  
+  temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
+                            median_standard = temp_data$median[index_standard],
+                            median_strong_tape_and_0.25_N = 
+                              temp_data$median[index_strong_tape_and_0.25_N],
+                            sd_standard = temp_data$sd[index_standard],
+                            sd_strong_tape_and_0.25_N = 
+                              temp_data$sd[index_strong_tape_and_0.25_N]) 
+  
+  p = ggplot(temp_gg_data, aes(x = median_standard, 
+                           y = median_strong_tape_and_0.25_N,
+                           color = Species)) +
+    geom_errorbar(xmin = temp_gg_data$median_standard - 
+                    temp_gg_data$sd_standard,
+                  xmax = temp_gg_data$median_standard +
+                    temp_gg_data$sd_standard) +
+    geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N - 
+                    temp_gg_data$sd_strong_tape_and_0.25_N,
+                  ymax = temp_gg_data$median_strong_tape_and_0.25_N +
+                    temp_gg_data$sd_strong_tape_and_0.25_N) +
+    geom_point() +
+    xlim(c(min(temp_gg_data$median_standard - 
+                 temp_gg_data$sd_standard), 
+           max(temp_gg_data$median_standard + 
+                 temp_gg_data$sd_standard))) +
+    ylim(c(min(temp_gg_data$median_strong_tape_and_0.25_N - 
+                 temp_gg_data$sd_strong_tape_and_0.25_N), 
+           max(temp_gg_data$median_strong_tape_and_0.25_N + 
+                 temp_gg_data$sd_strong_tape_and_0.25_N))) +
+    geom_abline(slope=1) +
+    xlab("Protocol standard") +
+    ylab("Protocol strong tape and 0,25 N") +
+    theme_bw(base_size = 22) 
+
+ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
+  plot=p, width=16, height=8, device = "pdf")
+
 
 #superposition D.melano no_cond et D.melano strongforce
 plot_path_superposition = paste0(plot_path, "/superposition/")
