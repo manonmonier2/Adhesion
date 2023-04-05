@@ -7,6 +7,7 @@ library("rcompanion")
 library("agricolae")
 library("FSA")
 library("ggpubr")
+library("forcats")
 
 #### FUNCTIONS ####
 
@@ -28,7 +29,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -280,6 +281,99 @@ for (i in 1:length(parameter_list)){
   
 }
 
+## by species all protocol merged
+plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
+dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
+
+for (i in 1:length(parameter_list)){
+  temp_data_species = gg_data %>% filter((Comment == "ok") & (Species != "Drosophila_hydei") & (Species != "Drosophila_abdita") &
+                                           ((Species != "Drosophila_melanogaster") & (Species != "Drosophila_suzukii") &
+                                           (Species != "Drosophila_biarmipes") & (Species != "Drosophila_simulans")) |
+                                            (Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+                                          (Species == "Drosophila_suzukii" & Stock == "WT3") |
+                                          (Species == "Drosophila_biarmipes" & Stock == "G224")|
+                                          (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
+                                         
+
+  
+  test_stat_species = c()
+  
+  # shapiro
+  res_shapiro_global = shapiro.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])])
+  shapiro_global_handler = res_shapiro_global$p.value >= 0.01
+  test_stat_species = c(test_stat_species, shapiro_global_handler)
+  
+  
+  # bartlett
+  res_bartlett = bartlett.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
+  bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
+  test_stat_species = c(test_stat_species, bartlett_reject)
+  
+  # anova
+  aov_res = aov(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
+  anova_res = anova(aov_res)
+  anova_handler = anova_res$`Pr(>F)`[1] >= 0.01
+  
+  test_stat_species = c(test_stat_species, anova_handler)
+  
+  # kruskal wallis
+  kruskal_res = kruskal.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
+  kruskal_handler = kruskal_res$p.value >= 0.01
+  
+  test_stat_species = c(test_stat_species, anova_handler)
+  
+  names(test_stat_species) = c("shapiro", "bartlett", "anova", "kruskal-wallis")
+  
+  # Tukey
+  tukey_res = TukeyHSD(aov_res, conf.level = 0.99)
+  HSD_res = HSD.test(aov_res, "Species", group = T)
+  tukey_group = HSD_res$groups
+  tukey_group = cbind(rownames(tukey_group), tukey_group[, -1])#on extrait les noms de ligne et on les place dans une nouvelle colonne à gauche avec cbind
+  #puis on append le tableau de resultats tukey_group auquel on retire les moyennes en colonne 1
+  colnames(tukey_group) = c("Protocol", "groups")
+  tukey_group = as.data.frame(tukey_group)
+  
+  
+  # Dunn
+  dunn_res = dunnTest(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, data = temp_data_species)
+  
+  dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res)
+  dunn_group = dunn_group[, -3]
+  colnames(dunn_group) = c("Protocol", "groups")
+  dunn_group$Protocol[which(dunn_group$Protocol == "s")] = "0s" #dans les resultats de dunn '0s' est affiche 's' donc on modifie
+  dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
+  #order est donne pour lignes car on veut ordonner lignes
+  ###
+  
+  used_test = NA
+  if (test_stat_species["shapiro"] & test_stat_species["bartlett"]){
+    gg_data_test_species = tukey_group
+    used_test = "Tukey"
+  } else {
+    gg_data_test_species = dunn_group
+    used_test = "Dunn"
+  }
+  
+
+  #plot
+  temp_data_species$Protocol = factor(temp_data_species$Species, levels = gg_data_test_species$Species)
+  p = ggplot(temp_data_species,
+             aes_string(x = "Species", y = parameter_list[i])) +
+    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
+    theme_bw(base_size = 22) +
+    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+    xlab("Species") + coord_flip() +
+    stat_summary(fun.data = n_fun, geom = "text") +
+    geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
+    ggtitle(paste0(lab_list[i], " by species"))
+  
+  ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_protocol_merged", ".pdf"),
+         plot=p, width=16, height=8, device = "pdf")
+  
+}
+
 
 ## by protocol
 plot_path_one_parameter_by_protocol = paste0(plot_path, "/one_parameter/by_protocol/")
@@ -489,22 +583,23 @@ dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster,
            showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
-   p = gg_data %>%
-     filter(Species == "Drosophila_melanogaster") %>%
-     filter(Comment == "ok") %>%
-     filter(Speed %in% c("1/3", "1", "3")) %>%
-     ggplot(aes_string(x = "Speed", 
-                        y = parameter_list[i], 
-                        color = "Protocol")) +
-     geom_boxplot() +
-     geom_jitter(mapping = aes_string(x = "Speed",
-                                      y = parameter_list[i],
-                                      fill = "Protocol"),
-                 alpha = 0.3,
-                 show.legend = F) +
-     xlab("Speed") +
-     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-     theme_bw(base_size = 22) 
+  p = gg_data %>%
+    filter(Species == "Drosophila_melanogaster") %>%
+    filter(Comment == "ok") %>%
+    filter(Speed %in% c("1/3", "1", "3")) %>%
+    ggplot(aes_string(x = "Speed", 
+                      y = parameter_list[i], 
+                      color = "Protocol")) +
+    geom_boxplot() +
+    geom_point(mapping = aes_string(x = "Speed",
+                                     y = parameter_list[i],
+                                     fill = "Protocol"),
+               position=position_jitterdodge(),
+                alpha = 0.3,
+                show.legend = F) +
+    xlab("Speed") +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+    theme_bw(base_size = 22) 
   
   ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_speed_protocol", ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
@@ -524,52 +619,53 @@ species_to_keep =
                                        which(gg_data$Protocol == "standard")])]
 
 temp_data = gg_data %>%
-    filter(Comment == "ok") %>%
-    filter(Species %in% species_to_keep) %>%
-    filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
-    group_by(Species, Protocol) %>% 
-    summarise(median = median(detachment_force),
-              sd = sd(detachment_force))
+  filter(Comment == "ok") %>%
+  filter(Species %in% species_to_keep) %>%
+  filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
+  group_by(Species, Protocol) %>% 
+  summarise(median = median(detachment_force),
+            sd = sd(detachment_force))
 
-  index_standard =which(temp_data$Protocol == "standard")
-  index_strong_tape_and_0.25_N = 
-    which(temp_data$Protocol == "strong tape and 0,25 N")
-  
-  temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
-                            median_standard = temp_data$median[index_standard],
-                            median_strong_tape_and_0.25_N = 
-                              temp_data$median[index_strong_tape_and_0.25_N],
-                            sd_standard = temp_data$sd[index_standard],
-                            sd_strong_tape_and_0.25_N = 
-                              temp_data$sd[index_strong_tape_and_0.25_N]) 
-  
-  p = ggplot(temp_gg_data, aes(x = median_standard, 
-                           y = median_strong_tape_and_0.25_N,
-                           color = Species)) +
-    geom_errorbar(xmin = temp_gg_data$median_standard - 
-                    temp_gg_data$sd_standard,
-                  xmax = temp_gg_data$median_standard +
-                    temp_gg_data$sd_standard) +
-    geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N - 
-                    temp_gg_data$sd_strong_tape_and_0.25_N,
-                  ymax = temp_gg_data$median_strong_tape_and_0.25_N +
-                    temp_gg_data$sd_strong_tape_and_0.25_N) +
-    geom_point() +
-    xlim(c(min(temp_gg_data$median_standard - 
-                 temp_gg_data$sd_standard), 
-           max(temp_gg_data$median_standard + 
-                 temp_gg_data$sd_standard))) +
-    ylim(c(min(temp_gg_data$median_strong_tape_and_0.25_N - 
-                 temp_gg_data$sd_strong_tape_and_0.25_N), 
-           max(temp_gg_data$median_strong_tape_and_0.25_N + 
-                 temp_gg_data$sd_strong_tape_and_0.25_N))) +
-    geom_abline(slope=1) +
-    xlab("Protocol standard") +
-    ylab("Protocol strong tape and 0,25 N") +
-    theme_bw(base_size = 22) 
+index_standard =which(temp_data$Protocol == "standard")
+index_strong_tape_and_0.25_N = 
+  which(temp_data$Protocol == "strong tape and 0,25 N")
+
+temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
+                          median_standard = temp_data$median[index_standard],
+                          median_strong_tape_and_0.25_N = 
+                            temp_data$median[index_strong_tape_and_0.25_N],
+                          sd_standard = temp_data$sd[index_standard],
+                          sd_strong_tape_and_0.25_N = 
+                            temp_data$sd[index_strong_tape_and_0.25_N]) 
+
+p = ggplot(temp_gg_data, aes(x = median_standard, 
+                             y = median_strong_tape_and_0.25_N,
+                             color = Species)) +
+  geom_errorbar(xmin = temp_gg_data$median_standard - 
+                  temp_gg_data$sd_standard,
+                xmax = temp_gg_data$median_standard +
+                  temp_gg_data$sd_standard) +
+  geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N - 
+                  temp_gg_data$sd_strong_tape_and_0.25_N,
+                ymax = temp_gg_data$median_strong_tape_and_0.25_N +
+                  temp_gg_data$sd_strong_tape_and_0.25_N) +
+  geom_point() +
+  xlim(c(min(temp_gg_data$median_standard - 
+               temp_gg_data$sd_standard), 
+         max(temp_gg_data$median_standard + 
+               temp_gg_data$sd_standard))) +
+  ylim(c(min(temp_gg_data$median_strong_tape_and_0.25_N - 
+               temp_gg_data$sd_strong_tape_and_0.25_N), 
+         max(temp_gg_data$median_strong_tape_and_0.25_N + 
+               temp_gg_data$sd_strong_tape_and_0.25_N))) +
+  geom_abline(slope=1) +
+  xlab("Detachment force for protocol standard (N)") +
+  ylab("Detachment force for Protocol strong tape and 0,25 N (N)") +
+  ggtitle("Detachment force for species strongly attached")+
+  theme_bw(base_size = 22) 
 
 ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
-  plot=p, width=16, height=8, device = "pdf")
+       plot=p, width=16, height=8, device = "pdf")
 
 
 #superposition D.melano no_cond et D.melano strongforce
@@ -715,6 +811,8 @@ p_el_cond1_cond3_global = ggplot(data = time_load_extension_2, aes(x = extension
 
 ggsave(file = paste0(plot_path_superposition, "/superposition_ext_cond3_cond1_Drosophila_melanogaster", ".pdf"), 
        plot=p_el_cond1_cond3_global, width=16, height=8, device = "pdf")
+
+
 
 
 
