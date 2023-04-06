@@ -813,6 +813,49 @@ ggsave(file = paste0(plot_path_superposition, "/superposition_ext_cond3_cond1_Dr
        plot=p_el_cond1_cond3_global, width=16, height=8, device = "pdf")
 
 
+#superposition D.melano detached pupae et D.melano standard
+plot_path_superposition = paste0(plot_path, "/superposition/")
+dir.create(plot_path_superposition, showWarnings = FALSE, recursive = T)
+
+temp_data_2 = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & (Protocol == "detached pupae"))
+id_temp_data_2 = temp_data_2$Sample_ID
+
+time_load_extension_2 = data.frame()
+
+for (id in id_temp_data_2){
+  sample = read.table(paste0(path_batch_by_id, "/", id, '.csv'), sep = "\t", header = T)
+  index_sample = which(index_table$id == id)
+  protocol_name = temp_data_2$Protocol[which(temp_data_2$Sample_ID == id)]
+  
+  # if (parameter_list[i] == "detachment_force"){
+  #   temp_data = temp_data %>% filter(Protocol != "cond2")
+  # }
+  index_to_plot = as.numeric(index_table[index_sample,"index_1"]):as.numeric(index_table[index_sample,"index_5"])
+  valeur_index_2 = as.numeric(index_table[index_sample,"index_1"])
+  Tnew = sample$time - sample$time[valeur_index_2]
+  Tnew = Tnew[index_to_plot]
+  Enew = sample$extension - sample$extension[valeur_index_2]
+  Enew = Enew[index_to_plot]
+  
+  
+  temp_time_load_extension = data.frame("time" = Tnew,
+                                        "load" = sample$load[index_to_plot],
+                                        "extension" = Enew, 
+                                        "protocol" = rep(protocol_name, length(index_to_plot)),
+                                        "id" = rep(id, length(index_to_plot)))
+  time_load_extension_2 = rbind(time_load_extension_2, temp_time_load_extension)
+}
+
+p_el_standard_detached_global = ggplot(data = time_load_extension_2, aes(x = extension, y = load, color = protocol, fill = id)) +
+  geom_path() +
+  theme_minimal() + 
+  #xlim(range_time) + 
+  #ylim(range_load) +
+  theme(legend.position = "none")
+#facet_wrap(species ~ ., scales = "free")
+
+ggsave(file = paste0(plot_path_superposition, "/superposition_ext_standard_detached_Drosophila_melanogaster", ".pdf"), 
+       plot=p_el_standard_detached_global, width=16, height=8, device = "pdf")
 
 
 
