@@ -8,11 +8,12 @@ library("agricolae")
 library("FSA")
 library("ggpubr")
 library("forcats")
+library("mdthemes")
 
 #### FUNCTIONS ####
 
 n_fun <- function(data){
-  y_pos = max(data) + (max(data) - min(data)) * 0.1
+  y_pos = min(data) + (max(data) - min(data)) * 0.1
   return(data.frame(y = y_pos, label = paste0("n = ",length(data))))
 }
 
@@ -29,7 +30,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -286,15 +287,22 @@ plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_specie
 dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
-  temp_data_species = gg_data %>% filter((Comment == "ok") & (Species != "Drosophila_hydei") & (Species != "Drosophila_abdita") &
-                                           ((Species != "Drosophila_melanogaster") & (Species != "Drosophila_suzukii") &
-                                           (Species != "Drosophila_biarmipes") & (Species != "Drosophila_simulans")) |
-                                            (Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-                                          (Species == "Drosophila_suzukii" & Stock == "WT3") |
-                                          (Species == "Drosophila_biarmipes" & Stock == "G224")|
-                                          (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
-                                         
-
+  temp_data_species = gg_data %>% filter(Comment == "ok") %>%
+                                  filter((Species != "Drosophila_hydei" & 
+                                          Species != "Megaselia_abdita" &
+                                          Species != "Drosophila_melanogaster" & 
+                                          Species != "Drosophila_suzukii" &
+                                          Species != "Drosophila_biarmipes" & 
+                                          Species != "Drosophila_simulans") |
+                                          (Species == "Drosophila_melanogaster" & 
+                                             Protocol == "standard" & 
+                                             Stock == "cantonS") |
+                                          (Species == "Drosophila_suzukii" & 
+                                             Stock == "WT3") |
+                                          (Species == "Drosophila_biarmipes" & 
+                                             Stock == "G224")|
+                                          (Species == "Drosophila_simulans" &
+                                             Stock == "simulans_vincennes"))
   
   test_stat_species = c()
   
@@ -330,7 +338,7 @@ for (i in 1:length(parameter_list)){
   tukey_group = HSD_res$groups
   tukey_group = cbind(rownames(tukey_group), tukey_group[, -1])#on extrait les noms de ligne et on les place dans une nouvelle colonne à gauche avec cbind
   #puis on append le tableau de resultats tukey_group auquel on retire les moyennes en colonne 1
-  colnames(tukey_group) = c("Protocol", "groups")
+  colnames(tukey_group) = c("Species", "groups")
   tukey_group = as.data.frame(tukey_group)
   
   
@@ -339,8 +347,8 @@ for (i in 1:length(parameter_list)){
   
   dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res)
   dunn_group = dunn_group[, -3]
-  colnames(dunn_group) = c("Protocol", "groups")
-  dunn_group$Protocol[which(dunn_group$Protocol == "s")] = "0s" #dans les resultats de dunn '0s' est affiche 's' donc on modifie
+  colnames(dunn_group) = c("Species", "groups")
+  dunn_group$Species[which(dunn_group$Species == "s")] = "0s" #dans les resultats de dunn '0s' est affiche 's' donc on modifie
   dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
   #order est donne pour lignes car on veut ordonner lignes
   ###
@@ -355,19 +363,52 @@ for (i in 1:length(parameter_list)){
   }
   
 
+  # reorder by detachment force median
+  order_data = temp_data_species %>%
+    group_by(Species) %>% 
+    summarise(median = median(detachment_force))
+  
+  order_data = order_data[order(order_data$median), ]
+
+  temp_data_species$Species = factor(temp_data_species$Species, 
+                                     levels = order_data$Species)
+  
+  gg_data_test_species$Species = factor(gg_data_test_species$Species, 
+                                levels = order_data$Species)
+  
+  x_labels = paste0("***",
+                    levels(gg_data_test_species$Species),
+                    "***",
+                    " [", 
+                    gg_data_test_species$groups[
+                      unlist(lapply(levels(gg_data_test_species$Species), 
+                  function(x) which(gg_data_test_species$Species == x)))],
+         "]")
+  x_labels = gsub("_", " ", x_labels, fixed = T)
+  x_labels = gsub("Drosophila", "D.", x_labels, fixed = T)
+  x_labels = gsub("Megaselia", "M.", x_labels, fixed = T)
+  x_labels = gsub("Scaptodrosophila", "S.", x_labels, fixed = T)
+  x_labels = gsub("Zaprionus", "Z.", x_labels, fixed = T)
+  
+  # add group count
+  # x_labels = paste0(x_labels, 
+  #        " (n = ", unlist(lapply(levels(temp_data_species$Species), 
+  #        function(x) length(which(temp_data_species$Species == x)))),
+  #        ")")
+  
   #plot
-  temp_data_species$Protocol = factor(temp_data_species$Species, levels = gg_data_test_species$Species)
   p = ggplot(temp_data_species,
              aes_string(x = "Species", y = parameter_list[i])) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
-    theme_bw(base_size = 22) +
-    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
-    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    xlab("Species") + coord_flip() +
     stat_summary(fun.data = n_fun, geom = "text") +
-    geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
-    ggtitle(paste0(lab_list[i], " by species"))
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+    xlab("Species") + 
+    scale_x_discrete(labels = x_labels) +
+    coord_flip() +
+    ggtitle(paste0(lab_list[i], " by species")) +
+    md_theme_bw(base_size = 22) +
+    as_md_theme(theme(plot.title = element_text(hjust = 0.5)))
   
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_protocol_merged", ".pdf"),
          plot=p, width=16, height=8, device = "pdf")
