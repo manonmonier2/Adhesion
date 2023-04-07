@@ -13,7 +13,7 @@ library("mdthemes")
 #### FUNCTIONS ####
 
 n_fun <- function(data){
-  y_pos = min(data) + (max(data) - min(data)) * 0.1
+  y_pos = max(data) + (max(data) - min(data)) * 0.1
   return(data.frame(y = y_pos, label = paste0("n = ",length(data))))
 }
 
