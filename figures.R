@@ -8,6 +8,8 @@ library("agricolae")
 library("FSA")
 library("ggpubr")
 library("forcats")
+library("rlang")
+
 #library("mdthemes")
 
 #### FUNCTIONS ####
@@ -30,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -90,11 +92,11 @@ gg_data = cbind(gg_data,
                 rigidity,
                 position_difference,
                 pression_extension,
-                log10_na(detachment_force),
-                log10_na(energy),
-                log10_na(rigidity),
-                log10_na(position_difference),
-                log10_na(pression_extension)
+                - log10_na(detachment_force),
+                - log10_na(energy),
+                - log10_na(rigidity),
+                - log10_na(position_difference),
+                - log10_na(pression_extension)
 )
 
 colnames(gg_data)[(ncol(gg_data) - 4) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension")
@@ -147,40 +149,6 @@ for (col_name in colnames(gg_stat_by_species)){
   if (col_name == "Species") next
   gg_stat_by_species[[col_name]] = as.numeric(gg_stat_by_species[[col_name]])
 }
-
-## by_species protocol merged
-gg_stat_by_species_merged = data.frame()
-for(species in sort(species_list)){
-  temp_species_data = gg_data %>% filter(Comment == "ok") %>%
-    filter((Species != "Drosophila_hydei" & 
-              Species != "Megaselia_abdita" &
-              Species != "Drosophila_quadraria"&
-              Species != "Drosophila_melanogaster" & 
-              Species != "Drosophila_suzukii" &
-              Species != "Drosophila_biarmipes" & 
-              Species != "Drosophila_simulans") |
-             (Species == "Drosophila_melanogaster" & 
-                Protocol == "standard" & 
-                Stock == "cantonS") |
-             (Species == "Drosophila_suzukii" & 
-                Stock == "WT3") |
-             (Species == "Drosophila_biarmipes" & 
-                Stock == "G224")|
-             (Species == "Drosophila_simulans" &
-                Stock == "simulans_vincennes"))
-  stat_handler = c(species)
-  colnames_handler = c("Species")
-  for (i in 1:length(parameter_list)){
-    for (stat_function in stat_list){
-      stat_handler = c(stat_handler, 
-                       do.call(stat_function, list(temp_species_data[[parameter_list[i]]], na.rm = T)))
-      colnames_handler = c(colnames_handler,
-                           paste0(stat_function, "_", parameter_list[i]))
-    }
-  }
-  gg_stat_by_species_merged = rbind(gg_stat_by_species_merged, stat_handler)
-}
-colnames(gg_stat_by_species_merged) = colnames_handler
 
 # force to numeric type
 for (col_name in colnames(gg_stat_by_species_merged)){
@@ -639,6 +607,7 @@ for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
     if (i == j) next
     
+    # filter on species and protocol
     temp_data_species = gg_data %>% filter(Comment == "ok") %>%
       filter((Species != "Drosophila_hydei" & 
                 Species != "Megaselia_abdita" &
@@ -657,6 +626,14 @@ for (i in 1:length(parameter_list)){
                (Species == "Drosophila_simulans" &
                   Stock == "simulans_vincennes"))
     
+    # add stats
+    temp_data_species = temp_data_species %>%
+      group_by(Species) %>%
+      mutate("median_x" = median((!!sym(parameter_list[i])))) %>%
+      mutate("sd_x" = sd((!!sym(parameter_list[i])))) %>%
+      mutate("median_y" = median((!!sym(parameter_list[j])))) %>%
+      mutate("sd_y" = sd((!!sym(parameter_list[j]))))
+    
     #incertitude
     # incertitude_detachment_force = moy(index_table$med_noise_1)
     # incertitude_rigidity = 
@@ -664,21 +641,25 @@ for (i in 1:length(parameter_list)){
     # incertitude_detachment_position = sqrt(2)*
     # 
     #plot
-    p = ggplot(gg_stat_by_species_merged, 
-               aes_string(x = paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Species")) +
+    
+    p = ggplot(temp_data_species, 
+               aes(x = median_x, 
+                   y = median_y,
+                   color = Species)) +
       geom_point(size = 5, shape = 3) +
-      geom_errorbar(xmin = gg_stat_by_species_merged[[paste0("median_", parameter_list[i])]] - gg_stat_by_species_merged[[paste0("sd_", parameter_list[i])]],
-                    xmax = gg_stat_by_species_merged[[paste0("median_", parameter_list[i])]] + gg_stat_by_species_merged[[paste0("sd_", parameter_list[i])]]) +
-      geom_errorbar(ymin = gg_stat_by_species_merged[[paste0("median_", parameter_list[j])]] - gg_stat_by_species_merged[[paste0("sd_", parameter_list[j])]],
-                    ymax = gg_stat_by_species_merged[[paste0("median_", parameter_list[j])]] + gg_stat_by_species_merged[[paste0("sd_", parameter_list[j])]]) +
-      xlim(min(gg_stat_by_species_merged[[paste0("min_", parameter_list[i])]], na.rm = T), max(gg_stat_by_species_merged[[paste0("max_", parameter_list[i])]], na.rm = T)) +
-      ylim(min(gg_stat_by_species_merged[[paste0("min_", parameter_list[j])]], na.rm = T), max(gg_stat_by_species_merged[[paste0("max_", parameter_list[j])]], na.rm = T)) +
+      geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
+                    xmax = temp_data_species$median_x + temp_data_species$sd_x) +
+      geom_errorbar(ymin = temp_data_species$median_y - temp_data_species$sd_y,
+                    ymax = temp_data_species$median_y + temp_data_species$sd_y) +
+      xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T), 
+           max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
+      ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T), 
+           max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
       geom_point(temp_data_species, 
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
-      #geom_vline(xintercept=) +
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-      theme_bw(base_size = 22) 
+      theme_bw(base_size = 22)
     
     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], "_protocol_merged", ".pdf"), 
            plot=p, width=16, height=8, device = "pdf")
