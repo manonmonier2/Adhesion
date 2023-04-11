@@ -8,12 +8,12 @@ library("agricolae")
 library("FSA")
 library("ggpubr")
 library("forcats")
-library("mdthemes")
+#library("mdthemes")
 
 #### FUNCTIONS ####
 
 n_fun <- function(data){
-  y_pos = max(data) + (max(data) - min(data)) * 0.1
+  y_pos = min(data) + (max(data) - min(data)) * 0.1
   return(data.frame(y = y_pos, label = paste0("n = ",length(data))))
 }
 
@@ -30,7 +30,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -146,6 +146,46 @@ colnames(gg_stat_by_species) = colnames_handler
 for (col_name in colnames(gg_stat_by_species)){
   if (col_name == "Species") next
   gg_stat_by_species[[col_name]] = as.numeric(gg_stat_by_species[[col_name]])
+}
+
+## by_species protocol merged
+gg_stat_by_species_merged = data.frame()
+for(species in sort(species_list)){
+  temp_species_data = gg_data %>% filter(Comment == "ok") %>%
+    filter((Species != "Drosophila_hydei" & 
+              Species != "Megaselia_abdita" &
+              Species != "Drosophila_quadraria"&
+              Species != "Drosophila_melanogaster" & 
+              Species != "Drosophila_suzukii" &
+              Species != "Drosophila_biarmipes" & 
+              Species != "Drosophila_simulans") |
+             (Species == "Drosophila_melanogaster" & 
+                Protocol == "standard" & 
+                Stock == "cantonS") |
+             (Species == "Drosophila_suzukii" & 
+                Stock == "WT3") |
+             (Species == "Drosophila_biarmipes" & 
+                Stock == "G224")|
+             (Species == "Drosophila_simulans" &
+                Stock == "simulans_vincennes"))
+  stat_handler = c(species)
+  colnames_handler = c("Species")
+  for (i in 1:length(parameter_list)){
+    for (stat_function in stat_list){
+      stat_handler = c(stat_handler, 
+                       do.call(stat_function, list(temp_species_data[[parameter_list[i]]], na.rm = T)))
+      colnames_handler = c(colnames_handler,
+                           paste0(stat_function, "_", parameter_list[i]))
+    }
+  }
+  gg_stat_by_species_merged = rbind(gg_stat_by_species_merged, stat_handler)
+}
+colnames(gg_stat_by_species_merged) = colnames_handler
+
+# force to numeric type
+for (col_name in colnames(gg_stat_by_species_merged)){
+  if (col_name == "Species") next
+  gg_stat_by_species_merged[[col_name]] = as.numeric(gg_stat_by_species_merged[[col_name]])
 }
 
 ## for melanogaster by protocol
@@ -288,21 +328,21 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 
 for (i in 1:length(parameter_list)){
   temp_data_species = gg_data %>% filter(Comment == "ok") %>%
-                                  filter((Species != "Drosophila_hydei" & 
-                                          Species != "Megaselia_abdita" &
-                                          Species != "Drosophila_melanogaster" & 
-                                          Species != "Drosophila_suzukii" &
-                                          Species != "Drosophila_biarmipes" & 
-                                          Species != "Drosophila_simulans") |
-                                          (Species == "Drosophila_melanogaster" & 
-                                             Protocol == "standard" & 
-                                             Stock == "cantonS") |
-                                          (Species == "Drosophila_suzukii" & 
-                                             Stock == "WT3") |
-                                          (Species == "Drosophila_biarmipes" & 
-                                             Stock == "G224")|
-                                          (Species == "Drosophila_simulans" &
-                                             Stock == "simulans_vincennes"))
+    filter((Species != "Drosophila_hydei" & 
+              Species != "Megaselia_abdita" &
+              Species != "Drosophila_melanogaster" & 
+              Species != "Drosophila_suzukii" &
+              Species != "Drosophila_biarmipes" & 
+              Species != "Drosophila_simulans") |
+             (Species == "Drosophila_melanogaster" & 
+                Protocol == "standard" & 
+                Stock == "cantonS") |
+             (Species == "Drosophila_suzukii" & 
+                Stock == "WT3") |
+             (Species == "Drosophila_biarmipes" & 
+                Stock == "G224")|
+             (Species == "Drosophila_simulans" &
+                Stock == "simulans_vincennes"))
   
   test_stat_species = c()
   
@@ -362,19 +402,19 @@ for (i in 1:length(parameter_list)){
     used_test = "Dunn"
   }
   
-
+  
   # reorder by detachment force median
   order_data = temp_data_species %>%
     group_by(Species) %>% 
     summarise(median = median(detachment_force))
   
   order_data = order_data[order(order_data$median), ]
-
+  
   temp_data_species$Species = factor(temp_data_species$Species, 
                                      levels = order_data$Species)
   
   gg_data_test_species$Species = factor(gg_data_test_species$Species, 
-                                levels = order_data$Species)
+                                        levels = order_data$Species)
   
   x_labels = paste0("***",
                     levels(gg_data_test_species$Species),
@@ -382,8 +422,8 @@ for (i in 1:length(parameter_list)){
                     " [", 
                     gg_data_test_species$groups[
                       unlist(lapply(levels(gg_data_test_species$Species), 
-                  function(x) which(gg_data_test_species$Species == x)))],
-         "]")
+                                    function(x) which(gg_data_test_species$Species == x)))],
+                    "]")
   x_labels = gsub("_", " ", x_labels, fixed = T)
   x_labels = gsub("Drosophila", "D.", x_labels, fixed = T)
   x_labels = gsub("Megaselia", "M.", x_labels, fixed = T)
@@ -406,9 +446,9 @@ for (i in 1:length(parameter_list)){
     xlab("Species") + 
     scale_x_discrete(labels = x_labels) +
     coord_flip() +
-    ggtitle(paste0(lab_list[i], " by species")) +
-    md_theme_bw(base_size = 22) +
-    as_md_theme(theme(plot.title = element_text(hjust = 0.5)))
+    ggtitle(paste0(lab_list[i], " by species"))
+    # md_theme_bw(base_size = 22) +
+    # as_md_theme(theme(plot.title = element_text(hjust = 0.5)))
   
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_protocol_merged", ".pdf"),
          plot=p, width=16, height=8, device = "pdf")
@@ -591,6 +631,61 @@ for (i in 1:length(parameter_list)){
   }
 }
 
+## by species protocol merged
+plot_path_two_parameters_by_species = paste0(plot_path, "/two_parameters/by_species/")
+dir.create(plot_path_two_parameters_by_species, showWarnings = FALSE, recursive = T)
+
+for (i in 1:length(parameter_list)){
+  for (j in 1:length(parameter_list)){
+    if (i == j) next
+    
+    temp_data_species = gg_data %>% filter(Comment == "ok") %>%
+      filter((Species != "Drosophila_hydei" & 
+                Species != "Megaselia_abdita" &
+                Species != "Drosophila_quadraria"&
+                Species != "Drosophila_melanogaster" & 
+                Species != "Drosophila_suzukii" &
+                Species != "Drosophila_biarmipes" & 
+                Species != "Drosophila_simulans") |
+               (Species == "Drosophila_melanogaster" & 
+                  Protocol == "standard" & 
+                  Stock == "cantonS") |
+               (Species == "Drosophila_suzukii" & 
+                  Stock == "WT3") |
+               (Species == "Drosophila_biarmipes" & 
+                  Stock == "G224")|
+               (Species == "Drosophila_simulans" &
+                  Stock == "simulans_vincennes"))
+    
+    #incertitude
+    # incertitude_detachment_force = moy(index_table$med_noise_1)
+    # incertitude_rigidity = 
+    # incertitude_energy = moy(energy_table$aire_index5_moins1)
+    # incertitude_detachment_position = sqrt(2)*
+    # 
+    #plot
+    p = ggplot(gg_stat_by_species_merged, 
+               aes_string(x = paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Species")) +
+      geom_point(size = 5, shape = 3) +
+      geom_errorbar(xmin = gg_stat_by_species_merged[[paste0("median_", parameter_list[i])]] - gg_stat_by_species_merged[[paste0("sd_", parameter_list[i])]],
+                    xmax = gg_stat_by_species_merged[[paste0("median_", parameter_list[i])]] + gg_stat_by_species_merged[[paste0("sd_", parameter_list[i])]]) +
+      geom_errorbar(ymin = gg_stat_by_species_merged[[paste0("median_", parameter_list[j])]] - gg_stat_by_species_merged[[paste0("sd_", parameter_list[j])]],
+                    ymax = gg_stat_by_species_merged[[paste0("median_", parameter_list[j])]] + gg_stat_by_species_merged[[paste0("sd_", parameter_list[j])]]) +
+      xlim(min(gg_stat_by_species_merged[[paste0("min_", parameter_list[i])]], na.rm = T), max(gg_stat_by_species_merged[[paste0("max_", parameter_list[i])]], na.rm = T)) +
+      ylim(min(gg_stat_by_species_merged[[paste0("min_", parameter_list[j])]], na.rm = T), max(gg_stat_by_species_merged[[paste0("max_", parameter_list[j])]], na.rm = T)) +
+      geom_point(temp_data_species, 
+                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+      #geom_vline(xintercept=) +
+      xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+      ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+      theme_bw(base_size = 22) 
+    
+    ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], "_protocol_merged", ".pdf"), 
+           plot=p, width=16, height=8, device = "pdf")
+  }
+}
+
+
 ## by protocol for Drosophila melanogaster
 plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
 dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
@@ -633,11 +728,11 @@ for (i in 1:length(parameter_list)){
                       color = "Protocol")) +
     geom_boxplot() +
     geom_point(mapping = aes_string(x = "Speed",
-                                     y = parameter_list[i],
-                                     fill = "Protocol"),
+                                    y = parameter_list[i],
+                                    fill = "Protocol"),
                position=position_jitterdodge(),
-                alpha = 0.3,
-                show.legend = F) +
+               alpha = 0.3,
+               show.legend = F) +
     xlab("Speed") +
     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     theme_bw(base_size = 22) 
