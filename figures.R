@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -57,6 +57,9 @@ for (id in list_id){
 detachment_force = c()
 rigidity = c()
 energy = c()
+energy_positive = c()
+energy_negative = c()
+energy_sum_positive_negative = c()
 position_difference = c()
 detachment_position = c()
 pression_extension = c()
@@ -69,8 +72,17 @@ for (id in gg_data$Sample_ID){
   
   if(length(which(energy_table$id == id)) == 1) {
     current_energy = energy_table$difference_integrales[energy_table$id == id]
+    current_energy_positive = 
+      energy_table$integrale_decompression_positive[energy_table$id == id]
+    current_energy_negative = 
+      energy_table$integrale_decompression_negative[energy_table$id == id]
+    current_energy_sum_positive_negative = 
+      energy_table$sum_decompression_negative_and_positive[energy_table$id == id]
   } else {
     current_energy = NA
+    current_energy_positive = NA
+    current_energy_negative = NA
+    current_energy_sum_positive_negative = NA
   }
   
   current_rigidity = (sample$load[current_index$index_2] - sample$load[current_index$index_1]) / (sample$extension[current_index$index_2] - sample$extension[current_index$index_1])
@@ -80,15 +92,21 @@ for (id in gg_data$Sample_ID){
   
   detachment_force = c(detachment_force, current_detachment_force)
   energy = c(energy, current_energy)
+  energy_positive = c(energy_positive, current_energy_positive)
+  energy_negative = c(energy_negative, current_energy_negative)
+  energy_sum_positive_negative = c(energy_sum_positive_negative, current_energy_sum_positive_negative)
   rigidity = c(rigidity, current_rigidity)
   position_difference = c(position_difference, current_position_difference)
   
-  pression_extension =c(pression_extension, current_pression_extension)
+  pression_extension = c(pression_extension, current_pression_extension)
 }
 
 gg_data = cbind(gg_data, 
                 detachment_force,
                 energy,
+                energy_negative,
+                energy_positive,
+                energy_sum_positive_negative,
                 rigidity,
                 position_difference,
                 pression_extension,
@@ -973,9 +991,6 @@ p_el_standard_detached_global = ggplot(data = time_load_extension_2, aes(x = ext
 
 ggsave(file = paste0(plot_path_superposition, "/superposition_ext_standard_detached_Drosophila_melanogaster", ".pdf"), 
        plot=p_el_standard_detached_global, width=16, height=8, device = "pdf")
-
-
-
 
 
 
