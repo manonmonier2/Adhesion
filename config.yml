@@ -34,7 +34,7 @@ default:
   integral_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/integral
   
   # Absolute path to the created directory containing the imageJ files
-  imagej_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/imageJ
+  imagej_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/imageJ/raw
   
 portable:
   # Absolute path to batches data files.
