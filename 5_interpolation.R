@@ -92,7 +92,9 @@ for (name in list_id) {
         rule = 2    # rule = 2 allow the interpolation function to not return NA
       )
       
-      # plot(data_decompression$extension, data_decompression$load, type = "l")
+      # plot(data_decompression$extension, data_decompression$load, type = "l", ylim = c(-0.1, 0.1), xlim = c(1, 1.2))
+      # lines(data_decompression$extension, abs(data_decompression$load), lty = "dashed")
+      # abline(h = 0)
       # points(x = seq(min(data_decompression$extension), max(data_decompression$extension), 0.01),
       #               y = interpolation_decompression(seq(min(data_decompression$extension), max(data_decompression$extension), 0.01)))
       # curve(interpolation_decompression, from = min(data_decompression$extension, na.rm = T), to = max(data_decompression$extension, na.rm = T))
@@ -124,7 +126,7 @@ for (name in list_id) {
       # points(x = seq(min(data_decompression_negative$extension), max(data_decompression_negative$extension), 0.01),
       #               y = interpolation_decompression_negative(seq(min(data_decompression_negative$extension), max(data_decompression_negative$extension), 0.01)))
       # curve(interpolation_decompression_negative, from = min(data_decompression_negative$extension, na.rm = T), to = max(data_decompression_negative$extension, na.rm = T))
-      # 
+
       ## integration
       integration_limit = range(data_decompression_negative$extension, na.rm = T)
       integration_decompression_negative = integrate(
@@ -155,7 +157,7 @@ for (name in list_id) {
       # curve(interpolation_decompression_positive, from = min(data_decompression_positive$extension, na.rm = T), to = max(data_decompression_positive$extension, na.rm = T))
 
       ## integration
-      integration_limit = range(data_decompression_negative$extension, na.rm = T)
+      integration_limit = range(data_decompression_positive$extension, na.rm = T)
       integration_decompression_positive = integrate(
         f = interpolation_decompression_positive,
         lower = integration_limit[1], 
