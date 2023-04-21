@@ -4,7 +4,7 @@ library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -35,7 +35,8 @@ not_running = c() # vector containing all the non running batch name
 vect_id = c()
 vect_compression = c()
 vect_decompression = c()
-
+vect_decompression_negative = c()
+vect_decompression_positive = c()
 for (name in list_id) {
   run = tryCatch(
     expr = {
@@ -78,9 +79,9 @@ for (name in list_id) {
       )
       
       
-      # decompression zone
+      # decompression zone (absolute value on negative load values)
       ## definition: from contact to to maximum extension (index_2) to pupae full detachment (index_5)
-      data_decompression = data.frame("load" = batch_data$load[batch_milestone$index_2 : batch_milestone$index_5],
+      data_decompression = data.frame("load" = abs(batch_data$load[batch_milestone$index_2 : batch_milestone$index_5]),
                                       "extension" = batch_data$extension[batch_milestone$index_2 : batch_milestone$index_5])
       
       ## interpolation
@@ -95,7 +96,7 @@ for (name in list_id) {
       # points(x = seq(min(data_decompression$extension), max(data_decompression$extension), 0.01),
       #               y = interpolation_decompression(seq(min(data_decompression$extension), max(data_decompression$extension), 0.01)))
       # curve(interpolation_decompression, from = min(data_decompression$extension, na.rm = T), to = max(data_decompression$extension, na.rm = T))
-      
+
       ## integration
       integration_limit = range(data_decompression$extension, na.rm = T)
       integration_decompression = integrate(
@@ -105,10 +106,71 @@ for (name in list_id) {
         subdivisions = 2000
       )
       
+      # negative zone on decompression zone
+      data_decompression = data.frame("load" = batch_data$load[batch_milestone$index_2 : batch_milestone$index_5],
+                                      "extension" = batch_data$extension[batch_milestone$index_2 : batch_milestone$index_5])
+      data_decompression_negative = data_decompression[
+        -(1:(min(which(data_decompression$load <= 0)) - 1)), ]
+      
+      ## interpolation
+      interpolation_decompression_negative = approxfun(
+        data_decompression_negative$extension,
+        data_decompression_negative$load, 
+        na.rm = T,
+        rule = 2    # rule = 2 allow the interpolation function to not return NA
+      )
+      
+      # plot(data_decompression_negative$extension, data_decompression_negative$load, type = "l")
+      # points(x = seq(min(data_decompression_negative$extension), max(data_decompression_negative$extension), 0.01),
+      #               y = interpolation_decompression_negative(seq(min(data_decompression_negative$extension), max(data_decompression_negative$extension), 0.01)))
+      # curve(interpolation_decompression_negative, from = min(data_decompression_negative$extension, na.rm = T), to = max(data_decompression_negative$extension, na.rm = T))
+      # 
+      ## integration
+      integration_limit = range(data_decompression_negative$extension, na.rm = T)
+      integration_decompression_negative = integrate(
+        f = interpolation_decompression_negative,
+        lower = integration_limit[1], 
+        upper = integration_limit[2],
+        subdivisions = 2000
+      )
+      
+      
+      # positive zone on decompression zone
+      data_decompression = data.frame("load" = batch_data$load[batch_milestone$index_2 : batch_milestone$index_5],
+                                      "extension" = batch_data$extension[batch_milestone$index_2 : batch_milestone$index_5])
+      data_decompression_positive = data_decompression[
+        1:(min(which(data_decompression$load <= 0) - 1)), ]
+      
+      ## interpolation
+      interpolation_decompression_positive = approxfun(
+        data_decompression_positive$extension,
+        data_decompression_positive$load, 
+        na.rm = T,
+        rule = 2    # rule = 2 allow the interpolation function to not return NA
+      )
+      
+      # plot(data_decompression_positive$extension, data_decompression_positive$load, type = "l")
+      # points(x = seq(min(data_decompression_positive$extension), max(data_decompression_positive$extension), 0.01),
+      #               y = interpolation_decompression_positive(seq(min(data_decompression_positive$extension), max(data_decompression_positive$extension), 0.01)))
+      # curve(interpolation_decompression_positive, from = min(data_decompression_positive$extension, na.rm = T), to = max(data_decompression_positive$extension, na.rm = T))
+
+      ## integration
+      integration_limit = range(data_decompression_negative$extension, na.rm = T)
+      integration_decompression_positive = integrate(
+        f = interpolation_decompression_positive,
+        lower = integration_limit[1], 
+        upper = integration_limit[2],
+        subdivisions = 2000
+      )
+      
       # save result for output
       vect_id = c(vect_id, name)
       vect_compression = c(vect_compression, integration_compression$value)
       vect_decompression = c(vect_decompression, integration_decompression$value)
+      vect_decompression_negative = c(vect_decompression_negative, 
+                                      integration_decompression_negative$value)
+      vect_decompression_positive = c(vect_decompression_positive, 
+                                      integration_decompression_positive$value)
       
     },
     error = function(e){ 
@@ -126,9 +188,17 @@ for (name in list_id) {
 }
 
 df_res = data.frame("id" = vect_id,
-                    "integrale_compression" = abs(vect_compression),
-                    "integrale_decompression" = abs(vect_decompression),
-                    "difference_integrales" = abs(vect_compression - vect_decompression))
+                    "integrale_compression" = vect_compression,
+                    "integrale_decompression" = vect_decompression,
+                    "integrale_decompression_negative" = 
+                      vect_decompression_negative,
+                    "integrale_decompression_positive" = 
+                      vect_decompression_positive,
+                    "sum_decompression_negative_and_positive" =
+                      abs(vect_decompression_negative) + 
+                      vect_decompression_positive,
+                    "difference_integrales" = abs(vect_compression - 
+                                                    vect_decompression))
 
 file_path = paste(path_integral, "/integral.csv", sep = "")
 write.table(df_res, file = file_path, quote = F, col.names = T, row.names = F, sep = "\t")
