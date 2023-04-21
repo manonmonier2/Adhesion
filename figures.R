@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -92,11 +92,11 @@ gg_data = cbind(gg_data,
                 rigidity,
                 position_difference,
                 pression_extension,
-                - log10_na(detachment_force),
-                - log10_na(energy),
-                - log10_na(rigidity),
-                - log10_na(position_difference),
-                - log10_na(pression_extension)
+                log10_na(detachment_force),
+                log10_na(energy),
+                log10_na(rigidity),
+                log10_na(position_difference),
+                log10_na(pression_extension)
 )
 
 colnames(gg_data)[(ncol(gg_data) - 4) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension")
@@ -150,11 +150,11 @@ for (col_name in colnames(gg_stat_by_species)){
   gg_stat_by_species[[col_name]] = as.numeric(gg_stat_by_species[[col_name]])
 }
 
-# force to numeric type
-for (col_name in colnames(gg_stat_by_species_merged)){
-  if (col_name == "Species") next
-  gg_stat_by_species_merged[[col_name]] = as.numeric(gg_stat_by_species_merged[[col_name]])
-}
+# # force to numeric type
+# for (col_name in colnames(gg_stat_by_species_merged)){
+#   if (col_name == "Species") next
+#   gg_stat_by_species_merged[[col_name]] = as.numeric(gg_stat_by_species_merged[[col_name]])
+# }
 
 ## for melanogaster by protocol
 
@@ -415,8 +415,8 @@ for (i in 1:length(parameter_list)){
     scale_x_discrete(labels = x_labels) +
     coord_flip() +
     ggtitle(paste0(lab_list[i], " by species"))
-    # md_theme_bw(base_size = 22) +
-    # as_md_theme(theme(plot.title = element_text(hjust = 0.5)))
+  # md_theme_bw(base_size = 22) +
+  # as_md_theme(theme(plot.title = element_text(hjust = 0.5)))
   
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_protocol_merged", ".pdf"),
          plot=p, width=16, height=8, device = "pdf")
