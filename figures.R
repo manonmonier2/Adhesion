@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -93,11 +93,11 @@ for (id in gg_data$Sample_ID){
   
   
   
-  # if(length(which(metadata$Area == id)) == 1) {
-  #   current_area_pupa = metadata$Area
-  # } else {
-  #   current_area_pupa = NA
-  # }
+  if(length(which(metadata$Area == id)) == 1) {
+    current_area_pupa = metadata$Area
+  } else {
+    current_area_pupa = NA
+  }
 
   detachment_force = c(detachment_force, current_detachment_force)
   energy = c(energy, current_energy)
@@ -108,7 +108,7 @@ for (id in gg_data$Sample_ID){
   position_difference = c(position_difference, current_position_difference)
   
   pression_extension = c(pression_extension, current_pression_extension)
-  #area_pupa = as.numeric(c(current_area_pupa))
+  area_pupa = as.numeric(c(current_area_pupa))
 }
 
 gg_data = cbind(gg_data, 
@@ -239,7 +239,18 @@ plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_specie
 dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
-  temp_data_species = gg_data %>% filter(Protocol == "standard" & Comment == "ok")
+  temp_data_species = gg_data %>% 
+    filter(Protocol == "standard" & Comment == "ok") %>%
+    filter(! is.na(!!as.symbol(parameter_list[i])))
+  
+  ## debug: number of row with a value different of NA by species; must be >= 2
+  # lapply(unique(temp_data_species$Species), function(x) {
+  #   temp_data_species %>% 
+  #     filter(Species == x) %>%
+  #     filter(!is.na(!!as.symbol(parameter_list[i]))) %>%
+  #     nrow()
+  #   
+  # })
   
   test_stat_species = c()
   
@@ -250,7 +261,9 @@ for (i in 1:length(parameter_list)){
   
   
   # bartlett
-  res_bartlett = bartlett.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
+  res_bartlett = bartlett.test(
+    temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])]
+    ~ Species, temp_data_species)
   bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
   test_stat_species = c(test_stat_species, bartlett_reject)
   
