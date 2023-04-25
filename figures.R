@@ -245,12 +245,18 @@ for (i in 1:length(parameter_list)){
   
   ## debug: number of row with a value different of NA by species; must be >= 2
   # lapply(unique(temp_data_species$Species), function(x) {
-  #   temp_data_species %>% 
+  #   temp_data_species %>%
   #     filter(Species == x) %>%
   #     filter(!is.na(!!as.symbol(parameter_list[i]))) %>%
   #     nrow()
-  #   
+  # 
   # })
+  
+  temp_data_species = temp_data_species %>%
+    group_by(Species) %>%
+    filter(length(!is.na(!!as.symbol(parameter_list[i]))) > 1)
+  
+  temp_data_species = as.data.frame(temp_data_species)
   
   test_stat_species = c()
   
