@@ -5,7 +5,7 @@ library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -177,7 +177,7 @@ list_imagej_file = list.files(path_imagej, full.names = T)
 
 concatenate_data_imagej = data.frame()
 for(imagej_file in list_imagej_file){
-  imagej_data = read.table(imagej_file, sep = ",", header = T, fileEncoding = "UTF-7")
+  imagej_data = read.table(imagej_file, sep = ";", header = T)
   
   imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
   
