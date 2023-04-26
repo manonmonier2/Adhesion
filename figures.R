@@ -93,13 +93,13 @@ for (id in gg_data$Sample_ID){
   current_pression_extension = sample$extension[current_index$index_2] - sample$extension[current_index$index_1]
   
   
-  if(length(which(metadata$Area == id)) == 1) {
+  if(length(which(metadata$Sample_ID == id)) == 1) {
     current_pupa_area = sqrt(gg_data$Scale_um[gg_data$Sample_ID == id]) * gg_data$Area[gg_data$Sample_ID == id] / sqrt(gg_data$Scale_px[gg_data$Sample_ID == id])
   } else {
     current_pupa_area = NA
   }
   
-  if(length(which(metadata$Feret == id)) == 1) {
+  if(length(which(metadata$Sample_ID == id)) == 1) {
     current_pupa_length = gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id]
   } else {
     current_pupa_length = NA
