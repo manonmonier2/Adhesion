@@ -5,7 +5,7 @@ library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -177,29 +177,22 @@ list_imagej_file = list.files(path_imagej, full.names = T)
 
 concatenate_data_imagej = data.frame()
 for(imagej_file in list_imagej_file){
-  imagej_data = read.table(imagej_file, sep = ",", header = T)
+  imagej_data = read.table(imagej_file, sep = ",", header = T, fileEncoding = "UTF-7")
   
   imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
   
-  imagej_image_type = sub(".*_pupa_(.+).csv$", "\\1", basename(imagej_file))
-
-  if(imagej_image_type == "size") {
-    imagej_pupa_color = sub("^.*_(.+)_pupa_.*.csv$", "\\1", 
-                            basename(imagej_file))
-  } else {
-    imagej_pupa_color = NA
+  imagej_image_type = sub(".*_type_+(.+).csv$", "\\1", 
+                          basename(imagej_file))
+  
+  if(imagej_image_type == basename(imagej_file)) {
+    imagej_image_type = "no_type_found"
   }
   
   concatenate_data_imagej = rbind(concatenate_data_imagej,
-                                  cbind(imagej_id, 
-                                        imagej_image_type,
-                                        imagej_pupa_color,
-                                        imagej_data))
+                                  cbind(imagej_id, imagej_data))
 }
 
 colnames(concatenate_data_imagej)[1] = "Sample_ID"
-colnames(concatenate_data_imagej)[2] = "type"
-colnames(concatenate_data_imagej)[3] = "color"
 
 id_not_running = c()
 # id not in metadata
