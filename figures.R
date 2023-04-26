@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -155,7 +155,7 @@ gg_data = gg_data %>%
                          Protocol == "detached pupae and speed x3", "3"))
 
 parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "pression_extension", "pupa_area", "pupa_length",
-                   "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_area_pupa", "log10_pupa_area", "log10_pupa_length")
+                   "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pupa_area", "log10_pupa_length")
 lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Pression extension", "Pupa area", "Pupa length",
              "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Pression extension)", "log(Pupa area)", "log(Pupa length)")
 unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "mm²", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm", "mm²", "mm")
@@ -172,8 +172,13 @@ for(species in sort(species_list)){
   colnames_handler = c("Species")
   for (i in 1:length(parameter_list)){
     for (stat_function in stat_list){
+      
+      stat = do.call(stat_function, list(temp_species_data[[parameter_list[i]]], na.rm = T))
+      if (is.null(stat)) {
+        stat = NA
+      }
       stat_handler = c(stat_handler, 
-                       do.call(stat_function, list(temp_species_data[[parameter_list[i]]], na.rm = T)))
+                       stat)
       colnames_handler = c(colnames_handler,
                            paste0(stat_function, "_", parameter_list[i]))
     }
@@ -198,13 +203,20 @@ for (col_name in colnames(gg_stat_by_species)){
 
 gg_stat_melano = data.frame()
 for(protocol in sort(protocol_list)){
-  temp_protocol_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & Protocol == protocol)
+  temp_protocol_data = gg_data %>% 
+    filter(Comment == "ok" & Species == "Drosophila_melanogaster" & Protocol == protocol)
   stat_handler = c(protocol)
   colnames_handler = c("Protocol")
   for (i in 1:length(parameter_list)){
     for (stat_function in stat_list){
+      stat = do.call(stat_function, 
+                     list(temp_protocol_data[[parameter_list[i]]], na.rm = T))
+      
+      if (is.null(stat)) {
+        stat = NA
+      }
       stat_handler = c(stat_handler, 
-                       do.call(stat_function, list(temp_protocol_data[[parameter_list[i]]], na.rm = T)))
+                       stat)
       colnames_handler = c(colnames_handler,
                            paste0(stat_function, "_", parameter_list[i]))
     }
@@ -226,11 +238,11 @@ plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_specie
 dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
 for (i in 1:length(parameter_list)){
-  
   #plot
   p = gg_data %>% 
     filter(((Species == "Drosophila_melanogaster" & Protocol == "default") | 
               Species != "Drosophila_melanogaster") & Comment == "ok") %>%
+    filter(length(!is.na(!!as.symbol(parameter_list[i]))) > 0) %>%
     ggplot(aes_string(x = "Species", y = parameter_list[i], fill = "Protocol")) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") + 
