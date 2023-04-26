@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -63,7 +63,9 @@ energy_sum_positive_negative = c()
 position_difference = c()
 detachment_position = c()
 pression_extension = c()
-area_pupa = c()
+pupa_area = c()
+pupa_length = c()
+
 for (id in gg_data$Sample_ID){
   sample = read.table(paste0(path_batch_by_id, "/", id, '.csv'), sep = "\t", header = T)
   current_metadata = metadata[metadata$Sample_ID == id, ]
@@ -88,17 +90,21 @@ for (id in gg_data$Sample_ID){
   
   current_rigidity = (sample$load[current_index$index_2] - sample$load[current_index$index_1]) / (sample$extension[current_index$index_2] - sample$extension[current_index$index_1])
   current_position_difference = sample$extension[current_index$index_1] - sample$extension[current_index$index_5]
-  
   current_pression_extension = sample$extension[current_index$index_2] - sample$extension[current_index$index_1]
   
   
-  
   if(length(which(metadata$Area == id)) == 1) {
-    current_area_pupa = metadata$Area
+    current_pupa_area = sqrt(gg_data$Scale_um[gg_data$Sample_ID == id]) * gg_data$Area[gg_data$Sample_ID == id] / sqrt(gg_data$Scale_px[gg_data$Sample_ID == id])
   } else {
-    current_area_pupa = NA
+    current_pupa_area = NA
   }
-
+  
+  if(length(which(metadata$Feret == id)) == 1) {
+    current_pupa_length = gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id]
+  } else {
+    current_pupa_length = NA
+  }
+  
   detachment_force = c(detachment_force, current_detachment_force)
   energy = c(energy, current_energy)
   energy_positive = c(energy_positive, current_energy_positive)
@@ -106,9 +112,9 @@ for (id in gg_data$Sample_ID){
   energy_sum_positive_negative = c(energy_sum_positive_negative, current_energy_sum_positive_negative)
   rigidity = c(rigidity, current_rigidity)
   position_difference = c(position_difference, current_position_difference)
-  
   pression_extension = c(pression_extension, current_pression_extension)
-  area_pupa = as.numeric(c(current_area_pupa))
+  pupa_area = c(pupa_area, current_pupa_area)
+  pupa_length = c(pupa_length, current_pupa_length)
 }
 
 gg_data = cbind(gg_data, 
@@ -120,15 +126,18 @@ gg_data = cbind(gg_data,
                 rigidity,
                 position_difference,
                 pression_extension,
+                pupa_area,
+                pupa_length,
                 log10_na(detachment_force),
                 log10_na(energy),
                 log10_na(rigidity),
                 log10_na(position_difference),
                 log10_na(pression_extension),
-                log10_na(gg_data$Area)
+                log10_na(pupa_area),
+                log10_na(pupa_length)
 )
 
-colnames(gg_data)[(ncol(gg_data) - 5) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_area_pupa")
+colnames(gg_data)[(ncol(gg_data) - 6) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_pupa_area", "log10_pupa_length")
 
 # exclusion of default condition for melanogaster
 gg_data = gg_data %>% filter((Protocol != "default" & Species == "Drosophila_melanogaster") | Species != "Drosophila_melanogaster") #on retire les default de melano
@@ -145,11 +154,11 @@ gg_data = gg_data %>%
   mutate(Speed = replace(Speed, 
                          Protocol == "detached pupae and speed x3", "3"))
 
-parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "pression_extension", "Area",
-                   "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_area_pupa")
-lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Pression extension", "Pupa area",
-             "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Pression extension)", "log(Pupa area)")
-unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm", "px")
+parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "pression_extension", "pupa_area", "pupa_length",
+                   "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_area_pupa", "log10_pupa_area", "log10_pupa_length")
+lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Pression extension", "Pupa area", "Pupa length",
+             "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Pression extension)", "log(Pupa area)", "log(Pupa length)")
+unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "mm²", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm", "mm²", "mm")
 species_list = unique(gg_data$Species)
 protocol_list = unique(gg_data$Protocol)
 stat_list = c("mean", "max", "min", "median", "sd")
@@ -1034,5 +1043,5 @@ ggplot(energy_table, aes(x=integrale_decompression, y=sum_decompression_negative
   geom_point() + xlab("Integrale decompression calculée en valeur absolue") + ylab("Integrale decompression positive + negative ")
 
 
-  
+
 
