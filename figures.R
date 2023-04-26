@@ -157,8 +157,9 @@ gg_data = gg_data %>%
 parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "pression_extension", "pupa_area", "pupa_length",
                    "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pupa_area", "log10_pupa_length")
 lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Pression extension", "Pupa area", "Pupa length",
-             "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Pression extension)", "log(Pupa area)", "log(Pupa length)")
-unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "mm²", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm", "mm²", "mm")
+             "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Pupa area)", "log(Pupa length)")
+unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "mm^2", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm^2", "mm")
+
 species_list = unique(gg_data$Species)
 protocol_list = unique(gg_data$Protocol)
 stat_list = c("mean", "max", "min", "median", "sd")
@@ -262,20 +263,9 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 for (i in 1:length(parameter_list)){
   temp_data_species = gg_data %>% 
     filter(Protocol == "standard" & Comment == "ok") %>%
-    filter(! is.na(!!as.symbol(parameter_list[i])))
-  
-  ## debug: number of row with a value different of NA by species; must be >= 2
-  # lapply(unique(temp_data_species$Species), function(x) {
-  #   temp_data_species %>%
-  #     filter(Species == x) %>%
-  #     filter(!is.na(!!as.symbol(parameter_list[i]))) %>%
-  #     nrow()
-  # 
-  # })
-  
-  temp_data_species = temp_data_species %>%
+    filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
     group_by(Species) %>%
-    filter(length(!is.na(!!as.symbol(parameter_list[i]))) > 1)
+    filter(length(!!as.symbol(parameter_list[i])) > 1)
   
   temp_data_species = as.data.frame(temp_data_species)
   
@@ -379,7 +369,12 @@ for (i in 1:length(parameter_list)){
              (Species == "Drosophila_biarmipes" & 
                 Stock == "G224")|
              (Species == "Drosophila_simulans" &
-                Stock == "simulans_vincennes"))
+                Stock == "simulans_vincennes")) %>%
+    filter(!is.na(!!as.symbol(parameter_list[i]))) %>%
+    group_by(Species) %>%
+    filter(length(!!as.symbol(parameter_list[i])) > 1)
+  
+  temp_data_species = as.data.frame(temp_data_species)
   
   test_stat_species = c()
   
@@ -693,7 +688,12 @@ for (i in 1:length(parameter_list)){
                (Species == "Drosophila_biarmipes" & 
                   Stock == "G224")|
                (Species == "Drosophila_simulans" &
-                  Stock == "simulans_vincennes"))
+                  Stock == "simulans_vincennes")) %>%
+      filter(!is.na(!!as.symbol(parameter_list[i]))) %>%
+      filter(!is.na(!!as.symbol(parameter_list[j]))) %>%
+      group_by(Species) %>%
+      filter(length(!!as.symbol(parameter_list[i])) > 0) %>%
+      filter(length(!!as.symbol(parameter_list[i])) > 0)
     
     # add stats
     temp_data_species = temp_data_species %>%
@@ -1052,7 +1052,7 @@ ggplot(energy_table, aes(x=integrale_decompression_negative, y=difference_integr
 
 
 ggplot(energy_table, aes(x=integrale_decompression, y=sum_decompression_negative_and_positive)) + 
-  geom_point() + xlab("Integrale decompression calculée en valeur absolue") + ylab("Integrale decompression positive + negative ")
+  geom_point() + xlab("Integrale decompression calculee en valeur absolue") + ylab("Integrale decompression positive + negative ")
 
 
 
