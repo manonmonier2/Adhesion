@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -347,6 +347,52 @@ for (i in 1:length(parameter_list)){
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_standard_protocol", ".pdf"),
          plot=p, width=16, height=8, device = "pdf")
   
+}
+
+
+#by species protocol separated with comments
+plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
+dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
+
+species_to_keep = 
+  unique(gg_data$Species[which(gg_data$Protocol == 
+                                 "strong tape and 0,25 N")])[
+                                   unique(gg_data$Species[
+                                     which(gg_data$Protocol == 
+                                             "strong tape and 0,25 N")]) %in% 
+                                     unique(gg_data$Species[
+                                       which(gg_data$Protocol == "standard")])]
+
+for (i in 1:length(parameter_list)){
+  
+  temp_data_species = gg_data %>%
+    filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
+    filter(Species %in% species_to_keep) %>%
+    filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
+    filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+    group_by(Species) %>%
+    filter(length(!!as.symbol(parameter_list[i])) > 1)
+  
+  
+  temp_data_species = as.data.frame(temp_data_species)
+
+  #plot
+  #temp_data_species$Protocol = factor(temp_data_species$Protocol, levels = gg_data_test_species$Protocol)
+  p = ggplot(temp_data_species,
+             aes_string(x = "Species", y = parameter_list[i], fill = factor(Protocol))) +
+    geom_point(aes(color = Comments), shape = 20, size = 2, stroke = 1)+
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") +
+    theme_bw(base_size = 22) +
+    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+    xlab("Species") +
+    stat_summary(fun.data = n_fun, geom = "text") +
+    geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
+    ggtitle(paste0(lab_list[i], " by species"))
+  
+  ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_two_protocol_comments", ".pdf"),
+         plot=p, width=16, height=8, device = "pdf")
+
 }
 
 ## by species all protocol merged
