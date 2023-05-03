@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -369,25 +369,26 @@ for (i in 1:length(parameter_list)){
     filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
     filter(Species %in% species_to_keep) %>%
     filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
-    filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-    group_by(Species) %>%
+    #filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+    #group_by(Species) %>%
     filter(length(!!as.symbol(parameter_list[i])) > 1)
   
   
   temp_data_species = as.data.frame(temp_data_species)
 
   #plot
-  temp_data_species$Protocol = factor(temp_data_species$Protocol, levels = gg_data_test_species$Protocol)
+  #temp_data_species$Protocol = factor(temp_data_species$Protocol, levels = gg_data_test_species$Protocol)
   p = ggplot(temp_data_species,
              aes_string(x = "Species", y = parameter_list[i], fill = "Protocol")) +
-    geom_point(aes(color = Comment), shape = 20, size = 2, stroke = 1)+
-    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") +
-    theme_bw(base_size = 22) +
+    #geom_point(aes(color = Comment), shape = 20, size = 2) +
+    #geom_dotplot(aes(color = Comment), binaxis='y', stackdir='center', dotsize=0.5) +
+    geom_jitter(aes(colour = Comment), width = 0.2) + 
+    geom_boxplot(position = position_dodge(width = 0.7), width= 0.4, outlier.colour = "grey", alpha = 0.1) +
+    theme_bw(base_size = 22) + 
     theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
-    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    xlab("Species") +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) + xlab("Species") +
     stat_summary(fun.data = n_fun, geom = "text") +
-    geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
+    #geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
     ggtitle(paste0(lab_list[i], " by species"))
   
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_two_protocol_comments", ".pdf"),
@@ -576,6 +577,7 @@ for (i in 1:length(parameter_list)){
   ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
 }
+
 
 ### by protocol for Drosophila_melanogaster
 list_plot = list()
@@ -854,7 +856,7 @@ temp_data = gg_data %>%
   filter(Comment == "ok") %>%
   filter(Species %in% species_to_keep) %>%
   filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
-  group_by(Species, Protocol) %>% 
+  group_by(Species, Protocol) %>%
   summarise(median = median(detachment_force),
             sd = sd(detachment_force))
 
@@ -890,7 +892,7 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
                temp_gg_data$sd_strong_tape_and_0.25_N), 
          max(temp_gg_data$median_strong_tape_and_0.25_N + 
                temp_gg_data$sd_strong_tape_and_0.25_N))) +
-  geom_abline(slope=1) +
+  geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "red") +
   xlab("Detachment force for protocol standard (N)") +
   ylab("Detachment force for Protocol strong tape and 0,25 N (N)") +
   ggtitle("Detachment force for species strongly attached")+
@@ -899,6 +901,7 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
 ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
        plot=p, width=16, height=8, device = "pdf")
 
+# cor(x = temp_gg_data$median_standard, y = temp_gg_data$median_strong_tape_and_0.25_N)
 
 #superposition D.melano no_cond et D.melano strongforce
 plot_path_superposition = paste0(plot_path, "/superposition/")
