@@ -57,9 +57,7 @@ for (id in list_id){
 detachment_force = c()
 rigidity = c()
 energy = c()
-energy_positive = c()
-energy_negative = c()
-energy_sum_positive_negative = c()
+negative_energy = c()
 position_difference = c()
 detachment_position = c()
 pression_extension = c()
@@ -74,18 +72,12 @@ for (id in gg_data$Sample_ID){
   current_detachment_force = -min(sample$load[current_index$index_4:current_index$index_5])
   
   if(length(which(energy_table$id == id)) == 1) {
-    current_energy = energy_table$difference_integrales[energy_table$id == id]
-    current_energy_positive = 
-      energy_table$integrale_decompression_positive[energy_table$id == id]
+    current_energy = energy_table$integrale_compression[energy_table$id == id] - energy_table$sum_decompression_negative_and_positive[energy_table$id == id]
     current_energy_negative = 
       energy_table$integrale_decompression_negative[energy_table$id == id]
-    current_energy_sum_positive_negative = 
-      energy_table$sum_decompression_negative_and_positive[energy_table$id == id]
   } else {
     current_energy = NA
-    current_energy_positive = NA
     current_energy_negative = NA
-    current_energy_sum_positive_negative = NA
   }
   
   current_rigidity = (sample$load[current_index$index_2] - sample$load[current_index$index_1]) / (sample$extension[current_index$index_2] - sample$extension[current_index$index_1])
@@ -107,9 +99,7 @@ for (id in gg_data$Sample_ID){
   
   detachment_force = c(detachment_force, current_detachment_force)
   energy = c(energy, current_energy)
-  energy_positive = c(energy_positive, current_energy_positive)
-  energy_negative = c(energy_negative, current_energy_negative)
-  energy_sum_positive_negative = c(energy_sum_positive_negative, current_energy_sum_positive_negative)
+  negative_energy = c(negative_energy, current_energy_negative)
   rigidity = c(rigidity, current_rigidity)
   position_difference = c(position_difference, current_position_difference)
   pression_extension = c(pression_extension, current_pression_extension)
@@ -120,9 +110,7 @@ for (id in gg_data$Sample_ID){
 gg_data = cbind(gg_data, 
                 detachment_force,
                 energy,
-                energy_negative,
-                energy_positive,
-                energy_sum_positive_negative,
+                negative_energy,
                 rigidity,
                 position_difference,
                 pression_extension,
@@ -130,6 +118,7 @@ gg_data = cbind(gg_data,
                 pupa_length,
                 log10_na(detachment_force),
                 log10_na(energy),
+                log10_na(negative_energy),
                 log10_na(rigidity),
                 log10_na(position_difference),
                 log10_na(pression_extension),
@@ -137,7 +126,7 @@ gg_data = cbind(gg_data,
                 log10_na(pupa_length)
 )
 
-colnames(gg_data)[(ncol(gg_data) - 6) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_pupa_area", "log10_pupa_length")
+colnames(gg_data)[(ncol(gg_data) - 7) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_pupa_area", "log10_pupa_length")
 
 # exclusion of default condition for melanogaster
 gg_data = gg_data %>% filter((Protocol != "default" & Species == "Drosophila_melanogaster") | Species != "Drosophila_melanogaster") #on retire les default de melano
@@ -154,11 +143,11 @@ gg_data = gg_data %>%
   mutate(Speed = replace(Speed, 
                          Protocol == "detached pupae and speed x3", "3"))
 
-parameter_list = c("detachment_force", "energy", "rigidity", "position_difference", "pression_extension", "pupa_area", "pupa_length",
-                   "log10_detachment_force", "log10_energy", "log10_rigidity", "log10_position_difference", "log10_pupa_area", "log10_pupa_length")
-lab_list = c("Detachment force", "Energy", "Rigidity", "Position difference", "Pression extension", "Pupa area", "Pupa length",
-             "log(Detachment force)", "log(Energy)", "log(Rigidity)", "log(Position difference)", "log(Pupa area)", "log(Pupa length)")
-unit_list = c("Newton", "N.mm", "N.mm-1", "mm", "mm", "mm^2", "mm", "Newton", "N.mm", "N.mm-1", "mm", "mm^2", "mm")
+parameter_list = c("detachment_force", "energy", "negative_energy", "rigidity", "position_difference", "pression_extension", "pupa_area", "pupa_length",
+                   "log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pupa_area", "log10_pupa_length")
+lab_list = c("Detachment force", "Energy", "Negative energy", "Rigidity", "Position difference", "Pression extension", "Pupa area", "Pupa length",
+             "log(Detachment force)", "log(Energy)", "log(Negative energy)", "log(Rigidity)", "log(Position difference)", "log(Pupa area)", "log(Pupa length)")
+unit_list = c("Newton", "N.mm", "N.mm", "N.mm-1", "mm", "mm", "mm^2", "mm", "Newton", "N.mm", "N.mm", "N.mm-1", "mm", "mm^2", "mm")
 
 species_list = unique(gg_data$Species)
 protocol_list = unique(gg_data$Protocol)
@@ -853,7 +842,7 @@ species_to_keep =
                                        which(gg_data$Protocol == "standard")])]
 
 temp_data = gg_data %>%
-  filter(Comment == "ok") %>%
+  filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached" ) %>%
   filter(Species %in% species_to_keep) %>%
   filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
   group_by(Species, Protocol) %>%
