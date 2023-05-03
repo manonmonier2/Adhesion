@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -377,10 +377,10 @@ for (i in 1:length(parameter_list)){
   temp_data_species = as.data.frame(temp_data_species)
 
   #plot
-  #temp_data_species$Protocol = factor(temp_data_species$Protocol, levels = gg_data_test_species$Protocol)
+  temp_data_species$Protocol = factor(temp_data_species$Protocol, levels = gg_data_test_species$Protocol)
   p = ggplot(temp_data_species,
-             aes_string(x = "Species", y = parameter_list[i], fill = factor(Protocol))) +
-    geom_point(aes(color = Comments), shape = 20, size = 2, stroke = 1)+
+             aes_string(x = "Species", y = parameter_list[i], fill = "Protocol")) +
+    geom_point(aes(color = Comment), shape = 20, size = 2, stroke = 1)+
     geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") +
     theme_bw(base_size = 22) +
     theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
