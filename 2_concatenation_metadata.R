@@ -173,26 +173,43 @@ write.table(temp, file=paste0(dirname(path_output_file), "/stock_correction.csv"
 
 # Integration of the imageJ results
 
-list_imagej_file = list.files(path_imagej, full.names = T)
-
 concatenate_data_imagej = data.frame()
-for(imagej_file in list_imagej_file){
-  imagej_data = read.table(imagej_file, sep = ";", header = T)
-  
-  imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
-  
-  imagej_image_type = sub(".*_type_+(.+).csv$", "\\1", 
-                          basename(imagej_file))
-  
-  if(imagej_image_type == basename(imagej_file)) {
-    imagej_image_type = "no_type_found"
+list_type = c("size", "glue")
+for(file_type in list_type){
+  list_imagej_file = list.files(path_imagej, full.names = T, 
+                                pattern = paste0(file_type, ".csv$"))
+  concatenate_by_type = data.frame()
+  for(imagej_file in list_imagej_file){
+    imagej_data = read.table(imagej_file, sep = ";", header = T)
+    
+    # remove non unique id
+    imagej_data = imagej_data[which(table(imagej_data$Label) == 1), ]
+    
+    imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
+    
+    if (file_type == "glue"){
+      temp_imagej_data = data.frame(
+        "Sample_ID" = imagej_id,
+        "Glue_area" = imagej_data$Area)
+    } else if (file_type == "size") {
+      temp_imagej_data = cbind(data.frame(
+        "Sample_ID" = imagej_id),
+        imagej_data)
+    }
+    
+    concatenate_by_type = rbind(concatenate_by_type, 
+                                    temp_imagej_data)
   }
   
-  concatenate_data_imagej = rbind(concatenate_data_imagej,
-                                  cbind(imagej_id, imagej_data))
+  if (nrow(concatenate_data_imagej) > 0){
+    concatenate_data_imagej = base::merge(concatenate_data_imagej,
+                                          concatenate_by_type,
+                        all.x = T,
+                        all.y = T)
+  } else {
+    concatenate_data_imagej = concatenate_by_type
+  }
 }
-
-colnames(concatenate_data_imagej)[1] = "Sample_ID"
 
 id_not_running = c()
 # id not in metadata
