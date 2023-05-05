@@ -86,7 +86,7 @@ for (id in gg_data$Sample_ID){
   
   
   if(length(which(metadata$Sample_ID == id)) == 1) {
-    current_pupa_area = sqrt(gg_data$Scale_um[gg_data$Sample_ID == id]) * gg_data$Area[gg_data$Sample_ID == id] / sqrt(gg_data$Scale_px[gg_data$Sample_ID == id])
+    current_pupa_area = ((gg_data$Scale_um[gg_data$Sample_ID == id]^2) * gg_data$Area[gg_data$Sample_ID == id]) / (gg_data$Scale_px[gg_data$Sample_ID == id]^2)
   } else {
     current_pupa_area = NA
   }
