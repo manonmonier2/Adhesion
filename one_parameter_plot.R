@@ -32,7 +32,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -159,201 +159,18 @@ stat_list = c("mean", "max", "min", "median", "sd")
 plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
 dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
+
 for (i in 1:length(parameter_list)){
   # extract not ok value
   not_ok_gg_data = gg_data %>% 
     filter((
-      (Species == "Drosophila_melanogaster" & Protocol == "default") | 
-              Species != "Drosophila_melanogaster") 
-      & (Comment == "not_detached") | (Comment == "cuticle_broke"))
-
-  #plot
-  p = gg_data %>% 
-    filter(((Species == "Drosophila_melanogaster" & Protocol == "default") | 
-              Species != "Drosophila_melanogaster") & Comment == "ok") %>%
-    filter(length(!is.na(!!as.symbol(parameter_list[i]))) > 0) %>%
-    ggplot(aes_string(x = "Species", y = parameter_list[i], fill = "Protocol")) +
-    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") + 
-    geom_jitter(position=position_dodge(0.8)) +
-    geom_jitter(data = not_ok_gg_data, 
-                aes_string(x = "Species", 
-                           y = parameter_list[i], 
-                           color = "Protocol",
-                           shape = "Comment"), 
-                position=position_dodge(0.8)) + 
-    scale_shape_manual(values = c(3, 4)) +
-    scale_color_manual(values = rep(1, 8)) +
-    theme_bw(base_size = 18) +
-    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    xlab("Species") +
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-  ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
-         plot=p, width=16, height=8, device = "pdf")
+      (Protocol == "strong tape and 0,25 N" | Protocol == "standard") 
+      & (Comment == "not_detached") | (Comment == "cuticle_broke")))
   
-}
-
-## by species only standard protocol
-plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
-dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
-
-for (i in 1:length(parameter_list)){
   temp_data_species = gg_data %>% 
-    filter(Protocol == "standard" & Comment == "ok") %>%
+    filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard") 
+           & Comment == "ok") %>%
     filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-    group_by(Species) %>%
-    filter(length(!!as.symbol(parameter_list[i])) > 1)
-  
-  temp_data_species = as.data.frame(temp_data_species)
-  
-  test_stat_species = c()
-  
-  # shapiro
-  res_shapiro_global = shapiro.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])])
-  shapiro_global_handler = res_shapiro_global$p.value >= 0.01
-  test_stat_species = c(test_stat_species, shapiro_global_handler)
-  
-  
-  # bartlett
-  res_bartlett = bartlett.test(
-    temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])]
-    ~ Species, temp_data_species)
-  bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
-  test_stat_species = c(test_stat_species, bartlett_reject)
-  
-  # anova
-  aov_res = aov(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
-  anova_res = anova(aov_res)
-  anova_handler = anova_res$`Pr(>F)`[1] >= 0.01
-  
-  test_stat_species = c(test_stat_species, anova_handler)
-  
-  # kruskal wallis
-  kruskal_res = kruskal.test(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, temp_data_species)
-  kruskal_handler = kruskal_res$p.value >= 0.01
-  
-  test_stat_species = c(test_stat_species, anova_handler)
-  
-  names(test_stat_species) = c("shapiro", "bartlett", "anova", "kruskal-wallis")
-  
-  # Tukey
-  tukey_res = TukeyHSD(aov_res, conf.level = 0.99)
-  HSD_res = HSD.test(aov_res, "Species", group = T)
-  tukey_group = HSD_res$groups
-  tukey_group = cbind(rownames(tukey_group), tukey_group[, -1])#on extrait les noms de ligne et on les place dans une nouvelle colonne à gauche avec cbind
-  #puis on append le tableau de resultats tukey_group auquel on retire les moyennes en colonne 1
-  colnames(tukey_group) = c("Protocol", "groups")
-  tukey_group = as.data.frame(tukey_group)
-  
-  
-  # Dunn
-  dunn_res = dunnTest(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])] ~ Species, data = temp_data_species)
-  
-  dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res)
-  dunn_group = dunn_group[, -3]
-  colnames(dunn_group) = c("Protocol", "groups")
-  dunn_group$Protocol[which(dunn_group$Protocol == "s")] = "0s" #dans les resultats de dunn '0s' est affiche 's' donc on modifie
-  dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
-  #order est donne pour lignes car on veut ordonner lignes
-  ###
-  
-  used_test = NA
-  if (test_stat_species["shapiro"] & test_stat_species["bartlett"]){
-    gg_data_test_species = tukey_group
-    used_test = "Tukey"
-  } else {
-    gg_data_test_species = dunn_group
-    used_test = "Dunn"
-  }
-  
-  
-  #plot
-  temp_data_species$Protocol = factor(temp_data_species$Species, levels = gg_data_test_species$Species)
-  p = ggplot(temp_data_species,
-             aes_string(x = "Species", y = parameter_list[i])) +
-    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
-    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") +
-    theme_bw(base_size = 22) +
-    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
-    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    xlab("Species") +
-    stat_summary(fun.data = n_fun, geom = "text") +
-    geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
-    ggtitle(paste0(lab_list[i], " by species"))
-  
-  ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_standard_protocol", ".pdf"),
-         plot=p, width=16, height=8, device = "pdf")
-  
-}
-
-
-#by species protocol separated with comments
-plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
-dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
-
-species_to_keep = 
-  unique(gg_data$Species[which(gg_data$Protocol == 
-                                 "strong tape and 0,25 N")])[
-                                   unique(gg_data$Species[
-                                     which(gg_data$Protocol == 
-                                             "strong tape and 0,25 N")]) %in% 
-                                     unique(gg_data$Species[
-                                       which(gg_data$Protocol == "standard")])]
-
-for (i in 1:length(parameter_list)){
-  
-  temp_data_species = gg_data %>%
-    filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
-    filter(Species %in% species_to_keep) %>%
-    filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
-    #filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-    #group_by(Species) %>%
-    filter(length(!!as.symbol(parameter_list[i])) > 1)
-  
-  
-  temp_data_species = as.data.frame(temp_data_species)
-  
-  #plot
-  #temp_data_species$Protocol = factor(temp_data_species$Protocol, levels = gg_data_test_species$Protocol)
-  p = ggplot(temp_data_species,
-             aes_string(x = "Species", y = parameter_list[i], fill = "Protocol")) +
-    #geom_point(aes(color = Comment), shape = 20, size = 2) +
-    #geom_dotplot(aes(color = Comment), binaxis='y', stackdir='center', dotsize=0.5) +
-    geom_jitter(aes(colour = Comment), width = 0.2) + 
-    geom_boxplot(position = position_dodge(width = 0.7), width= 0.4, outlier.colour = "grey", alpha = 0.1) +
-    theme_bw(base_size = 22) + 
-    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90)) +
-    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) + xlab("Species") +
-    stat_summary(fun.data = n_fun, geom = "text") +
-    #geom_text(data = gg_data_test_species, aes_string(x = "Protocol", label = "groups", y = min(temp_data_species[, which(colnames(temp_data_species) == parameter_list[i])], na.rm = T))) +
-    ggtitle(paste0(lab_list[i], " by species"))
-  
-  ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_two_protocol_comments", ".pdf"),
-         plot=p, width=16, height=8, device = "pdf")
-  
-}
-
-## by species all protocol merged
-plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
-dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
-
-for (i in 1:length(parameter_list)){
-  temp_data_species = gg_data %>% filter(Comment == "ok") %>%
-    filter((Species != "Drosophila_hydei" & 
-              Species != "Megaselia_abdita" &
-              Species != "Drosophila_melanogaster" & 
-              Species != "Drosophila_suzukii" &
-              Species != "Drosophila_biarmipes" & 
-              Species != "Drosophila_simulans") |
-             (Species == "Drosophila_melanogaster" & 
-                Protocol == "standard" & 
-                Stock == "cantonS") |
-             (Species == "Drosophila_suzukii" & 
-                Stock == "WT3") |
-             (Species == "Drosophila_biarmipes" & 
-                Stock == "G224")|
-             (Species == "Drosophila_simulans" &
-                Stock == "simulans_vincennes")) %>%
-    filter(!is.na(!!as.symbol(parameter_list[i]))) %>%
     group_by(Species) %>%
     filter(length(!!as.symbol(parameter_list[i])) > 1)
   
@@ -417,7 +234,6 @@ for (i in 1:length(parameter_list)){
     used_test = "Dunn"
   }
   
-  
   # reorder by detachment force median
   order_data = temp_data_species %>%
     group_by(Species) %>% 
@@ -425,11 +241,11 @@ for (i in 1:length(parameter_list)){
   
   order_data = order_data[order(order_data$median), ]
   
-  temp_data_species$Species = factor(temp_data_species$Species, 
+  temp_data_species$Species = factor(temp_data_species$Species,
                                      levels = order_data$Species)
   
-  gg_data_test_species$Species = factor(gg_data_test_species$Species, 
-                                        levels = order_data$Species)
+  gg_data_test_species$Species = factor(gg_data_test_species$Species,
+                                     levels = order_data$Species)
   
   x_labels = paste0("***",
                     levels(gg_data_test_species$Species),
@@ -445,27 +261,24 @@ for (i in 1:length(parameter_list)){
   x_labels = gsub("Scaptodrosophila", "S.", x_labels, fixed = T)
   x_labels = gsub("Zaprionus", "Z.", x_labels, fixed = T)
   
-  # add group count
-  # x_labels = paste0(x_labels, 
-  #        " (n = ", unlist(lapply(levels(temp_data_species$Species), 
-  #        function(x) length(which(temp_data_species$Species == x)))),
-  #        ")")
   
   #plot
   p = ggplot(temp_data_species,
              aes_string(x = "Species", y = parameter_list[i])) +
-    geom_point(colour = "black", shape = 20, size = 2, stroke = 1)+
-    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey", fill = NA) +
-    stat_summary(fun.data = n_fun, geom = "text") +
+    geom_boxplot(width= 0.4, colour= "red", outlier.colour = "grey") + 
+    geom_jitter(position=position_dodge(0.5)) +
+    geom_jitter(data = not_ok_gg_data, 
+                aes_string(x = "Species", 
+                           y = parameter_list[i], 
+                           shape = "Comment"), 
+                position=position_dodge(0.8)) + 
+    scale_shape_manual(values = c(3, 4)) +
+    scale_color_manual(values = rep(1, 8)) +
+    theme_bw(base_size = 18) +
     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    xlab("Species") + 
-    scale_x_discrete(labels = x_labels) +
-    coord_flip() +
-    ggtitle(paste0(lab_list[i], " by species"))
-  # md_theme_bw(base_size = 22) +
-  # as_md_theme(theme(plot.title = element_text(hjust = 0.5)))
-  
-  ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], "_protocol_merged", ".pdf"),
+    xlab("Species") + coord_flip() + scale_x_discrete(labels = x_labels) +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+  ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
   
 }
