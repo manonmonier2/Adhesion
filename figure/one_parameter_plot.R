@@ -163,7 +163,6 @@ for (i in 1:length(parameter_list)){
     theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90), axis.title.y = element_blank()) +
     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     scale_x_discrete(labels = x_labels) +
-    geom_text(data = gg_data_test, aes_string(label = "groups", y = min(temp_data[, which(colnames(temp_data) == parameter_list[i])], na.rm = T))) +
     coord_flip()
   
   ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/", parameter_list[i], "_Drosophila_melanogaster", ".pdf"), 
