@@ -148,8 +148,8 @@ gg_data = gg_data %>%
 
 parameter_list = c("detachment_force", "energy", "negative_energy", "rigidity", "position_difference", "pression_extension", "pupa_area", "pupa_length", "Glue_area",
                    "log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pupa_area", "log10_pupa_length", "log10_glue_area")
-lab_list = c("Detachment force", "Energy", "Negative energy", "Rigidity", "Position difference", "Pression extension", "Pupa area", "Pupa length", "Pupa area",
-             "log(Detachment force)", "log(Energy)", "log(Negative energy)", "log(Rigidity)", "log(Position difference)", "log(Pupa area)", "log(Pupa length)", "log10_glue_area")
+lab_list = c("Detachment force", "Short term energy", "Proxy of long term energy","Rigidity", "Position difference", "Pression extension", "Pupa area", "Pupa length", "Pupa area",
+             "log(Detachment force)", "log(Short term energy)", "log(Proxy of long term energy)", "log(Rigidity)", "log(Position difference)", "log(Pression extention)" , "log(Pupa area)", "log(Pupa length)", "log10_glue_area")
 unit_list = c("Newton", "N.mm", "N.mm", "N.mm-1", "mm", "mm", "mm^2", "mm", "um^2", "Newton", "N.mm", "N.mm", "N.mm-1", "mm", "mm^2", "mm", "um^2")
 
 species_list = unique(gg_data$Species)
@@ -165,7 +165,8 @@ dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE
 
 list_plot = list()
 for (i in 1:length(parameter_list)){
-  temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster")
+  temp_data = gg_data %>% filter(Comment == "ok" & Species == "Drosophila_melanogaster" & 
+                                   Protocol != "water")
   temp_data$Protocol = as.factor(temp_data$Protocol)
   test_stat = c()
   
@@ -251,9 +252,9 @@ for (i in 1:length(parameter_list)){
   }
 }
 
-p = ggarrange(plotlist = list_plot, common.legend = T)
+p = ggarrange(plotlist = list_plot[1:6], ncol = 2, nrow = 3, common.legend = T, labels = c("A", "B", "C", "D", "E", "F"))
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
-       plot=p, width=40, height=20, device = "pdf")
+       plot=p, width=20, height=30, device = "pdf")
 
 
 
