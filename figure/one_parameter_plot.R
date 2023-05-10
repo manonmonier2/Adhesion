@@ -93,7 +93,7 @@ make_stat = function(temp_data){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -136,7 +136,7 @@ for (i in 1:length(parameter_list)){
   
   
   temp_data_all_comment = gg_data %>% 
-    filter(Species == "Drosophila_melanogaster" & Protocol != "water") %>%
+    filter(Species == "Drosophila_melanogaster" & Stock == "cantonS" &Protocol != "water") %>%
     filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached")
   
   gg_data_test = make_stat(temp_data)
@@ -144,19 +144,29 @@ for (i in 1:length(parameter_list)){
   temp_data$Protocol = factor(temp_data$Protocol, levels = gg_data_test$Protocol)
   
   x_labels =  paste(StrAlign(gg_data_test$Protocol, sep = "\\r"),
-                 StrAlign(gg_data_test$groups, sep = "\\r"),
-                 StrAlign(paste0("n = ", 
-                                   unlist(lapply(gg_data_test$Protocol, 
-                                                 function(x) {
-                                        sum(temp_data_all_comment$Protocol == x)
-                                        }))), sep = "\\r"),
-                  sep = " | ")
+                    StrAlign(gg_data_test$groups, sep = "\\r"),
+                    StrAlign(paste0("n = ", 
+                                    unlist(lapply(gg_data_test$Protocol, 
+                                                  function(x) {
+                                                    sum(temp_data_all_comment$Protocol == x)
+                                                  }))), sep = "\\r"),
+                    sep = " | ")
   
-
-
+  # order_data = temp_data %>%
+  #   group_by(Protocol) %>%
+  #   summarise(median = median(detachment_force))
+  # 
+  # order_data = order_data[order(order_data$median), ]
+  # 
+  # temp_data$Protocol = factor(temp_data$Protocol,
+  #                             levels = order_data$Protocol)
+  # 
+  # gg_data_test$Protocol = factor(gg_data_test$Protocol,
+  #                                levels = order_data$Protocol)
+  
   
   p = ggplot(temp_data,
-             aes_string(x = "Protocol", y = parameter_list[i])) +
+             aes_string(x = fct_reorder("Protocol", parameter_list[i], fun = median[parameter_list[i]], .desc =TRUE), y = parameter_list[i])) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
     geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 22) +
@@ -175,7 +185,7 @@ for (i in 1:length(parameter_list)){
 
 p = ggarrange(plotlist = list_plot[1:6], ncol = 2, nrow = 3, common.legend = T, labels = c("A", "B", "C", "D", "E", "F"))
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
-       plot=p, width=20, height=30, device = "pdf")
+       plot=p, width=40, height=30, device = "pdf")
 
 
 
@@ -269,7 +279,7 @@ for (i in 1:length(parameter_list)){
                                      levels = order_data$Species)
   
   gg_data_test_species$Species = factor(gg_data_test_species$Species,
-                                     levels = order_data$Species)
+                                        levels = order_data$Species)
   
   x_labels = paste0("***",
                     levels(gg_data_test_species$Species),
