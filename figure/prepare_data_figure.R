@@ -17,7 +17,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -57,9 +57,9 @@ for (id in gg_data$Sample_ID){
   current_detachment_force = -min(sample$load[current_index$index_4:current_index$index_5])
   
   if(length(which(energy_table$id == id)) == 1) {
-    current_energy = energy_table$integrale_compression[energy_table$id == id] - energy_table$sum_decompression_negative_and_positive[energy_table$id == id]
+    current_energy = abs(energy_table$integrale_compression[energy_table$id == id] - energy_table$sum_decompression_negative_and_positive[energy_table$id == id])
     current_energy_negative = 
-      energy_table$integrale_decompression_negative[energy_table$id == id]
+      abs(energy_table$integrale_decompression_negative[energy_table$id == id])
   } else {
     current_energy = NA
     current_energy_negative = NA
