@@ -93,7 +93,7 @@ make_stat = function(temp_data){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -139,6 +139,19 @@ for (i in 1:length(parameter_list)){
     filter(Species == "Drosophila_melanogaster" & Stock == "cantonS" &Protocol != "water") %>%
     filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached")
   
+  # reorder by detachment force median
+  order_data = temp_data %>%
+    group_by(Species) %>% 
+    summarise(median = median(detachment_force))
+  
+  order_data = order_data[order(order_data$median), ]
+  
+  temp_data_species$Species = factor(temp_data_species$Species,
+                                     levels = order_data$Species)
+  
+  gg_data_test_species$Species = factor(gg_data_test_species$Species,
+                                        levels = order_data$Species)
+  
   gg_data_test = make_stat(temp_data)
   
   temp_data$Protocol = factor(temp_data$Protocol, levels = gg_data_test$Protocol)
@@ -152,21 +165,11 @@ for (i in 1:length(parameter_list)){
                                                   }))), sep = "\\r"),
                     sep = " | ")
   
-  # order_data = temp_data %>%
-  #   group_by(Protocol) %>%
-  #   summarise(median = median(detachment_force))
-  # 
-  # order_data = order_data[order(order_data$median), ]
-  # 
-  # temp_data$Protocol = factor(temp_data$Protocol,
-  #                             levels = order_data$Protocol)
-  # 
-  # gg_data_test$Protocol = factor(gg_data_test$Protocol,
-  #                                levels = order_data$Protocol)
+  
   
   
   p = ggplot(temp_data,
-             aes_string(x = fct_reorder("Protocol", parameter_list[i], fun = median[parameter_list[i]], .desc =TRUE), y = parameter_list[i])) +
+             aes_string(x = "Protocol", y = parameter_list[i])) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
     geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 22) +
