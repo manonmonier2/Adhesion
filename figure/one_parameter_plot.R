@@ -21,30 +21,33 @@ n_fun <- function(data){
 }
 
 
-make_stat = function(temp_data){
-  temp_data$Protocol = as.factor(temp_data$Protocol)
+make_stat = function(data, factor_name, parameter){
+  
+  data[[factor_name]] = as.factor(data[[factor_name]])
   test_stat = c()
   
   # shapiro
-  res_shapiro_global = shapiro.test(temp_data[, which(colnames(temp_data) == parameter_list[i])])
+  res_shapiro_global = shapiro.test(data[, which(colnames(data) == parameter)])
   shapiro_global_handler = res_shapiro_global$p.value >= 0.01
   test_stat = c(test_stat, shapiro_global_handler)
   
   
   # bartlett
-  res_bartlett = bartlett.test(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, temp_data)
+  res_bartlett = bartlett.test(x = data[, which(colnames(data) == parameter)], 
+                               g = data[, which(colnames(data) == factor_name)], 
+                               data = data)
   bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
   test_stat = c(test_stat, bartlett_reject)
   
   # anova
-  aov_res = aov(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, temp_data)
+  aov_res = aov(data[[parameter]] ~ data[[factor_name]])
   anova_res = anova(aov_res)
   anova_handler = anova_res$`Pr(>F)`[1] >= 0.01
   
   test_stat = c(test_stat, anova_handler)
   
   # kruskal wallis
-  kruskal_res = kruskal.test(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, temp_data)
+  kruskal_res = kruskal.test(data[[parameter]] ~ data[[factor_name]])
   kruskal_handler = kruskal_res$p.value >= 0.01
   
   test_stat = c(test_stat, anova_handler)
@@ -53,26 +56,26 @@ make_stat = function(temp_data){
   
   # Tukey
   tukey_res = TukeyHSD(aov_res, conf.level = 0.99)
-  HSD_res = HSD.test(aov_res, "Protocol", group = T)
+  HSD_res = HSD.test(aov_res, "data[[factor_name]]", group = T)
   tukey_group = HSD_res$groups
   tukey_group = cbind(rownames(tukey_group), tukey_group[, -1])#on extrait les noms de ligne et on les place dans une nouvelle colonne à gauche avec cbind
   #puis on append le tableau de resultats tukey_group auquel on retire les moyennes en colonne 1
-  colnames(tukey_group) = c("Protocol", "groups")
+  colnames(tukey_group) = c(factor_name, "groups")
   tukey_group = as.data.frame(tukey_group)
   
   
   # Dunn
-  dunn_res = dunnTest(temp_data[, which(colnames(temp_data) == parameter_list[i])] ~ Protocol, data = temp_data)
+  dunn_res = dunnTest(data[[parameter]] ~ data[[factor_name]])
   
   dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res, 
                        remove.zero = F,
                        remove.space = T)
   dunn_group = dunn_group[, -3]
-  colnames(dunn_group) = c("Protocol", "groups")
+  colnames(dunn_group) = c(factor_name, "groups")
   # correction of dunn group name (add space)
-  for(true_name in unique(temp_data$Protocol)){
+  for(true_name in unique(data[[factor_name]])){
     dunn_name = gsub(" ", "", true_name)
-    dunn_group$Protocol[which(dunn_group$Protocol == dunn_name)] = true_name
+    dunn_group[[factor_name]][which(dunn_group[[factor_name]] == dunn_name)] = true_name
   }
   dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
   #order est donne pour lignes car on veut ordonner lignes
@@ -80,20 +83,31 @@ make_stat = function(temp_data){
   
   used_test = NA
   if (test_stat["shapiro"] & test_stat["bartlett"]){
-    gg_data_test = tukey_group
+    data_test = tukey_group
     used_test = "Tukey"
   } else {
-    gg_data_test = dunn_group
+    data_test = dunn_group
     used_test = "Dunn"
   }
-  return(gg_data_test)
+  return(data_test)
 }
 
+
+reorder_by_factor = function(data, factor_name, fun, parameter) {
+  order_data = data %>%
+    group_by(!!as.symbol(factor_name)) %>% 
+    filter(!is.na(!!as.symbol(parameter))) %>%
+    summarise(fun = 
+                do.call(fun, list(x = (!!as.symbol(parameter)))))
+  order_data = as.data.frame(order_data[order(order_data$fun), ])
+  
+  return(order_data)
+}
 
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -133,29 +147,29 @@ for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% 
     filter(Comment == "ok" & 
              Species == "Drosophila_melanogaster" & 
-             Protocol != "water")
+             Protocol != "water") %>%
+    filter(!is.na(!!as.symbol(parameter_list[[i]])))
   
   
   temp_data_all_comment = gg_data %>% 
-    filter(Species == "Drosophila_melanogaster" & Stock == "cantonS" &Protocol != "water") %>%
-    filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached")
+    filter(Species == "Drosophila_melanogaster" & 
+             Stock == "cantonS" & Protocol != "water") %>%
+    filter(Comment == "ok" | Comment == "cuticle_broke" | 
+             Comment == "not_detached") %>%
+    filter(!is.na(!!as.symbol(parameter_list[[i]])))
   
-  # reorder by detachment force median
-  order_data = temp_data %>%
-    group_by(Species) %>% 
-    summarise(median = median(detachment_force))
+  protocol_order = reorder_by_factor(data = temp_data, 
+                                     factor_name = "Protocol", 
+                                     fun = "median", 
+                                     parameter = parameter_list[[i]])
   
-  order_data = order_data[order(order_data$median), ]
-  
-  temp_data_species$Species = factor(temp_data_species$Species,
-                                     levels = order_data$Species)
-  
-  gg_data_test_species$Species = factor(gg_data_test_species$Species,
-                                        levels = order_data$Species)
-  
-  gg_data_test = make_stat(temp_data)
-  
-  temp_data$Protocol = factor(temp_data$Protocol, levels = gg_data_test$Protocol)
+  gg_data_test = make_stat(data = temp_data, 
+                           factor_name = "Protocol", 
+                           parameter = parameter_list[[i]])
+  temp_data$Protocol = 
+    factor(temp_data$Protocol, levels = protocol_order$Protocol)
+  temp_data_all_comment$Protocol = 
+    factor(temp_data_all_comment$Protocol, levels = protocol_order$Protocol)
   
   x_labels =  paste(StrAlign(gg_data_test$Protocol, sep = "\\r"),
                     StrAlign(gg_data_test$groups, sep = "\\r"),
@@ -165,8 +179,6 @@ for (i in 1:length(parameter_list)){
                                                     sum(temp_data_all_comment$Protocol == x)
                                                   }))), sep = "\\r"),
                     sep = " | ")
-  
-  
   
   
   p = ggplot(temp_data,
@@ -183,14 +195,13 @@ for (i in 1:length(parameter_list)){
          plot=p, width=16, height=8, device = "pdf")
   
   if (! grepl("^log10_", parameter_list[i])){
-    list_plot[[parameter_list[i]]] = p + coord_flip()
+    list_plot[[parameter_list[i]]] = p
   }
 }
 
 p = ggarrange(plotlist = list_plot[1:6], ncol = 2, nrow = 3, common.legend = T, labels = c("A", "B", "C", "D", "E", "F"))
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
        plot=p, width=40, height=30, device = "pdf")
-
 
 
 ## by species
