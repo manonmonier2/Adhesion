@@ -7,11 +7,8 @@ library("rcompanion")
 library("agricolae")
 library("FSA")
 library("ggpubr")
-library("forcats")
-library("rlang")
 library("DescTools")
-
-#library("mdthemes")
+library("ggtext")
 
 #### FUNCTIONS ####
 
@@ -104,6 +101,49 @@ reorder_by_factor = function(data, factor_name, fun, parameter) {
   return(order_data)
 }
 
+
+format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA) {
+  if (factor_name == "Species"){
+    a_col = paste0("***",
+                   levels(factor_labels),
+                   "***")
+    a_col = gsub("_", " ", a_col, fixed = T)
+    a_col = gsub("Drosophila", "D.", a_col, fixed = T)
+    a_col = gsub("Megaselia", "M.", a_col, fixed = T)
+    a_col = gsub("Scaptodrosophila", "S.", a_col, fixed = T)
+    a_col = gsub("Zaprionus", "Z.", a_col, fixed = T)
+  } else {
+    a_col = StrAlign(levels(factor_labels), sep = "\\r")
+  }
+  
+  if (length(stat_group) > 0){
+    ordered_groups = unlist(lapply(levels(stat_group[[factor_name]]), 
+           function(x) {
+             stat_group[stat_group[[factor_name]] == x, ]$groups
+           }))
+    b_col = StrAlign(ordered_groups, sep = "\\r")
+  } else {
+    b_col = ""
+  }
+  
+  if (length(n_data) > 0){
+    
+    n_count = unlist(lapply(levels(n_data[[factor_name]]), 
+                            function(x) {
+                              sum(n_data[[factor_name]] == x)
+                            }))
+    c_col = StrAlign(paste0("n = ", n_count), sep = "\\r")
+  } else {
+    c_col = ""
+  }
+  
+  labels =  paste(a_col,
+                  b_col,
+                  c_col,
+                  sep = " | ")
+  return(labels)
+}
+  
 ####
 
 # load config file
@@ -158,29 +198,31 @@ for (i in 1:length(parameter_list)){
              Comment == "not_detached") %>%
     filter(!is.na(!!as.symbol(parameter_list[[i]])))
   
-  protocol_order = reorder_by_factor(data = temp_data, 
-                                     factor_name = "Protocol", 
-                                     fun = "median", 
-                                     parameter = parameter_list[[i]])
   
   gg_data_test = make_stat(data = temp_data, 
                            factor_name = "Protocol", 
-                           parameter = parameter_list[[i]])
+                           parameter = parameter_list[i])
+  
+  # reorder all the data in the same way
+  protocol_order = reorder_by_factor(data = temp_data, 
+                                     factor_name = "Protocol", 
+                                     fun = "median", 
+                                     parameter = parameter_list[i])
+  
+  gg_data_test$Protocol = 
+    factor(gg_data_test$Protocol, levels = protocol_order$Protocol, ordered = T)
   temp_data$Protocol = 
-    factor(temp_data$Protocol, levels = protocol_order$Protocol)
+    factor(temp_data$Protocol, levels = protocol_order$Protocol,  ordered = T)
   temp_data_all_comment$Protocol = 
-    factor(temp_data_all_comment$Protocol, levels = protocol_order$Protocol)
-  
-  x_labels =  paste(StrAlign(gg_data_test$Protocol, sep = "\\r"),
-                    StrAlign(gg_data_test$groups, sep = "\\r"),
-                    StrAlign(paste0("n = ", 
-                                    unlist(lapply(gg_data_test$Protocol, 
-                                                  function(x) {
-                                                    sum(temp_data_all_comment$Protocol == x)
-                                                  }))), sep = "\\r"),
-                    sep = " | ")
+    factor(temp_data_all_comment$Protocol, levels = protocol_order$Protocol,  
+           ordered = T)
   
   
+  x_labels = format_label(factor_name = "Protocol",
+                          factor_labels = gg_data_test[["Protocol"]],
+                          stat_group = gg_data_test,
+                          n_data = temp_data_all_comment)
+
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i])) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
@@ -220,39 +262,29 @@ for (i in 1:length(parameter_list)){
   
   temp_data_species = as.data.frame(temp_data_species)
   
-  test_stat_species = c()
-  
-  
-  gg_data_test_species = make_stat(temp_data_species)
+  gg_data_test_species = make_stat(data = temp_data_species,
+                                   factor_name = "Species",
+                                   parameter = parameter_list[i])
   
 
-  # reorder by detachment force median
-  order_data = temp_data_species %>%
-    group_by(Species) %>% 
-    summarise(median = median(detachment_force))
-  
-  order_data = order_data[order(order_data$median), ]
+  # reorder species for the plot
+  species_order = reorder_by_factor(data = temp_data_species, 
+                                     factor_name = "Species", 
+                                     fun = "median", 
+                                     parameter = parameter_list[i])
   
   temp_data_species$Species = factor(temp_data_species$Species,
-                                     levels = order_data$Species)
+                                     levels = species_order$Species,
+                                     ordered = T)
   
   gg_data_test_species$Species = factor(gg_data_test_species$Species,
-                                        levels = order_data$Species)
+                                        levels = species_order$Species,
+                                        ordered = T)
   
-  x_labels = paste0("***",
-                    levels(gg_data_test_species$Species),
-                    "***",
-                    " [", 
-                    gg_data_test_species$groups[
-                      unlist(lapply(levels(gg_data_test_species$Species), 
-                                    function(x) which(gg_data_test_species$Species == x)))],
-                    "]")
-  x_labels = gsub("_", " ", x_labels, fixed = T)
-  x_labels = gsub("Drosophila", "D.", x_labels, fixed = T)
-  x_labels = gsub("Megaselia", "M.", x_labels, fixed = T)
-  x_labels = gsub("Scaptodrosophila", "S.", x_labels, fixed = T)
-  x_labels = gsub("Zaprionus", "Z.", x_labels, fixed = T)
-  
+  x_labels = format_label(factor_name = "Species",
+                          factor_labels = gg_data_test_species[["Species"]],
+                          stat_group = gg_data_test_species,
+                          n_data = temp_data_species)
   
   #plot
   p = ggplot(temp_data_species,
@@ -268,13 +300,17 @@ for (i in 1:length(parameter_list)){
     scale_color_manual(values = rep(1, 8)) +
     theme_bw(base_size = 18) +
     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    xlab("Species") + coord_flip() + scale_x_discrete(labels = x_labels) +
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1), axis.title.y = element_blank())
+    xlab("Species") +
+    coord_flip() + 
+    scale_x_discrete(labels = x_labels) +
+    theme(axis.title.y = element_blank(),
+          axis.text.y.left = element_markdown())
+  
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = "pdf")
   
   if (! grepl("^log10_", parameter_list[i])){
-    list_plot[[parameter_list[i]]] = p + coord_flip()
+    list_plot[[parameter_list[i]]] = p
   }
   
 }
