@@ -5,7 +5,7 @@ library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -39,7 +39,7 @@ raw_comment = c("cuticle_broked", "cuticule_broke", "cuticule broke", "cuticle b
 correct_comment = c("cuticle_broke", "cuticle_broke", "cuticle_broke", "cuticle_broke", "no_adhesive_paper", "no_adhesive_paper", "two_pupae", "two_pupae", "not_detached", "pb_machine", "pb_machine", "attached_at_the_bottom", "two_pupae", "pb_machine", "pb_machine", "pb_machine", "no_adhesive_paper", "pb_scotch")
 
 raw_protocol = c("noscotch", "no_scotch", "nocond", "no_cond", "default", "strong", "strongforce", "scotch_fin", "strongtape", "tesa", "div3", "x3", "scotch_fin_strong_force", "3japf", "cond1", "cond2", "cond3")
-correct_protocol = c("no tape", "no tape", "standard", "standard", "standard", "0,25 N", "0,25 N", "strong tape", "strong tape", "standard", "speed /3", "speed x3", "strong tape and 0,25 N", "3 days", "detached pupae", "pupae attached on tesa tape", "detached pupae and speed x3")
+correct_protocol = c("no tape", "no tape", "standard", "standard", "standard", "0.25 N", "0.25 N", "strong tape", "strong tape", "standard", "speed /3", "speed x3", "strong tape and 0.25 N", "3 days", "detached pupae", "pupae attached on tesa tape", "detached pupae and speed x3")
 
 species_with_incorrect_stock = c("Drosophila_takahashii", "Drosophila_pachea", "Drosophila_nannoptera", "Drosophila_pseudoobscura", "Drosophila_eugracilis", "Drosophila_elegans", "Drosophila_prostipennis", "Drosophila_funebris", "Drosophila_rhopaloa", "Drosophila_kurseongensis", "Scaptodrosophila_lebanonensis", "Zaprionus_lachaisei", "Drosophila_malerkotliana", "Zaprionus_indianus", "Drosophila_ananassae", "Drosophila_immigrans", "Drosophila_hydei", "Drosophila_quadraria", "Drosophila_tropicalis", "Drosophila_virilis")
 correct_stock_by_species = c("14022-0311.07", "15090-1698.01_14.2", "15090-1692.00", "14011-0121.94", "Prud_homme_Gompel", "14027-0461.03", "14022-0291.00", "M_Monier", "BaVi067", "SaPa058", "J_David", "S_Prigent", "S_Prigent", "S_Prigent", "Prud_homme_Gompel", "F_Borne", "F_Borne", "J_David", "S_Prigent", "15010-1051.86")
@@ -182,32 +182,30 @@ for(file_type in list_type){
   for(imagej_file in list_imagej_file){
     imagej_data = read.table(imagej_file, sep = ";", header = T)
     
-    # extract id from label
-    imagej_data$Label = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
-    # remove non unique id (get first id occurrence)
-    imagej_data = imagej_data[
-      unlist(lapply(unique(imagej_data$Label), function(x) {
-        min(which(imagej_data$Label == x))})), ]
+    # remove non unique id
+    imagej_data = imagej_data[which(table(imagej_data$Label) == 1), ]
+    
+    imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
     
     if (file_type == "glue"){
       temp_imagej_data = data.frame(
-        "Sample_ID" = imagej_data$Label,
+        "Sample_ID" = imagej_id,
         "Glue_area" = imagej_data$Area)
     } else if (file_type == "size") {
       temp_imagej_data = cbind(data.frame(
-        "Sample_ID" = imagej_data$Label),
+        "Sample_ID" = imagej_id),
         imagej_data)
     }
     
     concatenate_by_type = rbind(concatenate_by_type, 
-                                    temp_imagej_data)
+                                temp_imagej_data)
   }
   
   if (nrow(concatenate_data_imagej) > 0){
     concatenate_data_imagej = base::merge(concatenate_data_imagej,
                                           concatenate_by_type,
-                        all.x = T,
-                        all.y = T)
+                                          all.x = T,
+                                          all.y = T)
   } else {
     concatenate_data_imagej = concatenate_by_type
   }
@@ -224,26 +222,22 @@ if(length(id_not_in_metadata) > 0){
   concatenate_data_imagej = concatenate_data_imagej[-id_not_in_metadata, ]
 }
 
-# # id not unique in imageJ
-# count_by_id = table(concatenate_data_imagej$Sample_ID)
-# not_unique_id = names(count_by_id[which(count_by_id > 1)])
-# 
-# if(length(not_unique_id) > 0){
-#   id_not_running = c(id_not_running, 
-#                      unique(concatenate_data_imagej$Sample_ID[not_unique_id]))
-#   concatenate_data_imagej = concatenate_data_imagej[-which(concatenate_data_imagej$Sample_ID %in% 
-#                                                              not_unique_id), ]
-# }
+# id not unique in imageJ
+count_by_id = table(concatenate_data_imagej$Sample_ID)
+not_unique_id = names(count_by_id[which(count_by_id > 1)])
+
+if(length(not_unique_id) > 0){
+  id_not_running = c(id_not_running, 
+                     unique(concatenate_data_imagej$Sample_ID[not_unique_id]))
+  concatenate_data_imagej = concatenate_data_imagej[-which(concatenate_data_imagej$Sample_ID %in% 
+                                                             not_unique_id), ]
+}
 
 write.table(id_not_running, file = paste0(dirname(path_imagej), "/imagej_id_not_running.log"), row.names = F, col.names = F, quote = F)
 
 
-data_df = base::merge(data_df, concatenate_data_imagej,
+data_df = base::merge(data_df, concatenate_data_imagej, 
                       by = "Sample_ID", all = T)
-
-data_df %>%
-  filter(! is.na(Glue_area)) %>%
-  nrow()
 
 # write the output file (create repository if necessary)
 dir.create(dirname(path_output_file), showWarnings = FALSE)
