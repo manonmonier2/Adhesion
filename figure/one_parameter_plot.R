@@ -153,7 +153,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
                             function(x) {
                               sum(n_data[[factor_name]] == x)
                             }))
-    c_col = StrAlign(paste0("n = ", n_count), sep = "\\r")
+    c_col = StrAlign(paste0(n_count), sep = "\\r")
   } else {
     c_col = ""
   }
@@ -161,7 +161,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
   labels =  paste(a_col,
                   b_col,
                   c_col,
-                  sep = " | ")
+                  sep = "   ")
   return(labels)
 }
   
@@ -192,6 +192,10 @@ gg_data = read.table(paste0(plot_path, "/data_figure.csv"),
                      stringsAsFactors = F,
                      sep = "\t",
                      header = T)
+
+gg_data %>% 
+  filter(! is.na(Glue_area)) %>%
+  nrow()
 
 species_list = unique(gg_data$Species)
 protocol_list = unique(gg_data$Protocol)
@@ -278,13 +282,19 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 
 list_plot = list()
 for (i in 1:length(parameter_list)){
-  # extract not ok value
-  temp_data_species = gg_data %>% 
-    filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard") 
-           & Comment == "ok") %>%
-    filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-    group_by(Species) %>%
-    filter(length(!!as.symbol(parameter_list[i])) > 1)
+  if (parameter_list[i] == "Glue_area") {
+    temp_data_species = gg_data %>% 
+      filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+      group_by(Species) %>%
+      filter(length(!!as.symbol(parameter_list[i])) > 1)
+  } else {
+    temp_data_species = gg_data %>% 
+      filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard") 
+             & Comment == "ok") %>%
+      filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+      group_by(Species) %>%
+      filter(length(!!as.symbol(parameter_list[i])) > 1)
+  }
   
   temp_data_species = as.data.frame(temp_data_species)
   
@@ -312,8 +322,6 @@ for (i in 1:length(parameter_list)){
                           stat_group = gg_data_test_species,
                           n_data = temp_data_species)
   
-  x_labels_2 = c(paste0("                         ***", c(1:28), "***  |"),
-                 ".     ***D. quadraria*** | a c   g  |   n = 7")
   #plot
   p = ggplot(temp_data_species,
              aes_string(x = "Species", y = parameter_list[i])) +
