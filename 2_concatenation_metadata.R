@@ -182,18 +182,20 @@ for(file_type in list_type){
   for(imagej_file in list_imagej_file){
     imagej_data = read.table(imagej_file, sep = ";", header = T)
     
-    # remove non unique id
-    imagej_data = imagej_data[which(table(imagej_data$Label) == 1), ]
-    
-    imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
+    # extract id from label
+    imagej_data$Label = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
+    # remove non unique id (get first id occurrence)
+    imagej_data = imagej_data[
+      unlist(lapply(unique(imagej_data$Label), function(x) {
+        min(which(imagej_data$Label == x))})), ]
     
     if (file_type == "glue"){
       temp_imagej_data = data.frame(
-        "Sample_ID" = imagej_id,
+        "Sample_ID" = imagej_data$Label,
         "Glue_area" = imagej_data$Area)
     } else if (file_type == "size") {
       temp_imagej_data = cbind(data.frame(
-        "Sample_ID" = imagej_id),
+        "Sample_ID" = imagej_data$Label),
         imagej_data)
     }
     
@@ -222,22 +224,26 @@ if(length(id_not_in_metadata) > 0){
   concatenate_data_imagej = concatenate_data_imagej[-id_not_in_metadata, ]
 }
 
-# id not unique in imageJ
-count_by_id = table(concatenate_data_imagej$Sample_ID)
-not_unique_id = names(count_by_id[which(count_by_id > 1)])
-
-if(length(not_unique_id) > 0){
-  id_not_running = c(id_not_running, 
-                     unique(concatenate_data_imagej$Sample_ID[not_unique_id]))
-  concatenate_data_imagej = concatenate_data_imagej[-which(concatenate_data_imagej$Sample_ID %in% 
-                                                             not_unique_id), ]
-}
+# # id not unique in imageJ
+# count_by_id = table(concatenate_data_imagej$Sample_ID)
+# not_unique_id = names(count_by_id[which(count_by_id > 1)])
+# 
+# if(length(not_unique_id) > 0){
+#   id_not_running = c(id_not_running, 
+#                      unique(concatenate_data_imagej$Sample_ID[not_unique_id]))
+#   concatenate_data_imagej = concatenate_data_imagej[-which(concatenate_data_imagej$Sample_ID %in% 
+#                                                              not_unique_id), ]
+# }
 
 write.table(id_not_running, file = paste0(dirname(path_imagej), "/imagej_id_not_running.log"), row.names = F, col.names = F, quote = F)
 
 
-data_df = base::merge(data_df, concatenate_data_imagej, 
+data_df = base::merge(data_df, concatenate_data_imagej,
                       by = "Sample_ID", all = T)
+
+data_df %>%
+  filter(! is.na(Glue_area)) %>%
+  nrow()
 
 # write the output file (create repository if necessary)
 dir.create(dirname(path_output_file), showWarnings = FALSE)
