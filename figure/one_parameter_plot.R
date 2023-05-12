@@ -10,6 +10,10 @@ library("ggpubr")
 library("DescTools")
 library("ggtext")
 
+library("extrafont")
+# font_import()
+loadfonts(device = "win")
+
 #### FUNCTIONS ####
 
 n_fun <- function(data){
@@ -104,24 +108,41 @@ reorder_by_factor = function(data, factor_name, fun, parameter) {
 
 format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA) {
   if (factor_name == "Species"){
-    a_col = paste0("***",
-                   levels(factor_labels),
-                   "***")
+    # a_col = paste0("***",
+    #                levels(factor_labels),
+    #                "***")
+    a_col = levels(factor_labels)
     a_col = gsub("_", " ", a_col, fixed = T)
     a_col = gsub("Drosophila", "D.", a_col, fixed = T)
     a_col = gsub("Megaselia", "M.", a_col, fixed = T)
     a_col = gsub("Scaptodrosophila", "S.", a_col, fixed = T)
     a_col = gsub("Zaprionus", "Z.", a_col, fixed = T)
+    a_col = StrAlign(a_col, sep = "\\r")
   } else {
     a_col = StrAlign(levels(factor_labels), sep = "\\r")
   }
   
   if (length(stat_group) > 0){
-    ordered_groups = unlist(lapply(levels(stat_group[[factor_name]]), 
-           function(x) {
-             stat_group[stat_group[[factor_name]] == x, ]$groups
-           }))
-    b_col = StrAlign(ordered_groups, sep = "\\r")
+    ordered_groups = unlist(lapply(levels(stat_group[[factor_name]]),
+                                   function(x) {
+                                     stat_group[stat_group[[factor_name]] == x, ]$groups
+                                   }))
+    group_diversity = sort(unique(unlist(lapply(ordered_groups, function(x) {
+      return(base::unlist(strsplit(x, split = "")))
+    }))))
+    
+    edited_groups = unlist(lapply(ordered_groups, function(g) {
+      base::paste(unlist(lapply(group_diversity, function(x) {
+        if (grepl(x, g)) {
+          return(x)
+        } else {
+          return(" ")
+        }
+      })), collapse = "")
+    }))
+    
+    
+    b_col = edited_groups
   } else {
     b_col = ""
   }
@@ -157,6 +178,14 @@ path_batch_by_id = opt$batch_by_id
 plot_path = opt$plot_path
 path_integral = opt$integral_path
 
+parameter_list = gsub(" +$", "", 
+                      gsub("^ +", "", unlist(strsplit(opt$parameter_list, ","))))
+lab_list = gsub(" +$", "", 
+                gsub("^ +", "", unlist(strsplit(opt$lab_list, ","))))
+unit_list = gsub(" +$", "",
+                 gsub("^ +", "", unlist(strsplit(opt$unit_list, ","))))
+stat_list = gsub(" +$", "", 
+                 gsub("^ +", "", unlist(strsplit(opt$stat_list, ","))))
 
 # read data figure
 gg_data = read.table(paste0(plot_path, "/data_figure.csv"), 
@@ -164,16 +193,9 @@ gg_data = read.table(paste0(plot_path, "/data_figure.csv"),
                      sep = "\t",
                      header = T)
 
-## convert to parameters in the .yml file
-parameter_list = c("detachment_force", "energy", "negative_energy", "rigidity", "position_difference", "pression_extension", "pupa_area", "pupa_length", "Glue_area",
-                   "log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pupa_area", "log10_pupa_length", "log10_glue_area")
-lab_list = c("Detachment force", "Short term energy", "Proxy of long term energy","Rigidity", "Position difference", "Pression extension", "Pupa area", "Pupa length", "Glue area",
-             "log10(Detachment force)", "log10(Short term energy)", "log10(Proxy of long term energy)", "log10(Rigidity)", "log10(Position difference)", "log10(Pression extention)" , "log10(Pupa area)", "log10(Pupa length)", "log10(Glue area)")
-unit_list = c("Newton", "N.mm", "N.mm", "N.mm-1", "mm", "mm", "mm^2", "mm", "um^2", "Newton", "N.mm", "N.mm", "N.mm-1", "mm", "mm^2", "mm", "um^2")
-
 species_list = unique(gg_data$Species)
 protocol_list = unique(gg_data$Protocol)
-stat_list = c("mean", "max", "min", "median", "sd")
+
 
 # one parameter plot
 ## D. melanogaster protocols
@@ -222,19 +244,23 @@ for (i in 1:length(parameter_list)){
                           factor_labels = gg_data_test[["Protocol"]],
                           stat_group = gg_data_test,
                           n_data = temp_data_all_comment)
-
+  
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i])) +
     geom_point(colour = "black", shape = 20, size = 2, stroke = 1) +
     geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey", fill = NA) +
     theme_bw(base_size = 22) +
-    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90), axis.title.y = element_blank()) +
+    theme(plot.title = element_text(hjust = 0.5), 
+          plot.subtitle = element_text(hjust = 0.5), 
+          axis.text.x = element_text(family = "Courier New"), 
+          axis.text.y= element_text(family = "Courier New"),
+          axis.title.y = element_blank()) +
     ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
     scale_x_discrete(labels = x_labels) +
     coord_flip()
   
-  ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/", parameter_list[i], "_Drosophila_melanogaster", ".pdf"), 
-         plot=p, width=16, height=8, device = "pdf")
+  ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/", parameter_list[i], "_Drosophila_melanogaster", ".pdf"),
+         plot=p, width=16, height=8, device = cairo_pdf)
   
   if (! grepl("^log10_", parameter_list[i])){
     list_plot[[parameter_list[i]]] = p
@@ -243,7 +269,7 @@ for (i in 1:length(parameter_list)){
 
 p = ggarrange(plotlist = list_plot[1:6], ncol = 2, nrow = 3, common.legend = T, labels = c("A", "B", "C", "D", "E", "F"))
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
-       plot=p, width=40, height=30, device = "pdf")
+       plot=p, width=40, height=30, device = cairo_pdf)
 
 
 ## by species
@@ -286,16 +312,13 @@ for (i in 1:length(parameter_list)){
                           stat_group = gg_data_test_species,
                           n_data = temp_data_species)
   
+  x_labels_2 = c(paste0("                         ***", c(1:28), "***  |"),
+                 ".     ***D. quadraria*** | a c   g  |   n = 7")
   #plot
   p = ggplot(temp_data_species,
              aes_string(x = "Species", y = parameter_list[i])) +
     geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
     geom_jitter(position=position_dodge(0.5)) +
-    # geom_jitter(data = not_ok_gg_data, 
-    #             aes_string(x = "Species", 
-    #                        y = parameter_list[i], 
-    #                        shape = "Comment"), 
-    #             position=position_dodge(0.8)) + 
     scale_shape_manual(values = c(3, 4)) +
     scale_color_manual(values = rep(1, 8)) +
     theme_bw(base_size = 18) +
@@ -304,10 +327,11 @@ for (i in 1:length(parameter_list)){
     coord_flip() + 
     scale_x_discrete(labels = x_labels) +
     theme(axis.title.y = element_blank(),
-          axis.text.y.left = element_markdown())
+          axis.text.x = element_text(family = "Courier New"),
+          axis.text.y= element_text(family = "Courier New"))
   
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
-         plot=p, width=16, height=8, device = "pdf")
+         plot=p, width=16, height=8, device = cairo_pdf)
   
   if (! grepl("^log10_", parameter_list[i])){
     list_plot[[parameter_list[i]]] = p
@@ -317,4 +341,6 @@ for (i in 1:length(parameter_list)){
 
 p = ggarrange(plotlist = list_plot, common.legend = T)
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/all_parameters_all_species", ".pdf"), 
-       plot=p, width=40, height=20, device = "pdf")
+       plot=p, width=40, height=20, device = cairo_pdf)
+
+
