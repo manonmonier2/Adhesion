@@ -85,8 +85,7 @@ portable:
   
   # Absolute path to the created directory containing the imageJ files
   imagej_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/imageJ/raw
-  
-  
+   
 manon_acanthoptera:
   # Absolute path to batches data files
   batches: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_22_03_23/data/batch/raw
@@ -124,4 +123,3 @@ manon_acanthoptera:
 
   # Absolute path to the created directory containing the imageJ files
   imagej_path:  /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_22_03_23/data/imageJ/raw
-  
