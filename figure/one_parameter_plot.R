@@ -117,7 +117,8 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
     a_col = gsub("Megaselia", "M.", a_col, fixed = T)
     a_col = gsub("Scaptodrosophila", "S.", a_col, fixed = T)
     a_col = gsub("Zaprionus", "Z.", a_col, fixed = T)
-    a_col = StrAlign(a_col, sep = "\\r")
+    a_col = StrAlign(a_col, sep = "\\l")
+    a_col = substr(a_col, 1, 8)
   } else {
     a_col = StrAlign(levels(factor_labels), sep = "\\r")
   }
@@ -350,8 +351,10 @@ for (i in 1:length(parameter_list)){
   
 }
 
+
 p = ggarrange(plotlist = list_plot, common.legend = T)
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/all_parameters_all_species", ".pdf"), 
        plot=p, width=40, height=20, device = cairo_pdf)
+
 
 
