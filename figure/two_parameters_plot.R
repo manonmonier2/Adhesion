@@ -201,9 +201,9 @@ protocol_list = unique(gg_data$Protocol)
 plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
 dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
 
-temp_data = gg_data %>% 
+temp_data = gg_data %>%
   filter(Comment == "ok" & Stock == "cantonS" &
-           Species == "Drosophila_melanogaster" & 
+           Species == "Drosophila_melanogaster" &
            Protocol != "water") %>%
   filter(!is.na(!!as.symbol(parameter_list[[i]])))
 
@@ -213,11 +213,11 @@ for(protocol in sort(protocol_list)){
   #   filter(Comment == "ok" & Stock == "cantonS" &
   #            Species == "Drosophila_melanogaster" & 
   #            Protocol != "water" & Protocol == protocol)
-  temp_data = gg_data %>% 
-    filter(Comment == "ok" & Stock == "cantonS" &
-             Species == "Drosophila_melanogaster" & 
-             Protocol != "water" & Protocol == protocol) %>% 
-    filter(!is.na(!!as.symbol(parameter_list[[i]])))
+  # temp_data = gg_data %>% 
+  #   filter(Comment == "ok" & Stock == "cantonS" &
+  #            Species == "Drosophila_melanogaster" & 
+  #            Protocol != "water" & Protocol == protocol) %>% 
+  #   filter(!is.na(!!as.symbol(parameter_list[[i]])))
   stat_handler = c(protocol)
   colnames_handler = c("Protocol")
   for (i in 1:length(parameter_list)){
@@ -267,6 +267,10 @@ for (i in 1:length(parameter_list)){
            plot=p, width=16, height=8, device = "pdf")
   }
 }
+
+
+
+
 
 
 
