@@ -209,16 +209,21 @@ temp_data = gg_data %>%
 
 gg_stat_melano = data.frame()
 for(protocol in sort(protocol_list)){
-  temp_protocol_data = gg_data %>% 
+  # temp_protocol_data = gg_data %>% 
+  #   filter(Comment == "ok" & Stock == "cantonS" &
+  #            Species == "Drosophila_melanogaster" & 
+  #            Protocol != "water" & Protocol == protocol)
+  temp_data = gg_data %>% 
     filter(Comment == "ok" & Stock == "cantonS" &
              Species == "Drosophila_melanogaster" & 
-             Protocol != "water" & Protocol == protocol)
+             Protocol != "water" & Protocol == protocol) %>% 
+    filter(!is.na(!!as.symbol(parameter_list[[i]])))
   stat_handler = c(protocol)
   colnames_handler = c("Protocol")
   for (i in 1:length(parameter_list)){
     for (stat_function in stat_list){
       stat = do.call(stat_function, 
-                     list(temp_protocol_data[[parameter_list[i]]], na.rm = T))
+                     list(temp_data[[parameter_list[i]]], na.rm = T))
       
       if (is.null(stat)) {
         stat = NA
@@ -240,7 +245,6 @@ for (col_name in colnames(gg_stat_melano)){
 }
 
 
-
 for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
     if (i == j) next
@@ -256,8 +260,8 @@ for (i in 1:length(parameter_list)){
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-      theme_bw(base_size = 22) +
-      ggtitle(paste0("x: ", lab_list[i], " y: ", lab_list[j] ," by protocol for Drosophila melanogaster"))
+      theme_bw(base_size = 22)
+      #ggtitle(paste0("x: ", lab_list[i], " y: ", lab_list[j] ," by protocol for Drosophila melanogaster"))
     
     ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster", ".pdf"), 
            plot=p, width=16, height=8, device = "pdf")
