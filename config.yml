@@ -43,7 +43,7 @@ default:
   lab_list: Detachment force, Two ways detachment energy, One way detachment energy, Rigidity, First vs last position, First vs maximum position, Pupa area, Pupa length, Glue area, log10(Detachment force), log10(Short term energy), log10(Proxy of long term energy), log10(Rigidity), log10(First vs last position), log10(First vs maximum position) , log10(Pupa area), log10(Pupa length), log10(Glue area)
   
   # Unit of each parameter (must be in same order as parameter_list)
-  unit_list: N, N.mm, N.mm, N.mm-1, mm, mm, mm^2, mm, um^2, N, N.mm, N.mm, N.mm-1, mm, mm, mm^2, mm, um^2
+  unit_list: N, N.mm, N.mm, N/mm, mm, mm, mm^2, mm, um^2, N, N.mm, N.mm, N/mm, mm, mm, mm^2, mm, um^2
 
   # Stat (R function name) to perform
   stat_list: mean, max, min, median, sd
