@@ -12,7 +12,7 @@ library("ggtext")
 
 library("extrafont")
 #font_import()
-loadfonts(device = "all")
+loadfonts(device = "win")
 
 #### FUNCTIONS ####
 
@@ -168,7 +168,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -201,74 +201,42 @@ protocol_list = unique(gg_data$Protocol)
 plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
 dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
 
-# temp_data = gg_data %>%
-#   filter(Comment == "ok" & Stock == "cantonS" &
-#            Species == "Drosophila_melanogaster" &
-#            Protocol != "water")
-
-
-gg_stat_melano = data.frame()
-for(protocol in sort(protocol_list)){
-
-  temp_data = gg_data %>%
-    filter(Comment == "ok" & Protocol == protocol)
-    #filter(!is.na(!!as.symbol(parameter_list[[i]])))
-  stat_handler = c(protocol)
-  colnames_handler = c("Protocol")
-  
-  for (i in 1:length(parameter_list)){
-    for (stat_function in stat_list){
-      stat = do.call(stat_function, 
-                     list(temp_data[[parameter_list[i]]], na.rm = T))
-      
-      if (is.null(stat)) {
-        stat = NA
-      }
-      stat_handler = c(stat_handler, 
-                       stat)
-      colnames_handler = c(colnames_handler,
-                           paste0(stat_function, "_", parameter_list[i]))
-    }
-  }
-  gg_stat_melano = rbind(gg_stat_melano, stat_handler)
-}
-colnames(gg_stat_melano) = colnames_handler
-
-# force to numeric type
-for (col_name in colnames(gg_stat_melano)){
-  if (col_name == "Protocol") next
-  gg_stat_melano[[col_name]] = as.numeric(gg_stat_melano[[col_name]])
-}
-
-
+list_plot = list()
 for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
     if (i == j) next
     
-    p = ggplot(gg_stat_melano,
-               aes_string(paste0("median_", parameter_list[i]), y = paste0("median_", parameter_list[j]), color = "Protocol")) +
+    # filter data and computes stats
+    temp_data = gg_data %>%
+      filter(Comment == "ok") %>%
+      group_by(Protocol) %>%
+      mutate("median_x" = median((!!sym(parameter_list[i])), na.rm = T)) %>%
+      mutate("sd_x" = sd((!!sym(parameter_list[i])), na.rm = T)) %>%
+      mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
+      mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
+
+    p = ggplot(temp_data,
+               aes_string("median_x", y = "median_y", color = "Protocol")) +
       geom_point(size = 1) +
-      geom_errorbar(xmin = gg_stat_melano[[paste0("median_", parameter_list[i])]] - gg_stat_melano[[paste0("sd_", parameter_list[i])]],
-                    xmax = gg_stat_melano[[paste0("median_", parameter_list[i])]] + gg_stat_melano[[paste0("sd_", parameter_list[i])]]) +
-      geom_errorbar(ymin = gg_stat_melano[[paste0("median_", parameter_list[j])]] - gg_stat_melano[[paste0("sd_", parameter_list[j])]],
-                    ymax = gg_stat_melano[[paste0("median_", parameter_list[j])]] + gg_stat_melano[[paste0("sd_", parameter_list[j])]]) +
+      geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
+                    xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
+      geom_errorbar(ymin = temp_data[["median_y"]] - temp_data[["sd_y"]],
+                    ymax = temp_data[["median_y"]] + temp_data[["sd_y"]]) +
       geom_point(temp_data,
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       theme_bw(base_size = 22)
-      #ggtitle(paste0("x: ", lab_list[i], " y: ", lab_list[j] ," by protocol for Drosophila melanogaster"))
-    
+
     ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster", ".pdf"), 
            plot=p, width=16, height=8, device = "pdf")
+    
+    list_plot[[paste0("x_", parameter_list[i], "_y_", parameter_list[j])]] = p
   }
 }
 
 
-
-
-
-
+## all previous plot are stored in list_plot
 
 
 #plot parameter and speed for melano (comment == "ok")
@@ -281,7 +249,8 @@ for (i in 1:length(parameter_list)){
   p = gg_data %>%
     filter(Species == "Drosophila_melanogaster") %>%
     filter(Comment == "ok") %>%
-    filter(Speed %in% c("1/3", "1", "3")) %>%
+    filter(! is.na(Speed)) %>%
+    filter(Speed %in% ordered(c("1/3", "1", "3"))) %>%
     ggplot(aes_string(x = "Speed", 
                       y = parameter_list[i], 
                       color = "Protocol")) +
@@ -300,138 +269,139 @@ for (i in 1:length(parameter_list)){
          plot=p, width=16, height=8, device = "pdf")
 }
 
-#plot species protocol standard and strong force 0,25N
-plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
-dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
-
-species_to_keep = 
-  unique(gg_data$Species[which(gg_data$Protocol == 
-                                 "strong tape and 0,25 N")])[
-                                   unique(gg_data$Species[
-                                     which(gg_data$Protocol == 
-                                             "strong tape and 0,25 N")]) %in% 
-                                     unique(gg_data$Species[
-                                       which(gg_data$Protocol == "standard")])]
-
-temp_data = gg_data %>%
-  filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached" ) %>%
-  filter(Species %in% species_to_keep) %>%
-  filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
-  group_by(Species, Protocol) %>%
-  summarise(median = median(detachment_force),
-            sd = sd(detachment_force))
-
-index_standard =which(temp_data$Protocol == "standard")
-index_strong_tape_and_0.25_N = 
-  which(temp_data$Protocol == "strong tape and 0,25 N")
-
-temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
-                          median_standard = temp_data$median[index_standard],
-                          median_strong_tape_and_0.25_N = 
-                            temp_data$median[index_strong_tape_and_0.25_N],
-                          sd_standard = temp_data$sd[index_standard],
-                          sd_strong_tape_and_0.25_N = 
-                            temp_data$sd[index_strong_tape_and_0.25_N]) 
-
-p = ggplot(temp_gg_data, aes(x = median_standard, 
-                             y = median_strong_tape_and_0.25_N,
-                             color = Species)) +
-  geom_errorbar(xmin = temp_gg_data$median_standard - 
-                  temp_gg_data$sd_standard,
-                xmax = temp_gg_data$median_standard +
-                  temp_gg_data$sd_standard) +
-  geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N - 
-                  temp_gg_data$sd_strong_tape_and_0.25_N,
-                ymax = temp_gg_data$median_strong_tape_and_0.25_N +
-                  temp_gg_data$sd_strong_tape_and_0.25_N) +
-  geom_point() +
-  xlim(c(min(temp_gg_data$median_standard - 
-               temp_gg_data$sd_standard), 
-         max(temp_gg_data$median_standard + 
-               temp_gg_data$sd_standard))) +
-  ylim(c(min(temp_gg_data$median_strong_tape_and_0.25_N - 
-               temp_gg_data$sd_strong_tape_and_0.25_N), 
-         max(temp_gg_data$median_strong_tape_and_0.25_N + 
-               temp_gg_data$sd_strong_tape_and_0.25_N))) +
-  geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "red") +
-  xlab("Detachment force for protocol standard (N)") +
-  ylab("Detachment force for Protocol strong tape and 0,25 N (N)") +
-  ggtitle("Detachment force for species strongly attached")+
-  theme_bw(base_size = 22) 
-
-ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
-       plot=p, width=16, height=8, device = "pdf")
-
-
-## by species
-plot_path_two_parameters_by_species = paste0(plot_path, "/two_parameters/by_species/")
-dir.create(plot_path_two_parameters_by_species, showWarnings = FALSE, recursive = T)
-
-for (i in 1:length(parameter_list)){
-  for (j in 1:length(parameter_list)){
-    if (i == j) next
-    
-    # filter on species and protocol
-    temp_data_species = gg_data %>% filter(Comment == "ok") %>%
-      filter((Species != "Drosophila_hydei" & 
-                Species != "Megaselia_abdita" &
-                Species != "Drosophila_quadraria"&
-                Species != "Drosophila_melanogaster" & 
-                Species != "Drosophila_suzukii" &
-                Species != "Drosophila_biarmipes" & 
-                Species != "Drosophila_simulans") |
-               (Species == "Drosophila_melanogaster" & 
-                  Protocol == "standard" & 
-                  Stock == "cantonS") |
-               (Species == "Drosophila_suzukii" & 
-                  Stock == "WT3") |
-               (Species == "Drosophila_biarmipes" & 
-                  Stock == "G224")|
-               (Species == "Drosophila_simulans" &
-                  Stock == "simulans_vincennes")) %>%
-      filter(!is.na(!!as.symbol(parameter_list[i]))) %>%
-      filter(!is.na(!!as.symbol(parameter_list[j]))) %>%
-      group_by(Species) %>%
-      filter(length(!!as.symbol(parameter_list[i])) > 0) %>%
-      filter(length(!!as.symbol(parameter_list[i])) > 0)
-    
-    # add stats
-    temp_data_species = temp_data_species %>%
-      group_by(Species) %>%
-      mutate("median_x" = median((!!sym(parameter_list[i])))) %>%
-      mutate("sd_x" = sd((!!sym(parameter_list[i])))) %>%
-      mutate("median_y" = median((!!sym(parameter_list[j])))) %>%
-      mutate("sd_y" = sd((!!sym(parameter_list[j]))))
-    
-    #incertitude
-    # incertitude_detachment_force = moy(index_table$med_noise_1)
-    # incertitude_rigidity = 
-    # incertitude_energy = moy(energy_table$aire_index5_moins1)
-    # incertitude_detachment_position = sqrt(2)*
-    # 
-    #plot
-    
-    p = ggplot(temp_data_species, 
-               aes(x = median_x, 
-                   y = median_y,
-                   color = Species)) +
-      geom_point(size = 5, shape = 3) +
-      geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
-                    xmax = temp_data_species$median_x + temp_data_species$sd_x) +
-      geom_errorbar(ymin = temp_data_species$median_y - temp_data_species$sd_y,
-                    ymax = temp_data_species$median_y + temp_data_species$sd_y) +
-      xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T), 
-           max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
-      ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T), 
-           max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
-      geom_point(temp_data_species, 
-                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
-      xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-      ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-      theme_bw(base_size = 22)
-    
-    ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], "_protocol_merged", ".pdf"), 
-           plot=p, width=16, height=8, device = "pdf")
-  }
-}
-
+### next is potentially useful
+# #plot species protocol standard and strong force 0,25N
+# plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
+# dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
+# 
+# species_to_keep = 
+#   unique(gg_data$Species[which(gg_data$Protocol == 
+#                                  "strong tape and 0,25 N")])[
+#                                    unique(gg_data$Species[
+#                                      which(gg_data$Protocol == 
+#                                              "strong tape and 0,25 N")]) %in% 
+#                                      unique(gg_data$Species[
+#                                        which(gg_data$Protocol == "standard")])]
+# 
+# temp_data = gg_data %>%
+#   filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached" ) %>%
+#   filter(Species %in% species_to_keep) %>%
+#   filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
+#   group_by(Species, Protocol) %>%
+#   summarise(median = median(detachment_force),
+#             sd = sd(detachment_force))
+# 
+# index_standard =which(temp_data$Protocol == "standard")
+# index_strong_tape_and_0.25_N = 
+#   which(temp_data$Protocol == "strong tape and 0,25 N")
+# 
+# temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
+#                           median_standard = temp_data$median[index_standard],
+#                           median_strong_tape_and_0.25_N = 
+#                             temp_data$median[index_strong_tape_and_0.25_N],
+#                           sd_standard = temp_data$sd[index_standard],
+#                           sd_strong_tape_and_0.25_N = 
+#                             temp_data$sd[index_strong_tape_and_0.25_N]) 
+# 
+# p = ggplot(temp_gg_data, aes(x = median_standard, 
+#                              y = median_strong_tape_and_0.25_N,
+#                              color = Species)) +
+#   geom_errorbar(xmin = temp_gg_data$median_standard - 
+#                   temp_gg_data$sd_standard,
+#                 xmax = temp_gg_data$median_standard +
+#                   temp_gg_data$sd_standard) +
+#   geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N - 
+#                   temp_gg_data$sd_strong_tape_and_0.25_N,
+#                 ymax = temp_gg_data$median_strong_tape_and_0.25_N +
+#                   temp_gg_data$sd_strong_tape_and_0.25_N) +
+#   geom_point() +
+#   xlim(c(min(temp_gg_data$median_standard - 
+#                temp_gg_data$sd_standard), 
+#          max(temp_gg_data$median_standard + 
+#                temp_gg_data$sd_standard))) +
+#   ylim(c(min(temp_gg_data$median_strong_tape_and_0.25_N - 
+#                temp_gg_data$sd_strong_tape_and_0.25_N), 
+#          max(temp_gg_data$median_strong_tape_and_0.25_N + 
+#                temp_gg_data$sd_strong_tape_and_0.25_N))) +
+#   geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "red") +
+#   xlab("Detachment force for protocol standard (N)") +
+#   ylab("Detachment force for Protocol strong tape and 0,25 N (N)") +
+#   ggtitle("Detachment force for species strongly attached")+
+#   theme_bw(base_size = 22) 
+# 
+# ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
+#        plot=p, width=16, height=8, device = "pdf")
+# 
+# 
+# ## by species
+# plot_path_two_parameters_by_species = paste0(plot_path, "/two_parameters/by_species/")
+# dir.create(plot_path_two_parameters_by_species, showWarnings = FALSE, recursive = T)
+# 
+# for (i in 1:length(parameter_list)){
+#   for (j in 1:length(parameter_list)){
+#     if (i == j) next
+#     
+#     # filter on species and protocol
+#     temp_data_species = gg_data %>% filter(Comment == "ok") %>%
+#       filter((Species != "Drosophila_hydei" & 
+#                 Species != "Megaselia_abdita" &
+#                 Species != "Drosophila_quadraria"&
+#                 Species != "Drosophila_melanogaster" & 
+#                 Species != "Drosophila_suzukii" &
+#                 Species != "Drosophila_biarmipes" & 
+#                 Species != "Drosophila_simulans") |
+#                (Species == "Drosophila_melanogaster" & 
+#                   Protocol == "standard" & 
+#                   Stock == "cantonS") |
+#                (Species == "Drosophila_suzukii" & 
+#                   Stock == "WT3") |
+#                (Species == "Drosophila_biarmipes" & 
+#                   Stock == "G224")|
+#                (Species == "Drosophila_simulans" &
+#                   Stock == "simulans_vincennes")) %>%
+#       filter(!is.na(!!as.symbol(parameter_list[i]))) %>%
+#       filter(!is.na(!!as.symbol(parameter_list[j]))) %>%
+#       group_by(Species) %>%
+#       filter(length(!!as.symbol(parameter_list[i])) > 0) %>%
+#       filter(length(!!as.symbol(parameter_list[i])) > 0)
+#     
+#     # add stats
+#     temp_data_species = temp_data_species %>%
+#       group_by(Species) %>%
+#       mutate("median_x" = median((!!sym(parameter_list[i])))) %>%
+#       mutate("sd_x" = sd((!!sym(parameter_list[i])))) %>%
+#       mutate("median_y" = median((!!sym(parameter_list[j])))) %>%
+#       mutate("sd_y" = sd((!!sym(parameter_list[j]))))
+#     
+#     #incertitude
+#     # incertitude_detachment_force = moy(index_table$med_noise_1)
+#     # incertitude_rigidity = 
+#     # incertitude_energy = moy(energy_table$aire_index5_moins1)
+#     # incertitude_detachment_position = sqrt(2)*
+#     # 
+#     #plot
+#     
+#     p = ggplot(temp_data_species, 
+#                aes(x = median_x, 
+#                    y = median_y,
+#                    color = Species)) +
+#       geom_point(size = 5, shape = 3) +
+#       geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
+#                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
+#       geom_errorbar(ymin = temp_data_species$median_y - temp_data_species$sd_y,
+#                     ymax = temp_data_species$median_y + temp_data_species$sd_y) +
+#       xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T), 
+#            max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
+#       ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T), 
+#            max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
+#       geom_point(temp_data_species, 
+#                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+#       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+#       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+#       theme_bw(base_size = 22)
+#     
+#     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], "_protocol_merged", ".pdf"), 
+#            plot=p, width=16, height=8, device = "pdf")
+#   }
+# }
+# 
