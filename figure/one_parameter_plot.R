@@ -235,12 +235,12 @@ for (i in 1:length(parameter_list)){
                            parameter = parameter_list[i])
   
   # reorder all the data in the same way
-  protocol_order = reorder_by_factor(data = temp_data,
-                                     factor_name = "Protocol",
-                                     fun = "median",
-                                     parameter = parameter_list[1])
+  # protocol_order = reorder_by_factor(data = temp_data,
+  #                                    factor_name = "Protocol",
+  #                                    fun = "median",
+  #                                    parameter = parameter_list[1])
 
-  # protocol_order = manual_order
+  protocol_order = manual_order
   
   gg_data_test$Protocol =
     factor(gg_data_test$Protocol, levels = protocol_order, ordered = T)
