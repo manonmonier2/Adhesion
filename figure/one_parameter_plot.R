@@ -230,25 +230,31 @@ for (i in 1:length(parameter_list)){
                            factor_name = "Protocol", 
                            parameter = parameter_list[i])
   
-  # reorder all the data in the same way
-  protocol_order = reorder_by_factor(data = temp_data, 
-                                     factor_name = "Protocol", 
-                                     fun = "median", 
-                                     parameter = parameter_list[1])
-  
-  gg_data_test$Protocol = 
-    factor(gg_data_test$Protocol, levels = protocol_order$Protocol, ordered = T)
-  temp_data$Protocol = 
-    factor(temp_data$Protocol, levels = protocol_order$Protocol,  ordered = T)
-  temp_data_all_comment$Protocol = 
-    factor(temp_data_all_comment$Protocol, levels = protocol_order$Protocol,  
-           ordered = T)
+  # # reorder all the data in the same way
+  # protocol_order = reorder_by_factor(data = temp_data, 
+  #                                    factor_name = "Protocol", 
+  #                                    fun = "median", 
+  #                                    parameter = parameter_list[1])
+  # 
+  # gg_data_test$Protocol = 
+  #   factor(gg_data_test$Protocol, levels = protocol_order$Protocol, ordered = T)
+  # temp_data$Protocol = 
+  #   factor(temp_data$Protocol, levels = protocol_order$Protocol,  ordered = T)
+  # temp_data_all_comment$Protocol = 
+  #   factor(temp_data_all_comment$Protocol, levels = protocol_order$Protocol,  
+  #          ordered = T)
   
   
   x_labels = format_label(factor_name = "Protocol",
                           factor_labels = gg_data_test[["Protocol"]],
                           stat_group = gg_data_test,
                           n_data = temp_data_all_comment)
+  
+  temp_data$Protocol <- factor(temp_data$Protocol, levels = c("standard", "speed x3", "speed /3", 
+                                                              "0s", "5min", "strong tape", "no tape", 
+                                                              "0.25 N", "3 days", "detached pupae", 
+                                                              "pupae attached on tesa tape", 
+                                                              "detached pupae and speed x3", ordered = TRUE))
   
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i])) +
