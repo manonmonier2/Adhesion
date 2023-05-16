@@ -302,19 +302,14 @@ for (i in 1:length(parameter_list)){
       filter(length(!!as.symbol(parameter_list[i])) > 1)
   } else {
    temp_data_species = gg_data %>%
-      filter(Comment == "ok" & 
-               (Protocol == "strong tape and 0,25 N" | Protocol == "standard") &
-             (Species != "Megaselia_abdita" |
-             ((Species == "Drosophila_melanogaster" &
-                  Protocol == "standard" &
-                  Stock == "cantonS") |
-               (Species == "Drosophila_suzukii" &
-                  Stock == "WT3") |
-               (Species == "Drosophila_biarmipes" &
-                  Stock == "G224") |
-               (Species == "Drosophila_simulans" &
-                  Stock == "simulans_vincennes")))) %>%
-
+     filter(Comment == "ok") %>%
+     filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard")) %>%
+     filter(Species != "Megaselia_abdita") %>%
+     filter(
+       (Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_suzukii" & Stock == "WT3") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
