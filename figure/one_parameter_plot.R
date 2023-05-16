@@ -98,11 +98,12 @@ reorder_by_factor = function(data, factor_name, fun, parameter) {
   order_data = data %>%
     group_by(!!as.symbol(factor_name)) %>% 
     filter(!is.na(!!as.symbol(parameter))) %>%
+    filter(is.finite(!!as.symbol(parameter))) %>%
     summarise(fun = 
                 do.call(fun, list(x = (!!as.symbol(parameter)))))
   order_data = as.data.frame(order_data[order(order_data$fun), ])
   
-  return(order_data)
+  return(order_data[[factor_name]])
 }
 
 
@@ -169,7 +170,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -194,10 +195,6 @@ gg_data = read.table(paste0(plot_path, "/data_figure.csv"),
                      sep = "\t",
                      header = T)
 
-gg_data %>% 
-  filter(! is.na(Glue_area)) %>%
-  nrow()
-
 species_list = unique(gg_data$Species)
 protocol_list = unique(gg_data$Protocol)
 
@@ -209,13 +206,20 @@ plot_path_one_parameter_by_protocol_and_species = paste0(plot_path, "/one_parame
 dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE, recursive = T)
 
 
+manual_order = ordered(c("standard", "speed x3", "speed /3", 
+                         "0s", "5min", "strong tape", "no tape", 
+                         "0,25 N", "3 days", "detached pupae", 
+                         "pupae attached on tesa tape", 
+                         "detached pupae and speed x3"))
+
 list_plot = list()
 for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% 
     filter(Comment == "ok" & 
              Species == "Drosophila_melanogaster" & 
              Protocol != "water") %>%
-    filter(!is.na(!!as.symbol(parameter_list[[i]])))
+    filter(!is.na(!!as.symbol(parameter_list[[i]]))) %>%
+    filter(is.finite(!!as.symbol(parameter_list[[i]])))
   
   
   temp_data_all_comment = gg_data %>% 
@@ -230,19 +234,22 @@ for (i in 1:length(parameter_list)){
                            factor_name = "Protocol", 
                            parameter = parameter_list[i])
   
-  # # reorder all the data in the same way
-  # protocol_order = reorder_by_factor(data = temp_data, 
-  #                                    factor_name = "Protocol", 
-  #                                    fun = "median", 
-  #                                    parameter = parameter_list[1])
-  # 
-  # gg_data_test$Protocol = 
-  #   factor(gg_data_test$Protocol, levels = protocol_order$Protocol, ordered = T)
-  # temp_data$Protocol = 
-  #   factor(temp_data$Protocol, levels = protocol_order$Protocol,  ordered = T)
-  # temp_data_all_comment$Protocol = 
-  #   factor(temp_data_all_comment$Protocol, levels = protocol_order$Protocol,  
-  #          ordered = T)
+  # reorder all the data in the same way
+  protocol_order = reorder_by_factor(data = temp_data,
+                                     factor_name = "Protocol",
+                                     fun = "median",
+                                     parameter = parameter_list[1])
+
+  # protocol_order = manual_order
+  
+  gg_data_test$Protocol =
+    factor(gg_data_test$Protocol, levels = protocol_order, ordered = T)
+  temp_data$Protocol =
+    factor(temp_data$Protocol, levels = protocol_order,  ordered = T)
+  temp_data_all_comment$Protocol =
+    factor(temp_data_all_comment$Protocol, levels = protocol_order,
+           ordered = T)
+  
   
   
   x_labels = format_label(factor_name = "Protocol",
@@ -250,11 +257,6 @@ for (i in 1:length(parameter_list)){
                           stat_group = gg_data_test,
                           n_data = temp_data_all_comment)
   
-  temp_data$Protocol <- factor(temp_data$Protocol, levels = c("standard", "speed x3", "speed /3", 
-                                                              "0s", "5min", "strong tape", "no tape", 
-                                                              "0.25 N", "3 days", "detached pupae", 
-                                                              "pupae attached on tesa tape", 
-                                                              "detached pupae and speed x3", ordered = TRUE))
   
   p = ggplot(temp_data,
              aes_string(x = "Protocol", y = parameter_list[i])) +
@@ -295,6 +297,7 @@ for (i in 1:length(parameter_list)){
   if (parameter_list[i] == "Glue_area") {
     temp_data_species = gg_data %>% 
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+      filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
   } else {
@@ -302,6 +305,7 @@ for (i in 1:length(parameter_list)){
       filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard") 
              & Comment == "ok") %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+      filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
   }
@@ -320,11 +324,11 @@ for (i in 1:length(parameter_list)){
                                     parameter = parameter_list[i])
   
   temp_data_species$Species = factor(temp_data_species$Species,
-                                     levels = species_order$Species,
+                                     levels = species_order,
                                      ordered = T)
   
   gg_data_test_species$Species = factor(gg_data_test_species$Species,
-                                        levels = species_order$Species,
+                                        levels = species_order,
                                         ordered = T)
   
   x_labels = format_label(factor_name = "Species",
