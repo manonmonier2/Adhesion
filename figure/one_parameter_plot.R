@@ -170,7 +170,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -195,6 +195,7 @@ gg_data = read.table(paste0(plot_path, "/data_figure.csv"),
                      header = T)
 
 species_list = unique(gg_data$Species)
+stock_list = unique(gg_data$Stock)
 protocol_list = unique(gg_data$Protocol)
 
 
@@ -212,6 +213,7 @@ manual_order = ordered(c( "no tape", "detached pupae", "detached pupae and speed
                          "speed x3", "speed /3", "standard"))
 
 list_plot = list()
+
 for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% 
     filter(Comment == "ok" & 
@@ -277,6 +279,7 @@ for (i in 1:length(parameter_list)){
   if (! grepl("^log10_", parameter_list[i])){
     list_plot[[parameter_list[i]]] = p
   }
+  
 }
 
 p1 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
@@ -292,6 +295,7 @@ plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_specie
 dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
 list_plot = list()
+list_plot_log = list()
 for (i in 1:length(parameter_list)){
   if (parameter_list[i] == "Glue_area") {
     temp_data_species = gg_data %>% 
@@ -320,7 +324,7 @@ for (i in 1:length(parameter_list)){
     temp_data_all_comment = gg_data %>% 
       filter(Comment == "ok" | Comment == "cuticle_broke" | 
                Comment == "not_detached") %>%
-      filter((Protocol == "strong tape and 0,25 N" & Protocol == "standard")) %>%
+      filter((Protocol == "strong tape and 0.25 N" & Protocol == "standard")) %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_quadraria") %>%
       filter(
@@ -383,16 +387,109 @@ for (i in 1:length(parameter_list)){
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = cairo_pdf)
   
-  if (! grepl("^log10_", parameter_list[i])){
-    list_plot[[parameter_list[i]]] = p
-  }
-  
+  # if (! grepl("^log10_", parameter_list[i])){
+  #   list_plot[[parameter_list[i]]] = p
+  # }
+  # 
+  list_plot_log[[parameter_list[i]]] = p
 }
 
+# p = ggarrange(plotlist = list_plot, common.legend = T)
+# ggsave(file = paste0(plot_path_one_parameter_by_species, "/all_parameters_all_species", ".pdf"), 
+#        plot=p, width=40, height=20, device = cairo_pdf)
 
-p = ggarrange(plotlist = list_plot, common.legend = T)
-ggsave(file = paste0(plot_path_one_parameter_by_species, "/all_parameters_all_species", ".pdf"), 
-       plot=p, width=40, height=20, device = cairo_pdf)
+p = ggarrange(plotlist = list_plot_log[10:12], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/log_force_energy_all_species", ".pdf"), 
+       plot=p, width=30, height=40, device = cairo_pdf)
 
+## by stock
+plot_path_one_parameter_by_stock = paste0(plot_path, "/one_parameter/by_stock/")
+dir.create(plot_path_one_parameter_by_stock, showWarnings = FALSE, recursive = T)
 
+list_plot = list()
+for (i in 1:length(parameter_list)){
+  if (parameter_list[i] == "Glue_area") {
+    temp_data_stock = gg_data %>% 
+      filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+      filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+      group_by(Stock) %>%
+      filter(length(!!as.symbol(parameter_list[i])) > 1)
+  } else {
+    temp_data_stock = gg_data %>%
+      filter(Comment == "ok") %>%
+      filter(Protocol == "standard") %>%
+      filter((Species == "Drosophila_suzukii") |
+           (Species == "Drosophila_biarmipes") |
+           (Species == "Drosophila_simulans"))
+      #%>%
+      #filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+      group_by(Stock) %>%
+      filter(length(!!as.symbol(parameter_list[i])) > 1)
+    
+    temp_data_all_comment = gg_data %>% 
+      filter(Comment == "ok" | Comment == "cuticle_broke" | 
+               Comment == "not_detached") %>%
+      filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
+      filter(
+        (  (Species == "Drosophila_suzukii") |
+             (Species == "Drosophila_biarmipes") |
+             (Species == "Drosophila_simulans"))
+      ) %>%
+      filter(!is.na(!!as.symbol(parameter_list[[i]])))
+  }
+  
+  temp_data_stock = as.data.frame(temp_data_stock)
+  
+  gg_data_test_stock = make_stat(data = temp_data_stock,
+                                   factor_name = "Stock",
+                                   parameter = parameter_list[i])
+  
+  
+  # reorder species for the plot
+  stock_order = reorder_by_factor(data = temp_data_stock, 
+                                    factor_name = "Stock", 
+                                    fun = "median", 
+                                    parameter = parameter_list[i])
+  
+  temp_data_stock$Stock = factor(temp_data_stock$Stock,
+                                     levels = stock_order,
+                                     ordered = T)
+  
+  temp_data_all_comment$Stock = factor(temp_data_all_comment$Stock,
+                                         levels = stock_order,
+                                         ordered = T)
+  
+  gg_data_test_stock$Stock = factor(gg_data_test_stock$Stock,
+                                        levels = stock_order,
+                                        ordered = T)
+  
+  x_labels = format_label(factor_name = "Stock",
+                          factor_labels = gg_data_test_stock[["Stock"]],
+                          stat_group = gg_data_test_stock,
+                          n_data = temp_data_all_comment)
+  
+  #plot
+  p = ggplot(temp_data_stock,
+             aes_string(x = "Stock", y = parameter_list[i])) +
+    geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
+    geom_jitter(position=position_dodge(0.5)) +
+    scale_shape_manual(values = c(3, 4)) +
+    scale_color_manual(values = rep(1, 8)) +
+    theme_bw(base_size = 18) +
+    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+    xlab("Stock") +
+    coord_flip() + 
+    scale_x_discrete(labels = x_labels) +
+    theme(axis.title.y = element_blank(),
+          axis.text.x = element_text(family = "Courier New"),
+          axis.text.y= element_text(family = "Courier New"))
+  
+  ggsave(file = paste0(plot_path_one_parameter_by_stock, "/", parameter_list[i], ".pdf"), 
+         plot=p, width=16, height=8, device = cairo_pdf)
+  
+  list_plot[[parameter_list[i]]] = p
+}
 
+p = ggarrange(plotlist = list_plot, nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
+ggsave(file = paste0(plot_path_one_parameter_by_stock, "/all_parameters_stock", ".pdf"), 
+       plot=p, width=30, height=40, device = cairo_pdf)
