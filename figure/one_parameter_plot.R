@@ -174,7 +174,6 @@ opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$pat
 
 # retrieve parameters
 # Input
-path_metadata_file = opt$concatenate_metadata
 path_index = opt$index_path
 path_batch_by_id = opt$batch_by_id
 plot_path = opt$plot_path
@@ -208,7 +207,7 @@ dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE
 
 manual_order = ordered(c("standard", "speed x3", "speed /3", 
                          "0s", "5min", "strong tape", "no tape", 
-                         "0,25 N", "3 days", "detached pupae", 
+                         "0.25 N", "3 days", "detached pupae", 
                          "pupae attached on tesa tape", 
                          "detached pupae and speed x3"))
 
@@ -306,10 +305,12 @@ for (i in 1:length(parameter_list)){
      filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard")) %>%
      filter(Species != "Megaselia_abdita") %>%
      filter(
-       (Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
        (Species == "Drosophila_suzukii" & Stock == "WT3") |
        (Species == "Drosophila_biarmipes" & Stock == "G224") |
-       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
+                    "Drosophila_biarmipes", "Drosophila_simulans")) 
        ) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       group_by(Species) %>%
