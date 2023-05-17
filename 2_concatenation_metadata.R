@@ -5,7 +5,7 @@ library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -38,8 +38,8 @@ correct_name = c("Drosophila_hydei", "Drosophila_nannoptera", "Drosophila_melano
 raw_comment = c("cuticle_broked", "cuticule_broke", "cuticule broke", "cuticle broke", "no_tape","no_scotch", "two_pupae_too_close", "2 at 1 time", "not detached", "not normal", "pbm_machine", "attached_from_the_bottom", "2_at_1_time", "pb_0", "pb_NA", "not_normal", "noscotch_notbroken", "tape_attached")
 correct_comment = c("cuticle_broke", "cuticle_broke", "cuticle_broke", "cuticle_broke", "no_adhesive_paper", "no_adhesive_paper", "two_pupae", "two_pupae", "not_detached", "pb_machine", "pb_machine", "attached_at_the_bottom", "two_pupae", "pb_machine", "pb_machine", "pb_machine", "no_adhesive_paper", "pb_scotch")
 
-raw_protocol = c("noscotch", "no_scotch", "nocond", "no_cond", "default", "strong", "strongforce", "scotch_fin", "strongtape", "tesa", "div3", "x3", "scotch_fin_strong_force", "3japf", "cond1", "cond2", "cond3")
-correct_protocol = c("no tape", "no tape", "standard", "standard", "standard", "0.25 N", "0.25 N", "strong tape", "strong tape", "standard", "speed /3", "speed x3", "strong tape and 0.25 N", "3 days", "detached pupae", "pupae attached on tesa tape", "detached pupae and speed x3")
+raw_protocol = c("noscotch", "no_scotch", "nocond", "no_cond", "default", "strong", "strongforce", "scotch_fin", "strongtape", "tesa", "div3", "x3", "scotch_fin_strong_force", "3japf", "cond1", "cond2", "cond3", "0,25 N")
+correct_protocol = c("no tape", "no tape", "standard", "standard", "standard", "0.25 N", "0.25 N", "strong tape", "strong tape", "standard", "speed /3", "speed x3", "strong tape and 0.25 N", "3 days", "detached pupae", "pupae attached on tesa tape", "detached pupae and speed x3", "0.25 N")
 
 species_with_incorrect_stock = c("Drosophila_takahashii", "Drosophila_pachea", "Drosophila_nannoptera", "Drosophila_pseudoobscura", "Drosophila_eugracilis", "Drosophila_elegans", "Drosophila_prostipennis", "Drosophila_funebris", "Drosophila_rhopaloa", "Drosophila_kurseongensis", "Scaptodrosophila_lebanonensis", "Zaprionus_lachaisei", "Drosophila_malerkotliana", "Zaprionus_indianus", "Drosophila_ananassae", "Drosophila_immigrans", "Drosophila_hydei", "Drosophila_quadraria", "Drosophila_tropicalis", "Drosophila_virilis")
 correct_stock_by_species = c("14022-0311.07", "15090-1698.01_14.2", "15090-1692.00", "14011-0121.94", "Prud_homme_Gompel", "14027-0461.03", "14022-0291.00", "M_Monier", "BaVi067", "SaPa058", "J_David", "S_Prigent", "S_Prigent", "S_Prigent", "Prud_homme_Gompel", "F_Borne", "F_Borne", "J_David", "S_Prigent", "15010-1051.86")
