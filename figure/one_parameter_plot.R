@@ -170,7 +170,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -205,11 +205,11 @@ plot_path_one_parameter_by_protocol_and_species = paste0(plot_path, "/one_parame
 dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE, recursive = T)
 
 
-manual_order = ordered(c("standard", "speed x3", "speed /3", 
-                         "0s", "5min", "strong tape", "no tape", 
-                         "0.25 N", "3 days", "detached pupae", 
-                         "pupae attached on tesa tape", 
-                         "detached pupae and speed x3"))
+manual_order = ordered(c( "no tape", "detached pupae", "detached pupae and speed x3",
+                          "pupae attached on tesa tape",
+                          "0.25 N", "3 days",
+                         "0s", "5min", "strong tape",
+                         "speed x3", "speed /3", "standard"))
 
 list_plot = list()
 for (i in 1:length(parameter_list)){
@@ -238,7 +238,7 @@ for (i in 1:length(parameter_list)){
   #                                    factor_name = "Protocol",
   #                                    fun = "median",
   #                                    parameter = parameter_list[1])
-
+  
   protocol_order = manual_order
   
   gg_data_test$Protocol =
@@ -300,21 +300,38 @@ for (i in 1:length(parameter_list)){
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
   } else {
-   temp_data_species = gg_data %>%
-     filter(Comment == "ok") %>%
-     filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard")) %>%
-     filter(Species != "Megaselia_abdita") %>%
-     filter(
-       ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-       (Species == "Drosophila_suzukii" & Stock == "WT3") |
-       (Species == "Drosophila_biarmipes" & Stock == "G224") |
-       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
-      (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
-                    "Drosophila_biarmipes", "Drosophila_simulans")) 
-       ) %>%
+    temp_data_species = gg_data %>%
+      filter(Comment == "ok") %>%
+      filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard")) %>%
+      filter(Species != "Megaselia_abdita") %>%
+      filter(Species != "Drosophila_quadraria") %>%
+      filter(
+        ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+           (Species == "Drosophila_suzukii" & Stock == "WT3") |
+           (Species == "Drosophila_biarmipes" & Stock == "G224") |
+           (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
+          (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
+                            "Drosophila_biarmipes", "Drosophila_simulans")) 
+      ) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
+    
+    temp_data_all_comment = gg_data %>% 
+      filter(Comment == "ok" | Comment == "cuticle_broke" | 
+               Comment == "not_detached") %>%
+      filter((Protocol == "strong tape and 0,25 N" & Protocol == "standard")) %>%
+      filter(Species != "Megaselia_abdita") %>%
+      filter(Species != "Drosophila_quadraria") %>%
+      filter(
+        ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+           (Species == "Drosophila_suzukii" & Stock == "WT3") |
+           (Species == "Drosophila_biarmipes" & Stock == "G224") |
+           (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
+          (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
+                            "Drosophila_biarmipes", "Drosophila_simulans")) 
+      ) %>%
+      filter(!is.na(!!as.symbol(parameter_list[[i]])))
   }
   
   temp_data_species = as.data.frame(temp_data_species)
@@ -334,6 +351,10 @@ for (i in 1:length(parameter_list)){
                                      levels = species_order,
                                      ordered = T)
   
+  temp_data_all_comment$Species = factor(temp_data_all_comment$Species,
+                                         levels = species_order,
+                                         ordered = T)
+  
   gg_data_test_species$Species = factor(gg_data_test_species$Species,
                                         levels = species_order,
                                         ordered = T)
@@ -341,7 +362,7 @@ for (i in 1:length(parameter_list)){
   x_labels = format_label(factor_name = "Species",
                           factor_labels = gg_data_test_species[["Species"]],
                           stat_group = gg_data_test_species,
-                          n_data = temp_data_species)
+                          n_data = temp_data_all_comment)
   
   #plot
   p = ggplot(temp_data_species,
