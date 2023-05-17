@@ -237,7 +237,8 @@ for (i in 1:length(parameter_list)){
 
 
 ## all previous plot are stored in list_plot
-
+# names(list_plot)
+# list_plot[["x_detachment_force_y_energy"]]
 
 #plot parameter and speed for melano (comment == "ok")
 plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = 
