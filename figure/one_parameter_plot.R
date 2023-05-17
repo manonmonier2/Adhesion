@@ -170,7 +170,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -297,7 +297,7 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 list_plot = list()
 list_plot_log = list()
 for (i in 1:length(parameter_list)){
-  if (parameter_list[i] == "Glue_area") {
+  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
     temp_data_species = gg_data %>% 
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
@@ -334,7 +334,9 @@ for (i in 1:length(parameter_list)){
           (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
                             "Drosophila_biarmipes", "Drosophila_simulans")) 
       ) %>%
-      filter(! is.na(!!as.symbol(parameter_list[i])))
+      filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+      group_by(Species) %>%
+      filter(length(!!as.symbol(parameter_list[i])) > 1)
   }
   
   temp_data_species = as.data.frame(temp_data_species)
@@ -386,16 +388,8 @@ for (i in 1:length(parameter_list)){
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = cairo_pdf)
   
-  # if (! grepl("^log10_", parameter_list[i])){
-  #   list_plot[[parameter_list[i]]] = p
-  # }
-  # 
   list_plot_log[[parameter_list[i]]] = p
 }
-
-# p = ggarrange(plotlist = list_plot, common.legend = T)
-# ggsave(file = paste0(plot_path_one_parameter_by_species, "/all_parameters_all_species", ".pdf"), 
-#        plot=p, width=40, height=20, device = cairo_pdf)
 
 p = ggarrange(plotlist = list_plot_log[10:12], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/log_force_energy_all_species", ".pdf"), 
@@ -407,88 +401,131 @@ dir.create(plot_path_one_parameter_by_stock, showWarnings = FALSE, recursive = T
 
 list_plot = list()
 for (i in 1:length(parameter_list)){
-  if (parameter_list[i] == "Glue_area") {
-    temp_data_stock = gg_data %>% 
-      filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-      filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
-      group_by(Stock) %>%
-      filter(length(!!as.symbol(parameter_list[i])) > 1)
-  } else {
-    temp_data_stock = gg_data %>%
-      filter(Comment == "ok") %>%
-      filter(Protocol == "standard") %>%
-      filter((Species == "Drosophila_suzukii") |
-           (Species == "Drosophila_biarmipes") |
-           (Species == "Drosophila_simulans"))
-      #%>%
-      #filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-      group_by(Stock) %>%
-      filter(length(!!as.symbol(parameter_list[i])) > 1)
+  list_plot[[parameter_list[i]]] = list()
+  for(focus in c("Drosophila_suzukii", "Drosophila_biarmipes", 
+                 "Drosophila_simulans")) {
+    focus_lab = gsub("_", " ", focus, fixed = T)
+    focus_lab = gsub("Drosophila", "D.", focus_lab, fixed = T)
+    focus_lab = gsub("Megaselia", "M.", focus_lab, fixed = T)
+    focus_lab = gsub("Scaptodrosophila", "S.", focus_lab, fixed = T)
+    focus_lab = gsub("Zaprionus", "Z.", focus_lab, fixed = T)
+    focus_lab = StrAlign(focus_lab, sep = "\\l")
+    focus_lab = substr(focus_lab, 1, 8)
+    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
+      temp_data_stock = gg_data %>%
+        filter(Species == focus) %>%
+        filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+        filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+        group_by(Stock) %>%
+        filter(length(!!as.symbol(parameter_list[i])) > 1)
+      
+      temp_data_all_comment = temp_data_stock
+      
+    } else {
+      temp_data_stock = gg_data %>%
+        filter(Comment == "ok") %>%
+        filter(Protocol == "standard") %>%
+        filter(Species == focus) %>%
+        filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+        filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+        group_by(Stock) %>%
+        filter(length(!!as.symbol(parameter_list[i])) > 1)
+      
+      temp_data_all_comment = gg_data %>%
+        filter(Comment == "ok" | Comment == "cuticle_broke" | 
+                 Comment == "not_detached") %>%
+        filter(Protocol == "standard") %>%
+        filter(Species == focus) %>%
+        filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+        filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+        group_by(Stock) %>%
+        filter(length(!!as.symbol(parameter_list[i])) > 1)
+    }
     
-    temp_data_all_comment = gg_data %>% 
-      filter(Comment == "ok" | Comment == "cuticle_broke" | 
-               Comment == "not_detached") %>%
-      filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
-      filter(
-        (  (Species == "Drosophila_suzukii") |
-             (Species == "Drosophila_biarmipes") |
-             (Species == "Drosophila_simulans"))
-      ) %>%
-      filter(!is.na(!!as.symbol(parameter_list[[i]])))
-  }
-  
-  temp_data_stock = as.data.frame(temp_data_stock)
-  
-  gg_data_test_stock = make_stat(data = temp_data_stock,
-                                   factor_name = "Stock",
-                                   parameter = parameter_list[i])
-  
-  
-  # reorder species for the plot
-  stock_order = reorder_by_factor(data = temp_data_stock, 
+    temp_data_stock = as.data.frame(temp_data_stock)
+    
+    # no data for this species for this parameter
+    if (nrow(temp_data_stock) == 0) {
+      p = ggplot(temp_data_stock,
+                 aes_string(x = "Stock", y = parameter_list[i])) +
+        geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
+        geom_jitter(position=position_dodge(0.5)) +
+        scale_shape_manual(values = c(3, 4)) +
+        scale_color_manual(values = rep(1, 8)) +
+        theme_bw(base_size = 18) +
+        ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+        xlab(focus_lab) +
+        coord_flip() +
+        theme(axis.text.x = element_text(family = "Courier New"),
+              axis.text.y= element_text(family = "Courier New"))
+      
+      list_plot[[parameter_list[i]]][[focus]] = p
+      next
+    }
+    
+    # 1 or 2 stocks for this species for this parameter
+    if (length(unique(temp_data_stock$Stock)) <= 2){
+      gg_data_test_stock = data.frame("Stock" = unique(temp_data_stock$Stock),
+                                      "Groups" = rep("", length(unique(temp_data_stock$Stock))))
+    } else {
+      gg_data_test_stock = make_stat(data = temp_data_stock,
+                                     factor_name = "Stock",
+                                     parameter = parameter_list[i])
+    }
+    
+    # reorder species for the plot
+    stock_order = reorder_by_factor(data = temp_data_stock, 
                                     factor_name = "Stock", 
                                     fun = "median", 
                                     parameter = parameter_list[i])
-  
-  temp_data_stock$Stock = factor(temp_data_stock$Stock,
-                                     levels = stock_order,
-                                     ordered = T)
-  
-  temp_data_all_comment$Stock = factor(temp_data_all_comment$Stock,
+    
+    temp_data_stock$Stock = factor(temp_data_stock$Stock,
+                                   levels = stock_order,
+                                   ordered = T)
+    
+    temp_data_all_comment$Stock = factor(temp_data_all_comment$Stock,
                                          levels = stock_order,
                                          ordered = T)
-  
-  gg_data_test_stock$Stock = factor(gg_data_test_stock$Stock,
-                                        levels = stock_order,
-                                        ordered = T)
-  
-  x_labels = format_label(factor_name = "Stock",
-                          factor_labels = gg_data_test_stock[["Stock"]],
-                          stat_group = gg_data_test_stock,
-                          n_data = temp_data_all_comment)
-  
-  #plot
-  p = ggplot(temp_data_stock,
-             aes_string(x = "Stock", y = parameter_list[i])) +
-    geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
-    geom_jitter(position=position_dodge(0.5)) +
-    scale_shape_manual(values = c(3, 4)) +
-    scale_color_manual(values = rep(1, 8)) +
-    theme_bw(base_size = 18) +
-    ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-    xlab("Stock") +
-    coord_flip() + 
-    scale_x_discrete(labels = x_labels) +
-    theme(axis.title.y = element_blank(),
-          axis.text.x = element_text(family = "Courier New"),
-          axis.text.y= element_text(family = "Courier New"))
-  
-  ggsave(file = paste0(plot_path_one_parameter_by_stock, "/", parameter_list[i], ".pdf"), 
-         plot=p, width=16, height=8, device = cairo_pdf)
-  
-  list_plot[[parameter_list[i]]] = p
+    
+    gg_data_test_stock$Stock = factor(gg_data_test_stock$Stock,
+                                      levels = stock_order,
+                                      ordered = T)
+    
+    x_labels = format_label(factor_name = "Stock",
+                            factor_labels = gg_data_test_stock[["Stock"]],
+                            stat_group = gg_data_test_stock,
+                            n_data = temp_data_all_comment)
+    
+    #plot
+    p = ggplot(temp_data_stock,
+               aes_string(x = "Stock", y = parameter_list[i])) +
+      geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
+      geom_jitter(position=position_dodge(0.5)) +
+      scale_shape_manual(values = c(3, 4)) +
+      scale_color_manual(values = rep(1, 8)) +
+      theme_bw(base_size = 18) +
+      ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+      xlab(focus_lab) +
+      coord_flip() + 
+      scale_x_discrete(labels = x_labels) +
+      theme(axis.text.x = element_text(family = "Courier New"),
+            axis.text.y= element_text(family = "Courier New"))
+    
+    list_plot[[parameter_list[i]]][[focus]] = p
+  }
+  p = ggarrange(plotlist = list_plot[[parameter_list[i]]],
+                nrow = 3, 
+                common.legend = T,
+                align = c("v"), 
+                labels = c("A", "B", "C"))
+  ggsave(file = paste0(plot_path_one_parameter_by_stock, "/", parameter_list[i], 
+                       "_stock", ".pdf"), 
+         plot=p, 
+         width=15, 
+         height=20, 
+         device = cairo_pdf)
 }
 
-p = ggarrange(plotlist = list_plot, nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
-ggsave(file = paste0(plot_path_one_parameter_by_stock, "/all_parameters_stock", ".pdf"), 
-       plot=p, width=30, height=40, device = cairo_pdf)
+# p = ggarrange(plotlist = list_plot, nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
+# ggsave(file = paste0(plot_path_one_parameter_by_stock, "/all_parameters_stock", ".pdf"), 
+#        plot=p, width=30, height=40, device = cairo_pdf)
