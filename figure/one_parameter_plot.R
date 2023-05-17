@@ -321,10 +321,9 @@ for (i in 1:length(parameter_list)){
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
     
-    temp_data_all_comment = gg_data %>% 
-      filter(Comment == "ok" | Comment == "cuticle_broke" | 
-               Comment == "not_detached") %>%
-      filter((Protocol == "strong tape and 0.25 N" & Protocol == "standard")) %>%
+    temp_data_all_comment = gg_data %>%
+      filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
+      filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_quadraria") %>%
       filter(
@@ -335,7 +334,7 @@ for (i in 1:length(parameter_list)){
           (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
                             "Drosophila_biarmipes", "Drosophila_simulans")) 
       ) %>%
-      filter(!is.na(!!as.symbol(parameter_list[[i]])))
+      filter(! is.na(!!as.symbol(parameter_list[i])))
   }
   
   temp_data_species = as.data.frame(temp_data_species)
