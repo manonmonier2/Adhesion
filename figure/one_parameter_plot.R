@@ -170,7 +170,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -302,7 +302,7 @@ for (i in 1:length(parameter_list)){
   } else {
     temp_data_species = gg_data %>%
       filter(Comment == "ok") %>%
-      filter((Protocol == "strong tape and 0,25 N" | Protocol == "standard")) %>%
+      filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_quadraria") %>%
       filter(
