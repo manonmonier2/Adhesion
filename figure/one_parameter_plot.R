@@ -170,7 +170,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -209,8 +209,8 @@ dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE
 manual_order = ordered(c( "no tape", "detached pupae", "detached pupae and speed x3",
                           "pupae attached on tesa tape",
                           "0.25 N", "3 days",
-                         "0s", "5min", "strong tape",
-                         "speed x3", "speed /3", "standard"))
+                          "0s", "5min", "strong tape",
+                          "speed x3", "speed /3", "standard"))
 
 list_plot = list()
 
@@ -350,7 +350,7 @@ for (i in 1:length(parameter_list)){
   species_order = reorder_by_factor(data = temp_data_species, 
                                     factor_name = "Species", 
                                     fun = "median", 
-                                    parameter = parameter_list[i])
+                                    parameter = parameter_list[1])
   
   temp_data_species$Species = factor(temp_data_species$Species,
                                      levels = species_order,
@@ -388,12 +388,24 @@ for (i in 1:length(parameter_list)){
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = cairo_pdf)
   
-  list_plot_log[[parameter_list[i]]] = p
+  if (! grepl("^log10_", parameter_list[i])){
+    list_plot[[parameter_list[i]]] = p
+  }
+  
+  #list_plot_log[[parameter_list[i]]] = p
 }
 
-p = ggarrange(plotlist = list_plot_log[10:12], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
+p1 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
+p2 = ggarrange(plotlist = list_plot[4:6], nrow = 3, common.legend = T, align = c("v"), labels = c("D", "E", "F"))
+p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/all_parameters_all_species", ".pdf"), 
+       plot=p, width=30, height=20, device = cairo_pdf)
+
+
+p3 = ggarrange(plotlist = list_plot_log[10:12], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/log_force_energy_all_species", ".pdf"), 
-       plot=p, width=30, height=40, device = cairo_pdf)
+       plot=p3, width=30, height=10, device = cairo_pdf)
 
 ## by stock
 plot_path_one_parameter_by_stock = paste0(plot_path, "/one_parameter/by_stock/")
