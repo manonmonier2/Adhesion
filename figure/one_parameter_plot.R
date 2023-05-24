@@ -170,7 +170,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -303,6 +303,9 @@ for (i in 1:length(parameter_list)){
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
+    
+    temp_data_all_comment = temp_data_species
+    
   } else {
     temp_data_species = gg_data %>%
       filter(Comment == "ok") %>%
@@ -384,6 +387,9 @@ for (i in 1:length(parameter_list)){
     theme(axis.title.y = element_blank(),
           axis.text.x = element_text(family = "Courier New"),
           axis.text.y= element_text(family = "Courier New"))
+  
+  # recuperation de stat ggplot avec ggplot_build()
+  # df_res = ggplot_build(p)$data[[1]]
   
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = cairo_pdf)
