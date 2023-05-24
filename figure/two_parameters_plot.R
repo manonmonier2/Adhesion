@@ -167,6 +167,10 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 
 ####
 
+
+#
+parameter_with_threshold = c("energy", "negative_energy", "log10_energy", "log10_negative_energy")
+
 # load config file
 opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
@@ -201,6 +205,14 @@ protocol_list = unique(gg_data$Protocol)
 plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
 dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
 
+# get threshold values with "detached pupae" protocol
+thr_data = gg_data %>% 
+  filter(Protocol == "detached pupae") %>%
+  summarise("energy" = max(energy, na.rm = T), 
+            "negative_energy" = max(negative_energy, na.rm = T), 
+            "log10_energy" = max(log10_energy, na.rm = T),
+            "log10_negative_energy" = max(log10_negative_energy, na.rm = T))
+
 list_plot = list()
 for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
@@ -209,12 +221,23 @@ for (i in 1:length(parameter_list)){
     # filter data and computes stats
     temp_data = gg_data %>%
       filter(Comment == "ok") %>%
-      group_by(Protocol) %>%
+      group_by(Protocol)
+
+    if (parameter_list[i] %in% parameter_with_threshold) {
+      temp_data = temp_data %>%
+        filter(!!sym(parameter_list[i]) > as.numeric(thr_data[parameter_list[i]]))
+    }
+    if (parameter_list[j] %in% parameter_with_threshold) {
+      temp_data = temp_data %>%
+        filter(!!sym(parameter_list[j]) > as.numeric(thr_data[parameter_list[j]]))
+    }
+    
+    temp_data = temp_data %>% 
       mutate("median_x" = median((!!sym(parameter_list[i])), na.rm = T)) %>%
       mutate("sd_x" = sd((!!sym(parameter_list[i])), na.rm = T)) %>%
       mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
       mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
-
+    
     p = ggplot(temp_data,
                aes_string("median_x", y = "median_y", color = "Protocol")) +
       geom_point(size = 1) +
