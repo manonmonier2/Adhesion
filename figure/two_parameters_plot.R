@@ -8,7 +8,8 @@ library("agricolae")
 library("FSA")
 library("ggpubr")
 library("DescTools")
-library("ggtext")
+#library("ggtext")
+library("Polychrome")
 
 library("extrafont")
 #font_import()
@@ -169,10 +170,10 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 
 
 #
-parameter_with_threshold = c("energy", "negative_energy", "log10_energy", "log10_negative_energy")
+parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -206,31 +207,41 @@ plot_path_two_parameters_by_protocol_for_drosophila_melanogaster = paste0(plot_p
 dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, showWarnings = FALSE, recursive = T)
 
 # get threshold values with "detached pupae" protocol
-thr_data = gg_data %>% 
+thr_data = gg_data %>%
   filter(Protocol == "detached pupae") %>%
-  summarise("energy" = max(energy, na.rm = T), 
-            "negative_energy" = max(negative_energy, na.rm = T), 
-            "log10_energy" = max(log10_energy, na.rm = T),
-            "log10_negative_energy" = max(log10_negative_energy, na.rm = T))
+  summarise("log10_detachment_force" = -1.5,
+            "log10_energy" = -2,
+            "log10_negative_energy" = -2)
 
 list_plot = list()
+
+mypal <- c("#8db600", "#222222", "#f3c300", "#875692", "#f38400", "#a1caf1", "#be0032", 
+           "#c2b280", "#848482", "#008856", "#e68fac", "#0067a5")
+
+
+
 for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
     if (i == j) next
     
     # filter data and computes stats
     temp_data = gg_data %>%
-      filter(Comment == "ok") %>%
+      filter(Species == "Drosophila_melanogaster" & 
+               Stock == "cantonS" & Protocol != "water") %>%
+      filter(Comment == "ok" | Comment == "cuticle_broke" | 
+               Comment == "not_detached") %>%
       group_by(Protocol)
-
-    if (parameter_list[i] %in% parameter_with_threshold) {
-      temp_data = temp_data %>%
-        filter(!!sym(parameter_list[i]) > as.numeric(thr_data[parameter_list[i]]))
-    }
-    if (parameter_list[j] %in% parameter_with_threshold) {
-      temp_data = temp_data %>%
-        filter(!!sym(parameter_list[j]) > as.numeric(thr_data[parameter_list[j]]))
-    }
+    
+    #names(mypal) <- levels(factor(c(levels(temp_data$Protocol))))
+    
+    # if (parameter_list[i] %in% parameter_with_threshold) {
+    #   temp_data = temp_data %>%
+    #     filter(!!sym(parameter_list[i]) > as.numeric(thr_data[parameter_list[i]]))
+    # }
+    # if (parameter_list[j] %in% parameter_with_threshold) {
+    #   temp_data = temp_data %>%
+    #     filter(!!sym(parameter_list[j]) > as.numeric(thr_data[parameter_list[j]]))
+    # }
     
     temp_data = temp_data %>% 
       mutate("median_x" = median((!!sym(parameter_list[i])), na.rm = T)) %>%
@@ -239,7 +250,7 @@ for (i in 1:length(parameter_list)){
       mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
     
     p = ggplot(temp_data,
-               aes_string("median_x", y = "median_y", color = "Protocol")) +
+               aes_string("median_x", y = "median_y", colour = "Protocol")) +
       geom_point(size = 1) +
       geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
                     xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
@@ -249,8 +260,9 @@ for (i in 1:length(parameter_list)){
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+      scale_colour_manual(values = mypal) +
       theme_bw(base_size = 22)
-
+    
     ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster", ".pdf"), 
            plot=p, width=16, height=8, device = "pdf")
     
