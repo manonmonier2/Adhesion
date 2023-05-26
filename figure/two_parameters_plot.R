@@ -173,7 +173,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -215,10 +215,9 @@ thr_data = gg_data %>%
 
 list_plot = list()
 
-mypal <- c("#8db600", "#222222", "#f3c300", "#875692", "#f38400", "#a1caf1", "#be0032", 
-           "#c2b280", "#848482", "#008856", "#e68fac", "#0067a5")
-
-
+mypal_protocol <- c("#8db600", "#222222", "#f3c300", "#875692", "#f38400", 
+                    "#a1caf1", "#be0032", "#c2b280", "#848482", "#008856", 
+                    "#e68fac", "#0067a5")
 
 for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
@@ -232,17 +231,24 @@ for (i in 1:length(parameter_list)){
                Comment == "not_detached") %>%
       group_by(Protocol)
     
-    #names(mypal) <- levels(factor(c(levels(temp_data$Protocol))))
+    temp_data$Protocol = factor(temp_data$Protocol, 
+                                levels = c("standard",
+                                           "speed /3",
+                                           "speed x3",
+                                           "strong tape",
+                                           "5min",
+                                           "0s",
+                                           "3 days",
+                                           "0.25 N",
+                                           "pupae attached on tesa tape",
+                                           "detached pupae and speed x3",
+                                           "detached pupae",
+                                           "no tape"),
+                                ordered = T)
     
-    # if (parameter_list[i] %in% parameter_with_threshold) {
-    #   temp_data = temp_data %>%
-    #     filter(!!sym(parameter_list[i]) > as.numeric(thr_data[parameter_list[i]]))
-    # }
-    # if (parameter_list[j] %in% parameter_with_threshold) {
-    #   temp_data = temp_data %>%
-    #     filter(!!sym(parameter_list[j]) > as.numeric(thr_data[parameter_list[j]]))
-    # }
+    names(mypal_protocol) <- levels(temp_data$Protocol)
     
+    # complete plot
     temp_data = temp_data %>% 
       mutate("median_x" = median((!!sym(parameter_list[i])), na.rm = T)) %>%
       mutate("sd_x" = sd((!!sym(parameter_list[i])), na.rm = T)) %>%
@@ -251,22 +257,58 @@ for (i in 1:length(parameter_list)){
     
     p = ggplot(temp_data,
                aes_string("median_x", y = "median_y", colour = "Protocol")) +
+      geom_point(temp_data,
+                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       geom_point(size = 1) +
       geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
                     xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
       geom_errorbar(ymin = temp_data[["median_y"]] - temp_data[["sd_y"]],
                     ymax = temp_data[["median_y"]] + temp_data[["sd_y"]]) +
-      geom_point(temp_data,
-                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-      scale_colour_manual(values = mypal) +
+      scale_colour_manual(values = mypal_protocol) +
       theme_bw(base_size = 22)
     
     ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster", ".pdf"), 
            plot=p, width=16, height=8, device = "pdf")
     
     list_plot[[paste0("x_", parameter_list[i], "_y_", parameter_list[j])]] = p
+    
+    # trimmed plot
+    if (parameter_list[i] %in% parameter_with_threshold | 
+        parameter_list[j] %in% parameter_with_threshold) {
+      if (parameter_list[i] %in% parameter_with_threshold) {
+        temp_data = temp_data %>%
+          filter(!!sym(parameter_list[i]) > as.numeric(thr_data[parameter_list[i]]))
+      }
+      if (parameter_list[j] %in% parameter_with_threshold) {
+        temp_data = temp_data %>%
+          filter(!!sym(parameter_list[j]) > as.numeric(thr_data[parameter_list[j]]))
+      }
+      
+      temp_data = temp_data %>% 
+        mutate("median_x" = median((!!sym(parameter_list[i])), na.rm = T)) %>%
+        mutate("sd_x" = sd((!!sym(parameter_list[i])), na.rm = T)) %>%
+        mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
+        mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
+      
+      p2 = ggplot(temp_data,
+                  aes_string("median_x", y = "median_y", colour = "Protocol")) +
+        geom_point(temp_data,
+                   mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+        geom_point(size = 1) +
+        geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
+                      xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
+        geom_errorbar(ymin = temp_data[["median_y"]] - temp_data[["sd_y"]],
+                      ymax = temp_data[["median_y"]] + temp_data[["sd_y"]]) +
+        xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+        ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+        scale_colour_manual(values = mypal_protocol) +
+        theme_bw(base_size = 22)
+      
+      ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster_trimmed", ".pdf"), 
+             plot=p2, width=16, height=8, device = "pdf")
+    }
   }
 }
 
