@@ -174,7 +174,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -303,7 +303,11 @@ for (i in 1:length(parameter_list)){
                   aes_string("median_x", y = "median_y", colour = "Protocol")) +
         geom_point(temp_data,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
-        geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE) +
+        geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
+        geom_smooth(data = temp_data, 
+                    mapping = aes_string(x = parameter_list[i], 
+                                         y = parameter_list[j]),
+                    color="blue", formula = y ~ x, se = F)) +
         stat_cor(aes(label=..rr.label..)) +
         geom_point(size = 1) +
         geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
