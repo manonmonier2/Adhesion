@@ -7,6 +7,7 @@ library("rcompanion")
 library("agricolae")
 library("FSA")
 library("ggpubr")
+library("ggplot2")
 library("DescTools")
 #library("ggtext")
 library("Polychrome")
@@ -173,7 +174,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -209,11 +210,12 @@ dir.create(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, sho
 # get threshold values with "detached pupae" protocol
 thr_data = gg_data %>%
   filter(Protocol == "detached pupae") %>%
-  summarise("log10_detachment_force" = -1.5,
+  summarise("log10_detachment_force" = -1.10,
             "log10_energy" = -2,
             "log10_negative_energy" = -2)
 
 list_plot = list()
+list_plot_t = list()
 
 mypal_protocol <- c("#8db600", "#222222", "#f3c300", "#875692", "#f38400", 
                     "#a1caf1", "#be0032", "#c2b280", "#848482", "#008856", 
@@ -273,6 +275,11 @@ for (i in 1:length(parameter_list)){
            plot=p, width=16, height=8, device = "pdf")
     
     list_plot[[paste0("x_", parameter_list[i], "_y_", parameter_list[j])]] = p
+
+    p2 = list_plot[["x_log10_negative_energy_y_log10_energy"]]
+    p3 = list_plot[["x_log10_detachment_force_y_log10_energy"]]
+    
+
     
     # trimmed plot
     if (parameter_list[i] %in% parameter_with_threshold | 
@@ -292,10 +299,12 @@ for (i in 1:length(parameter_list)){
         mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
         mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
       
-      p2 = ggplot(temp_data,
+      t = ggplot(temp_data,
                   aes_string("median_x", y = "median_y", colour = "Protocol")) +
         geom_point(temp_data,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+        geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE) +
+        stat_cor(aes(label=..rr.label..)) +
         geom_point(size = 1) +
         geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
                       xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
@@ -307,7 +316,16 @@ for (i in 1:length(parameter_list)){
         theme_bw(base_size = 22)
       
       ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster_trimmed", ".pdf"), 
-             plot=p2, width=16, height=8, device = "pdf")
+             plot=t, width=16, height=8, device = "pdf")
+      
+      list_plot_t[[paste0("x_", parameter_list[i], "_y_", parameter_list[j])]] = t
+      t2 = list_plot_t[["x_log10_negative_energy_y_log10_energy"]]
+      t3 = list_plot_t[["x_log10_energy_y_log10_detachment_force"]]
+      
+      
+      f= p2 + annotation_custom(ggplotGrob(t2), xmin = -6, xmax = -4,
+                             ymin = -2, ymax = 0)
+      
     }
   }
 }
