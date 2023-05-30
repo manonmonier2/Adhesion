@@ -11,6 +11,7 @@ library("ggplot2")
 library("DescTools")
 #library("ggtext")
 library("Polychrome")
+library("ggpmisc")
 
 library("extrafont")
 #font_import()
@@ -304,11 +305,22 @@ for (i in 1:length(parameter_list)){
         geom_point(temp_data,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
         geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
-        geom_smooth(data = temp_data, 
+        stat_poly_eq(data = temp_data,
+                     color = "red",
+                     inherit.aes = F,
+                     method = lm,
+                     mapping = aes_string("median_x", y = "median_y"),
+                     formula = y ~ x) +
+        geom_smooth(data = temp_data,
+                    method =lm,
                     mapping = aes_string(x = parameter_list[i], 
                                          y = parameter_list[j]),
-                    color="blue", formula = y ~ x, se = F)) +
-        stat_cor(aes(label=..rr.label..)) +
+                    color="blue", formula = y ~ x, se = F) +
+        stat_poly_eq(data = temp_data,
+                     method =lm,
+                     mapping = aes_string(x = parameter_list[i], 
+                                          y = parameter_list[j]),
+                     color="blue", formula = y ~ x, label.x = "right") +
         geom_point(size = 1) +
         geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
                       xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
