@@ -304,7 +304,7 @@ for (i in 1:length(parameter_list)){
                  aes_string("median_x", y = "median_y", colour = "Protocol")) +
         geom_point(temp_data,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
-        geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
+        # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
         # stat_poly_eq(data = temp_data,
         #              color = "red",
         #              inherit.aes = F,
@@ -316,11 +316,11 @@ for (i in 1:length(parameter_list)){
                     mapping = aes_string(x = parameter_list[i], 
                                          y = parameter_list[j]),
                     color="black", formula = y ~ x, se = F) +
-        # stat_poly_eq(data = temp_data,
-        #              method =lm,
-        #              mapping = aes_string(x = parameter_list[i], 
-        #                                   y = parameter_list[j]),
-        #              color="blue", formula = y ~ x, label.x = "right") +
+        stat_poly_eq(data = temp_data,
+                     method =lm,
+                     mapping = aes_string(x = parameter_list[i],
+                                          y = parameter_list[j]),
+                     color="blue", formula = y ~ x, label.x = "right") +
         geom_point(size = 1) +
         geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
                       xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
