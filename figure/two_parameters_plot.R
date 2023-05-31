@@ -11,7 +11,7 @@ library("ggplot2")
 library("DescTools")
 #library("ggtext")
 library("Polychrome")
-library("ggpmisc")
+#library("ggpmisc")
 
 library("extrafont")
 #font_import()
@@ -175,7 +175,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -218,8 +218,8 @@ thr_data = gg_data %>%
 list_plot = list()
 list_plot_t = list()
 
-mypal_protocol <- c("#8db600", "#222222", "#f3c300", "#875692", "#f38400", 
-                    "#a1caf1", "#be0032", "#c2b280", "#848482", "#008856", 
+mypal_protocol <- c("red", "#222222", "#f3c300", "#875692", "#f38400", 
+                    "#a1caf1", "#8db600", "#a13d2d", "#848482", "#008856", 
                     "#e68fac", "#0067a5")
 
 for (i in 1:length(parameter_list)){
@@ -261,7 +261,7 @@ for (i in 1:length(parameter_list)){
     p = ggplot(temp_data,
                aes_string("median_x", y = "median_y", colour = "Protocol")) +
       geom_point(temp_data,
-                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
       geom_point(size = 1) +
       geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
                     xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
@@ -276,11 +276,11 @@ for (i in 1:length(parameter_list)){
            plot=p, width=16, height=8, device = "pdf")
     
     list_plot[[paste0("x_", parameter_list[i], "_y_", parameter_list[j])]] = p
-
+    
     p2 = list_plot[["x_log10_negative_energy_y_log10_energy"]]
     p3 = list_plot[["x_log10_detachment_force_y_log10_energy"]]
     
-
+    
     
     # trimmed plot
     if (parameter_list[i] %in% parameter_with_threshold | 
@@ -301,26 +301,26 @@ for (i in 1:length(parameter_list)){
         mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
       
       t = ggplot(temp_data,
-                  aes_string("median_x", y = "median_y", colour = "Protocol")) +
+                 aes_string("median_x", y = "median_y", colour = "Protocol")) +
         geom_point(temp_data,
-                   mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+                   mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
         geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
-        stat_poly_eq(data = temp_data,
-                     color = "red",
-                     inherit.aes = F,
-                     method = lm,
-                     mapping = aes_string("median_x", y = "median_y"),
-                     formula = y ~ x) +
+        # stat_poly_eq(data = temp_data,
+        #              color = "red",
+        #              inherit.aes = F,
+        #              method = lm,
+        #              mapping = aes_string("median_x", y = "median_y"),
+        #              formula = y ~ x) +
         geom_smooth(data = temp_data,
                     method =lm,
                     mapping = aes_string(x = parameter_list[i], 
                                          y = parameter_list[j]),
                     color="blue", formula = y ~ x, se = F) +
-        stat_poly_eq(data = temp_data,
-                     method =lm,
-                     mapping = aes_string(x = parameter_list[i], 
-                                          y = parameter_list[j]),
-                     color="blue", formula = y ~ x, label.x = "right") +
+        # stat_poly_eq(data = temp_data,
+        #              method =lm,
+        #              mapping = aes_string(x = parameter_list[i], 
+        #                                   y = parameter_list[j]),
+        #              color="blue", formula = y ~ x, label.x = "right") +
         geom_point(size = 1) +
         geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
                       xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
@@ -339,8 +339,8 @@ for (i in 1:length(parameter_list)){
       t3 = list_plot_t[["x_log10_energy_y_log10_detachment_force"]]
       
       
-      f= p2 + annotation_custom(ggplotGrob(t2), xmin = -6, xmax = -4,
-                             ymin = -2, ymax = 0)
+      # f= p2 + annotation_custom(ggplotGrob(t2), xmin = -6, xmax = -4,
+      #                           ymin = -2, ymax = 0)
       
     }
   }
