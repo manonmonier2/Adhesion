@@ -315,7 +315,7 @@ for (i in 1:length(parameter_list)){
                     method =lm,
                     mapping = aes_string(x = parameter_list[i], 
                                          y = parameter_list[j]),
-                    color="blue", formula = y ~ x, se = F) +
+                    color="black", formula = y ~ x, se = F) +
         # stat_poly_eq(data = temp_data,
         #              method =lm,
         #              mapping = aes_string(x = parameter_list[i], 
