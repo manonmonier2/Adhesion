@@ -170,7 +170,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -299,6 +299,10 @@ list_plot_log = list()
 for (i in 1:length(parameter_list)){
   if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
     temp_data_species = gg_data %>% 
+      filter(Species != "Megaselia_abdita") %>%
+      filter(Species != "Drosophila_elegans") %>%
+      filter(Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+      (! Species %in% c("Drosophila_melanogaster")) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
@@ -389,7 +393,7 @@ for (i in 1:length(parameter_list)){
           axis.text.y= element_text(family = "Courier New"))
   
   # recuperation de stat ggplot avec ggplot_build()
-  # df_res = ggplot_build(p)$data[[1]]
+  df_res = ggplot_build(p)$data[[1]]
   
   ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
          plot=p, width=16, height=8, device = cairo_pdf)
