@@ -282,8 +282,10 @@ for (i in 1:length(parameter_list)){
   
 }
 
-p1 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
-p2 = ggarrange(plotlist = list_plot[4:6], nrow = 3, common.legend = T, align = c("v"), labels = c("D", "E", "F"))
+p1 = ggarrange(plotlist = list_plot[4:6], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"), 
+               font.label=list(color="black",size=30))
+p2 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("D", "E", "F"), 
+               font.label=list(color="black",size=30))
 p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
 
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
@@ -301,8 +303,8 @@ for (i in 1:length(parameter_list)){
     temp_data_species = gg_data %>% 
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_elegans") %>%
-      filter(Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-      (! Species %in% c("Drosophila_melanogaster")) %>%
+      filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+      (! Species %in% c("Drosophila_melanogaster"))) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
@@ -405,9 +407,11 @@ for (i in 1:length(parameter_list)){
   #list_plot_log[[parameter_list[i]]] = p
 }
 
-p1 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
-p2 = ggarrange(plotlist = list_plot[4:6], nrow = 3, common.legend = T, align = c("v"), labels = c("D", "E", "F"))
-p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
+p2 = ggarrange(plotlist = list_plot[4:6], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"), 
+               font.label=list(color="black",size=30))
+p1 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("D", "E", "F"), 
+               font.label=list(color="black",size=30))
+p = ggarrange(p2, p1, ncol = 2, common.legend = T, align = c("v"))
 
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/all_parameters_all_species", ".pdf"), 
        plot=p, width=30, height=20, device = cairo_pdf)
