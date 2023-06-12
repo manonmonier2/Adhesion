@@ -7,9 +7,8 @@ library("rcompanion")
 library("agricolae")
 library("FSA")
 library("ggpubr")
-library("ggplot2")
 library("DescTools")
-#library("ggtext")
+library("ggtext")
 library("Polychrome")
 #library("ggpmisc")
 
@@ -107,7 +106,6 @@ reorder_by_factor = function(data, factor_name, fun, parameter) {
   
   return(order_data)
 }
-
 
 format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA) {
   if (factor_name == "Species"){
@@ -387,25 +385,49 @@ for (i in 1:length(parameter_list)){
 plot_path_two_parameters_by_species = paste0(plot_path, "/two_parameters/by_species/")
 dir.create(plot_path_two_parameters_by_species, showWarnings = FALSE, recursive = T)
 
+c27 <- c("dodgerblue2", "#E31A1C", "red",
+  "green4","#6A3D9A", "purple",
+  "#FF7F00", "orange","black", 
+  "gold1","skyblue2", "#FB9A99", 
+  "#ffb6c1","palegreen2","#CAB2D6",
+  "#CBC3E3","#FDBF6F", "#FFD580",
+  "gray70", "khaki2","maroon", 
+  "orchid1", "deeppink1", "blue1", 
+  "steelblue4","darkturquoise", "green1")
+
 for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
     if (i == j) next
+    
+    temp_data_species = gg_data
+    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area") | parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
+      if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
+        temp_data_species = temp_data_species %>% 
+          filter(Species != "Megaselia_abdita") %>%
+          filter(Species != "Drosophila_elegans") %>%
+          filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+                   (Species != "Drosophila_melanogaster")) %>%
+          filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+          filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+          group_by(Species) %>%
+          filter(length(!!as.symbol(parameter_list[i])) > 1)
+      } 
+      if (parameter_list[j] %in% c("Glue_area", "log10_glue_area")){
+        temp_data_species = temp_data_species %>% 
+          filter(Species != "Megaselia_abdita") %>%
+          filter(Species != "Drosophila_elegans") %>%
+          filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+                   (Species != "Drosophila_melanogaster")) %>%
+          filter(! is.na(!!as.symbol(parameter_list[j]))) %>%
+          filter(is.finite(!!as.symbol(parameter_list[[j]]))) %>%
+          group_by(Species) %>%
+          filter(length(!!as.symbol(parameter_list[j])) > 1)
+      }
+    }
+    
 
-    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
-      temp_data_species = gg_data %>% 
-        filter(Species != "Megaselia_abdita") %>%
-        filter(Species != "Drosophila_elegans") %>%
-        filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-                 (! Species %in% c("Drosophila_melanogaster"))) %>%
-        filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-        filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
-        group_by(Species) %>%
-        filter(length(!!as.symbol(parameter_list[i])) > 1)
-      
-      temp_data_all_comment = temp_data_species
-      
-    } else {
-      temp_data_species = gg_data %>%
+    if ( ! parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
+      temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
         filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
         filter(Species != "Megaselia_abdita") %>%
@@ -419,9 +441,64 @@ for (i in 1:length(parameter_list)){
                               "Drosophila_biarmipes", "Drosophila_simulans")) 
         ) %>%
         filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+        filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
         group_by(Species) %>%
         filter(length(!!as.symbol(parameter_list[i])) > 1)
-
+    }
+    
+    if ( ! parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
+      temp_data_species = temp_data_species %>%
+        filter(Comment == "ok") %>%
+        filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
+        filter(Species != "Megaselia_abdita") %>%
+        filter(Species != "Drosophila_quadraria") %>%
+        filter(
+          ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+             (Species == "Drosophila_suzukii" & Stock == "WT3") |
+             (Species == "Drosophila_biarmipes" & Stock == "G224") |
+             (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
+            (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
+                              "Drosophila_biarmipes", "Drosophila_simulans")) 
+        ) %>%
+        filter(! is.na(!!as.symbol(parameter_list[j]))) %>%
+        filter(is.finite(!!as.symbol(parameter_list[[j]]))) %>%
+        group_by(Species) %>%
+        filter(length(!!as.symbol(parameter_list[j])) > 1)
+    }
+    
+    temp_data_species$Species = factor(temp_data_species$Species, 
+                                levels = c("Drosophila_kurseongensis",
+                                           "Drosophila_biarmipes",
+                                           "Drosophila_melanogaster",
+                                           "Drosophila_suzukii",
+                                           "Drosophila_mauritiana",
+                                           "Drosophila_simulans",
+                                           "Drosophila_yakuba",
+                                           "Drosophila_takahashii",        
+                                           "Drosophila_ananassae",
+                                           "Drosophila_prostipennis",
+                                           "Drosophila_eugracilis",
+                                           "Drosophila_rhopaloa",
+                                           "Drosophila_elegans",
+                                           "Drosophila_funebris",
+                                           "Drosophila_immigrans",
+                                           "Drosophila_virilis",
+                                           "Drosophila_tropicalis",
+                                           "Scaptodrosophila_lebanonensis",
+                                           "Drosophila_nannoptera",        
+                                           "Drosophila_pachea",
+                                           "Drosophila_malerkotliana",
+                                           "Zaprionus_indianus",
+                                           "Zaprionus_lachaisei",          
+                                           "Megaselia_scalaris",
+                                           "Drosophila_hydei",
+                                           "Drosophila_littoralis",        
+                                           "Drosophila_pseudoobscura"),
+                                          ordered = T)
+    
+    names(c27) <- levels(temp_data_species$Species)
+    
+    
     # add stats
     temp_data_species = temp_data_species %>%
       group_by(Species) %>%
@@ -449,12 +526,13 @@ for (i in 1:length(parameter_list)){
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+      scale_colour_manual(values = c27) +
       theme_bw(base_size = 22)
 
     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], ".pdf"),
            plot=p, width=16, height=8, device = "pdf")
   }
-}}
+}
 
 
 ### next is potentially useful
