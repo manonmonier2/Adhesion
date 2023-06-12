@@ -5,7 +5,7 @@ library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -174,7 +174,7 @@ write.table(temp, file=paste0(dirname(path_output_file), "/stock_correction.csv"
 # Integration of the imageJ results
 
 concatenate_data_imagej = data.frame()
-list_type = c("size", "glue")
+list_type = c("size", "glue", "side")
 for(file_type in list_type){
   list_imagej_file = list.files(path_imagej, full.names = T, 
                                 pattern = paste0(file_type, ".csv$"))
@@ -182,19 +182,25 @@ for(file_type in list_type){
   for(imagej_file in list_imagej_file){
     imagej_data = read.table(imagej_file, sep = ";", header = T)
     
-    # remove non unique id
-    imagej_data = imagej_data[which(table(imagej_data$Label) == 1), ]
+    # remove duplicated unique id (keep first occurrences of each duplicated id)
     
     imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
+    imagej_data$Label = imagej_id
     
+    imagej_data = imagej_data[!duplicated(imagej_data$Label), ]
+
     if (file_type == "glue"){
       temp_imagej_data = data.frame(
-        "Sample_ID" = imagej_id,
+        "Sample_ID" = imagej_data$Label,
         "Glue_area" = imagej_data$Area)
     } else if (file_type == "size") {
       temp_imagej_data = cbind(data.frame(
-        "Sample_ID" = imagej_id),
+        "Sample_ID" = imagej_data$Label),
         imagej_data)
+    } else if (file_type == "side") {
+      temp_imagej_data = cbind(data.frame(
+        "Sample_ID" = imagej_data$Label),
+        "Side" = imagej_data$Length)
     }
     
     concatenate_by_type = rbind(concatenate_by_type, 
@@ -235,7 +241,8 @@ if(length(not_unique_id) > 0){
 
 write.table(id_not_running, file = paste0(dirname(path_imagej), "/imagej_id_not_running.log"), row.names = F, col.names = F, quote = F)
 
-
+# remove "Label" col
+concatenate_data_imagej = concatenate_data_imagej[, -2]
 data_df = base::merge(data_df, concatenate_data_imagej, 
                       by = "Sample_ID", all = T)
 
@@ -244,7 +251,7 @@ path_imagej_second_run = paste0(dirname(path_imagej), "/second_run/second_run.cs
 path_random_names = paste0(dirname(path_imagej), "/second_run/random_names.csv")
 
 imagej_data = read.table(path_imagej_second_run, sep = ";", header = T)
-random_names = read.table(path_random_names, sep = ";", header = T)
+random_names = read.table(path_random_names, sep = ",", header = T)
 random_names = random_names[-which(random_names$result_pupa_glue.Label == ""), ]
 
 data = base::merge(imagej_data, random_names, 
@@ -256,9 +263,10 @@ data = data[c("result_pupa_glue.Label", "Area_random")]
 colnames(data) = c("Sample_ID", "Glue_area_second")
 data$Sample_ID = sub("^(\\d+)\\D+.*$", "\\1", data$Sample_ID)
 
-sum(data$Sample_ID %in% data_df$Sample_ID)
+# remove id non present in the current metadata dataframe
+data = data[data$Sample_ID %in% data_df$Sample_ID, ]
 
-test = base::merge(data_df, data, by = "Sample_ID", all = T)
+data_df = base::merge(data_df, data, by = "Sample_ID", all = T)
 
 # write the output file (create repository if necessary)
 dir.create(dirname(path_output_file), showWarnings = FALSE)
