@@ -8,7 +8,7 @@ library("agricolae")
 library("FSA")
 library("ggpubr")
 library("DescTools")
-#library("ggtext")
+library("ggtext")
 
 library("extrafont")
 # font_import()
@@ -169,7 +169,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -282,10 +282,20 @@ for (i in 1:length(parameter_list)){
   
 }
 
-p1 = ggarrange(list_plot[5], list_plot[6], list_plot[4], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"), 
+p1 = ggarrange(list_plot[[5]], list_plot[[6]], list_plot[[4]], 
+               nrow = 3, 
+               common.legend = T, 
+               align = c("v"), 
+               labels = c("A", "B", "C"), 
                font.label=list(color="black",size=30))
-p2 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("D", "E", "F"), 
+
+p2 = ggarrange(list_plot[[1]], list_plot[[2]], list_plot[[3]], 
+               nrow = 3, 
+               common.legend = T, 
+               align = c("v"), 
+               labels = c("D", "E", "F"), 
                font.label=list(color="black",size=30))
+
 p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
 
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
