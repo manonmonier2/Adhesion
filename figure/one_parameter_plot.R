@@ -205,9 +205,12 @@ plot_path_one_parameter_by_protocol_and_species = paste0(plot_path, "/one_parame
 dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE, recursive = T)
 
 
-manual_order = ordered(c(  "1 tape ; no glue ; speed x3",
-                          "speed x3", "speed /3", 
-                          "0 s", "5 min", 
+manual_order = ordered(c( 
+                          "1 tape ; no glue ; speed x3",
+                          "speed x3", 
+                          "speed /3", 
+                          "0 s",
+                          "5 min", 
                           "3 d", "0.25 N", "no tape ; glue", 
                           "1 strong tape ; glue", "2 tapes ; no glue", 
                           "1 tape ; no glue", "standard"))
@@ -221,7 +224,6 @@ for (i in 1:length(parameter_list)){
              Protocol != "water") %>%
     filter(!is.na(!!as.symbol(parameter_list[[i]]))) %>%
     filter(is.finite(!!as.symbol(parameter_list[[i]])))
-  
   
   temp_data_all_comment = gg_data %>% 
     filter(Species == "Drosophila_melanogaster" & 
