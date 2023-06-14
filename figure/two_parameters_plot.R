@@ -173,7 +173,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -237,8 +237,8 @@ for (i in 1:length(parameter_list)){
                                            "speed /3",
                                            "speed x3",
                                            "strong tape",
-                                           "5min",
-                                           "0s",
+                                           "5 min",
+                                           "0 s",
                                            "3 days",
                                            "0.25 N",
                                            "pupae attached on tesa tape",
@@ -534,6 +534,14 @@ for (i in 1:length(parameter_list)){
   }
 }
 
+###
+
+temp_data = gg_data %>%
+  filter(Species == "Drosophila_melanogaster" & Stock == "cantonS") %>%
+  filter(Protocol == "standard") %>%
+  filter(Comment == "ok" | Comment == "cuticle_broke" | 
+           Comment == "not_detached") %>%
+  group_by(Protocol)
 
 ### next is potentially useful
 # #plot species protocol standard and strong force 0,25N
