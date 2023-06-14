@@ -37,10 +37,10 @@ default:
   imagej_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/imageJ/raw
   
   # Raw parameter names
-  parameter_list: detachment_force, energy, negative_energy, rigidity, position_difference, pression_extension, pupa_area, pupa_length, Glue_area, log10_detachment_force, log10_energy, log10_negative_energy, log10_rigidity, log10_position_difference, log10_pupa_area, log10_pupa_length, log10_glue_area
+  parameter_list: detachment_force, energy, negative_energy, rigidity, position_difference, pression_extension, pupa_area, pupa_length, Glue_area, log10_detachment_force, log10_energy, log10_negative_energy, log10_rigidity, log10_position_difference, log10_pression_extension, log10_pupa_area, log10_pupa_length, log10_glue_area
 
   # Pretty parameter names (must be in same order as parameter_list)
-  lab_list: Detachment force, Two ways detachment energy, One way detachment energy, Rigidity, First vs last position, First vs maximum position, Pupa area, Pupa length, Glue area, log10(Detachment force), log10(Two ways detachment energy), log10(One way detachment energy), log10(Rigidity), log10(First vs last position), log10(First vs maximum position) , log10(Pupa area), log10(Pupa length), log10(Glue area)
+  lab_list: Detachment force, Two ways detachment energy, One way detachment energy, Rigidity, Last - first position, Maximum - first position, Pupa area, Pupa length, Glue area, log10(Detachment force), log10(Two ways detachment energy), log10(One way detachment energy), log10(Rigidity), log10(Last - first position), log10(Maximum - first position) , log10(Pupa area), log10(Pupa length), log10(Glue area)
   
   # Unit of each parameter (must be in same order as parameter_list)
   unit_list: N, N.mm, N.mm, N/mm, mm, mm, mm^2, mm, um^2, N, N.mm, N.mm, N/mm, mm, mm, mm^2, mm, um^2
