@@ -205,12 +205,12 @@ plot_path_one_parameter_by_protocol_and_species = paste0(plot_path, "/one_parame
 dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE, recursive = T)
 
 
-manual_order = ordered(c(  "detached pupae and speed x3",
+manual_order = ordered(c(  "1 tape ; no glue ; speed x3",
                           "speed x3", "speed /3", 
-                          "0s", "5min", 
-                          "3 days", "0.25 N", "no tape", 
-                          "strong tape", "pupae attached on tesa tape", 
-                          "detached pupae", "standard"))
+                          "0 s", "5 min", 
+                          "3 d", "0.25 N", "no tape ; glue", 
+                          "1 strong tape ; glue", "2 tapes ; no glue", 
+                          "1 tape ; no glue", "standard"))
 
 list_plot = list()
 
