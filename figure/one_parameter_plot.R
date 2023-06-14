@@ -205,11 +205,12 @@ plot_path_one_parameter_by_protocol_and_species = paste0(plot_path, "/one_parame
 dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE, recursive = T)
 
 
-manual_order = ordered(c( "no tape", "detached pupae", "detached pupae and speed x3",
-                          "pupae attached on tesa tape",
-                          "0.25 N", "3 days",
-                          "0s", "5min", "strong tape",
-                          "speed x3", "speed /3", "standard"))
+manual_order = ordered(c(  "detached pupae and speed x3",
+                          "speed x3", "speed /3", 
+                          "0s", "5min", 
+                          "3 days", "0.25 N", "no tape", 
+                          "strong tape", "pupae attached on tesa tape", 
+                          "detached pupae", "standard"))
 
 list_plot = list()
 
@@ -281,14 +282,14 @@ for (i in 1:length(parameter_list)){
   
 }
 
-p1 = ggarrange(plotlist = list_plot[4:6], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"), 
+p1 = ggarrange(list_plot[5], list_plot[6], list_plot[4], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"), 
                font.label=list(color="black",size=30))
 p2 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("D", "E", "F"), 
                font.label=list(color="black",size=30))
 p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
 
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
-       plot=p, width=40, height=30, device = cairo_pdf)
+       plot=p1, width=40, height=30, device = cairo_pdf)
 
 
 ## by species
