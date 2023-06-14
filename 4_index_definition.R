@@ -117,7 +117,7 @@ for(id in list_id){
       # index 2
       index_2_graph = which(data$load == max(na.omit(data$load))) #index utilise pour graph seulement
       
-      if (metadata_file$Protocol[metadata_file$Sample_ID == id] == "5min") {
+      if (metadata_file$Protocol[metadata_file$Sample_ID == id] == "5 min") {
         index_2 = which(data$load == max(na.omit(data$load)))
       } else {
         index_2 = which(data$extension == max(na.omit(data$extension)))[1]#index utilise pour calculs
@@ -163,11 +163,11 @@ for(id in list_id){
       }
       
       # index 4
-      if (metadata_file$Protocol[metadata_file$Sample_ID == id] == "5min") {
+      if (metadata_file$Protocol[metadata_file$Sample_ID == id] == "5 min") {
         index_3_4_time_gap = 300
         zone_4_lim = data$time[index_3] + index_3_4_time_gap
         index_4 = which(data$time >= zone_4_lim)[1]
-      } else if (metadata_file$Protocol[metadata_file$Sample_ID == id] == "0s") {
+      } else if (metadata_file$Protocol[metadata_file$Sample_ID == id] == "0 s") {
         index_4 = index_3
       } else {
         index_3_4_time_gap = 10
