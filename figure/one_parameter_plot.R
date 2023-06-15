@@ -414,9 +414,9 @@ for (i in 1:length(parameter_list)){
   
   if (! grepl("^log10_", parameter_list[i])){
     list_plot[[parameter_list[i]]] = p
+  } else {
+    list_plot_log[[parameter_list[i]]] = p
   }
-  
-  #list_plot_log[[parameter_list[i]]] = p
 }
 
 p2 = ggarrange(plotlist = list_plot[4:6], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"), 
