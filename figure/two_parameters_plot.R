@@ -173,7 +173,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -191,6 +191,8 @@ unit_list = gsub(" +$", "",
                  gsub("^ +", "", unlist(strsplit(opt$unit_list, ","))))
 stat_list = gsub(" +$", "", 
                  gsub("^ +", "", unlist(strsplit(opt$stat_list, ","))))
+
+index_table = read.table(path_index, header = T, sep = "\t")
 
 # read data figure
 gg_data = read.table(paste0(plot_path, "/data_figure.csv"), 
@@ -386,14 +388,14 @@ plot_path_two_parameters_by_species = paste0(plot_path, "/two_parameters/by_spec
 dir.create(plot_path_two_parameters_by_species, showWarnings = FALSE, recursive = T)
 
 c27 <- c("dodgerblue2", "#E31A1C", "red",
-  "green4","#6A3D9A", "purple",
-  "#FF7F00", "orange","black", 
-  "gold1","skyblue2", "#FB9A99", 
-  "#ffb6c1","palegreen2","#CAB2D6",
-  "#CBC3E3","#FDBF6F", "#FFD580",
-  "gray70", "khaki2","maroon", 
-  "orchid1", "deeppink1", "blue1", 
-  "steelblue4","darkturquoise", "green1")
+         "green4","#6A3D9A", "purple",
+         "#FF7F00", "orange","black", 
+         "gold1","skyblue2", "#FB9A99", 
+         "#ffb6c1","palegreen2","#CAB2D6",
+         "#CBC3E3","#FDBF6F", "#FFD580",
+         "gray70", "khaki2","maroon", 
+         "orchid1", "deeppink1", "blue1", 
+         "steelblue4","darkturquoise", "green1")
 
 for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
@@ -425,7 +427,7 @@ for (i in 1:length(parameter_list)){
       }
     }
     
-
+    
     if ( ! parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
@@ -467,34 +469,34 @@ for (i in 1:length(parameter_list)){
     }
     
     temp_data_species$Species = factor(temp_data_species$Species, 
-                                levels = c("Drosophila_kurseongensis",
-                                           "Drosophila_biarmipes",
-                                           "Drosophila_melanogaster",
-                                           "Drosophila_suzukii",
-                                           "Drosophila_mauritiana",
-                                           "Drosophila_simulans",
-                                           "Drosophila_yakuba",
-                                           "Drosophila_takahashii",        
-                                           "Drosophila_ananassae",
-                                           "Drosophila_prostipennis",
-                                           "Drosophila_eugracilis",
-                                           "Drosophila_rhopaloa",
-                                           "Drosophila_elegans",
-                                           "Drosophila_funebris",
-                                           "Drosophila_immigrans",
-                                           "Drosophila_virilis",
-                                           "Drosophila_tropicalis",
-                                           "Scaptodrosophila_lebanonensis",
-                                           "Drosophila_nannoptera",        
-                                           "Drosophila_pachea",
-                                           "Drosophila_malerkotliana",
-                                           "Zaprionus_indianus",
-                                           "Zaprionus_lachaisei",          
-                                           "Megaselia_scalaris",
-                                           "Drosophila_hydei",
-                                           "Drosophila_littoralis",        
-                                           "Drosophila_pseudoobscura"),
-                                          ordered = T)
+                                       levels = c("Drosophila_kurseongensis",
+                                                  "Drosophila_biarmipes",
+                                                  "Drosophila_melanogaster",
+                                                  "Drosophila_suzukii",
+                                                  "Drosophila_mauritiana",
+                                                  "Drosophila_simulans",
+                                                  "Drosophila_yakuba",
+                                                  "Drosophila_takahashii",        
+                                                  "Drosophila_ananassae",
+                                                  "Drosophila_prostipennis",
+                                                  "Drosophila_eugracilis",
+                                                  "Drosophila_rhopaloa",
+                                                  "Drosophila_elegans",
+                                                  "Drosophila_funebris",
+                                                  "Drosophila_immigrans",
+                                                  "Drosophila_virilis",
+                                                  "Drosophila_tropicalis",
+                                                  "Scaptodrosophila_lebanonensis",
+                                                  "Drosophila_nannoptera",        
+                                                  "Drosophila_pachea",
+                                                  "Drosophila_malerkotliana",
+                                                  "Zaprionus_indianus",
+                                                  "Zaprionus_lachaisei",          
+                                                  "Megaselia_scalaris",
+                                                  "Drosophila_hydei",
+                                                  "Drosophila_littoralis",        
+                                                  "Drosophila_pseudoobscura"),
+                                       ordered = T)
     
     names(c27) <- levels(temp_data_species$Species)
     
@@ -506,9 +508,9 @@ for (i in 1:length(parameter_list)){
       mutate("sd_x" = sd((!!sym(parameter_list[i])))) %>%
       mutate("median_y" = median((!!sym(parameter_list[j])))) %>%
       mutate("sd_y" = sd((!!sym(parameter_list[j]))))
-
+    
     #plot
-
+    
     p = ggplot(temp_data_species,
                aes(x = median_x,
                    y = median_y,
@@ -528,20 +530,48 @@ for (i in 1:length(parameter_list)){
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       scale_colour_manual(values = c27) +
       theme_bw(base_size = 22)
-
+    
     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], ".pdf"),
            plot=p, width=16, height=8, device = "pdf")
   }
 }
 
-###
+### superposition ####
 
 temp_data = gg_data %>%
   filter(Species == "Drosophila_melanogaster" & Stock == "cantonS") %>%
-  filter(Protocol == "standard") %>%
+  filter(Protocol == "standard" | Protocol == "0.25 N") %>%
   filter(Comment == "ok" | Comment == "cuticle_broke" | 
            Comment == "not_detached") %>%
   group_by(Protocol)
+
+
+# f(extension) = load entre index 1 et 2
+
+temp_gg_data = data.frame()
+
+
+
+for (id in temp_data$Sample_ID){
+  # id = "2022050403"
+  sample = read.table(paste0(path_batch_by_id, "/", id, '.csv'), sep = "\t", header = T)
+  
+  current_id = which(index_table$id == id)
+  index1 = index_table[current_id, "index_1"]
+  index2 = index_table[current_id, "index_2"]
+
+  temp_gg_data = rbind(temp_gg_data, 
+                       data.frame("time" = sample$time[index1 : index2],
+                         "load" = sample$load[index1 : index2],
+                         "extension" = sample$extension[index1 : index2] - sample$extension[index2], 
+                         "protocol" = gg_data$Protocol[which(gg_data$Sample_ID == id)], 
+                         "id" = rep(id, length(index1 : index2))))
+}
+
+p_el = ggplot(data = temp_gg_data, aes(x = extension, y = load, color = protocol, group = id)) +
+  #group permet de separer les jeux de données par id, evite les courbes liees entre elles
+      geom_path()
+p_el
 
 ### next is potentially useful
 # #plot species protocol standard and strong force 0,25N
