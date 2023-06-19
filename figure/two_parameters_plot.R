@@ -431,7 +431,7 @@ for (i in 1:length(parameter_list)){
     if ( ! parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
-        filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
+        filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
         filter(Species != "Megaselia_abdita") %>%
         filter(Species != "Drosophila_quadraria") %>%
         filter(
@@ -451,7 +451,7 @@ for (i in 1:length(parameter_list)){
     if ( ! parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
-        filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
+        filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
         filter(Species != "Megaselia_abdita") %>%
         filter(Species != "Drosophila_quadraria") %>%
         filter(
@@ -559,18 +559,18 @@ for (id in temp_data$Sample_ID){
   current_id = which(index_table$id == id)
   index1 = index_table[current_id, "index_1"]
   index2 = index_table[current_id, "index_2"]
-
+  
   temp_gg_data = rbind(temp_gg_data, 
                        data.frame("time" = sample$time[index1 : index2],
-                         "load" = sample$load[index1 : index2],
-                         "extension" = sample$extension[index1 : index2] - sample$extension[index2], 
-                         "protocol" = gg_data$Protocol[which(gg_data$Sample_ID == id)], 
-                         "id" = rep(id, length(index1 : index2))))
+                                  "load" = sample$load[index1 : index2],
+                                  "extension" = sample$extension[index1 : index2] - sample$extension[index2], 
+                                  "protocol" = gg_data$Protocol[which(gg_data$Sample_ID == id)], 
+                                  "id" = rep(id, length(index1 : index2))))
 }
 
 p_el = ggplot(data = temp_gg_data, aes(x = extension, y = load, color = protocol, group = id)) +
   #group permet de separer les jeux de données par id, evite les courbes liees entre elles
-      geom_path()
+  geom_path()
 p_el
 
 ### next is potentially useful
