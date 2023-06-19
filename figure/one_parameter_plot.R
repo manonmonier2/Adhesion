@@ -169,7 +169,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -206,28 +206,30 @@ dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE
 
 
 manual_order = ordered(c( 
-                          "1 tape ; no glue ; speed x3",
-                          "speed x3", 
-                          "speed /3", 
-                          "0 s",
-                          "5 min", 
-                          "3 d", "0.25 N", "no tape ; glue", 
-                          "1 strong tape ; glue", "2 tapes ; no glue", 
-                          "1 tape ; no glue", "standard"))
+  "speed x3", 
+  "speed /3", 
+  "0 s",
+  "5 min", 
+  "3 d", "0.25 N", "no tape ; glue", 
+  "1 strong tape ; glue", "2 tapes ; no glue", 
+  "1 tape ; no glue", "standard"))
 
 list_plot = list()
+
 
 for (i in 1:length(parameter_list)){
   temp_data = gg_data %>% 
     filter(Comment == "ok" & 
              Species == "Drosophila_melanogaster" & 
-             Protocol != "water") %>%
+             Protocol != "water" & 
+             Protocol != "1 tape ; no glue ; speed x3") %>%
     filter(!is.na(!!as.symbol(parameter_list[[i]]))) %>%
     filter(is.finite(!!as.symbol(parameter_list[[i]])))
   
   temp_data_all_comment = gg_data %>% 
     filter(Species == "Drosophila_melanogaster" & 
-             Stock == "cantonS" & Protocol != "water") %>%
+             Stock == "cantonS" & Protocol != "water" & 
+             Protocol != "1 tape ; no glue ; speed x3") %>%
     filter(Comment == "ok" | Comment == "cuticle_broke" | 
              Comment == "not_detached") %>%
     filter(!is.na(!!as.symbol(parameter_list[[i]])))
@@ -291,7 +293,7 @@ p1 = ggarrange(list_plot[[5]], list_plot[[6]], list_plot[[4]],
                labels = c("A", "B", "C"), 
                font.label=list(color="black",size=30))
 
-p2 = ggarrange(list_plot[[1]], list_plot[[2]], list_plot[[3]], 
+p2 = ggarrange(list_plot[[1]], list_plot[[3]], list_plot[[2]], 
                nrow = 3, 
                common.legend = T, 
                align = c("v"), 
@@ -301,7 +303,13 @@ p2 = ggarrange(list_plot[[1]], list_plot[[2]], list_plot[[3]],
 p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
 
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
-       plot=p1, width=40, height=30, device = cairo_pdf)
+       plot=p, width=40, height=30, device = cairo_pdf)
+
+ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/position_Drosophila_melanogaster", ".pdf"), 
+       plot=p1, width=20, height=30, device = cairo_pdf)
+
+ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/force_energy_Drosophila_melanogaster", ".pdf"), 
+       plot=p2, width=20, height=30, device = cairo_pdf)
 
 
 ## by species
@@ -316,18 +324,26 @@ for (i in 1:length(parameter_list)){
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_elegans") %>%
       filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-      (! Species %in% c("Drosophila_melanogaster"))) %>%
+               (! Species %in% c("Drosophila_melanogaster"))) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
     
-    temp_data_all_comment = temp_data_species
+    temp_data_all_comment = gg_data %>% 
+      filter(Species != "Megaselia_abdita") %>%
+      filter(Species != "Drosophila_elegans") %>%
+      filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+               (! Species %in% c("Drosophila_melanogaster"))) %>%
+      filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+      filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+      group_by(Species) %>%
+      filter(length(!!as.symbol(parameter_list[i])) > 1)
     
   } else {
     temp_data_species = gg_data %>%
       filter(Comment == "ok") %>%
-      filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
+      filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_quadraria") %>%
       filter(
@@ -344,7 +360,7 @@ for (i in 1:length(parameter_list)){
     
     temp_data_all_comment = gg_data %>%
       filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
-      filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
+      filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_quadraria") %>%
       filter(
@@ -404,7 +420,7 @@ for (i in 1:length(parameter_list)){
     scale_x_discrete(labels = x_labels) +
     theme(axis.title.y = element_blank(),
           axis.text.x = element_text(family = "Courier New"),
-          axis.text.y= element_text(family = "Courier New"))
+          axis.text.y = element_text(family = "Courier New"))
   
   # recuperation de stat ggplot avec ggplot_build()
   df_res = ggplot_build(p)$data[[1]]
@@ -414,19 +430,36 @@ for (i in 1:length(parameter_list)){
   
   if (! grepl("^log10_", parameter_list[i])){
     list_plot[[parameter_list[i]]] = p
-  } else {
-    list_plot_log[[parameter_list[i]]] = p
   }
+  
+  #list_plot_log[[parameter_list[i]]] = p
 }
 
-p2 = ggarrange(plotlist = list_plot[4:6], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"), 
+p1 = ggarrange(list_plot[[5]], list_plot[[6]], list_plot[[4]], 
+               nrow = 3, 
+               common.legend = T, 
+               align = c("v"), 
+               labels = c("A", "B", "C"), 
                font.label=list(color="black",size=30))
-p1 = ggarrange(plotlist = list_plot[1:3], nrow = 3, common.legend = T, align = c("v"), labels = c("D", "E", "F"), 
+
+p2 = ggarrange(list_plot[[1]], list_plot[[3]], list_plot[[2]], 
+               nrow = 3, 
+               common.legend = T, 
+               align = c("v"), 
+               labels = c("D", "E", "F"), 
                font.label=list(color="black",size=30))
+
+
 p = ggarrange(p2, p1, ncol = 2, common.legend = T, align = c("v"))
 
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/all_parameters_all_species", ".pdf"), 
        plot=p, width=30, height=20, device = cairo_pdf)
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/position_all_species", ".pdf"), 
+       plot=p1, width=20, height=30, device = cairo_pdf)
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/force_energy_all_species", ".pdf"), 
+       plot=p2, width=20, height=30, device = cairo_pdf)
 
 
 p3 = ggarrange(plotlist = list_plot_log[10:12], nrow = 3, common.legend = T, align = c("v"), labels = c("A", "B", "C"))
@@ -577,10 +610,10 @@ list_plot = list()
 list_plot_log = list()
 for (i in 1:length(parameter_list)){
   if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) next
-    
+  
   raw_temp_data_species = gg_data %>%
     filter(Comment == "ok") %>%
-    filter((Protocol == "strong tape and 0.25 N" | Protocol == "standard")) %>%
+    filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
     filter(Species != "Megaselia_abdita") %>%
     filter(Species != "Drosophila_quadraria") %>%
     filter(
@@ -600,7 +633,7 @@ for (i in 1:length(parameter_list)){
     filter(! is.na(div_glue_area)) %>%
     filter(is.finite(div_glue_area)) %>%
     filter(length(div_glue_area) > 4)
-
+  
   temp_data_species = as.data.frame(temp_data_species)
   
   gg_data_test_species = make_stat(data = temp_data_species,
@@ -650,17 +683,17 @@ for (i in 1:length(parameter_list)){
          plot=p, width=16, height=8, device = cairo_pdf)
   
   list_plot_log[[parameter_list[i]]] = p
-
+  
   threshold = quantile(temp_data_species[["div_glue_area"]], probs = seq(0, 1, 0.05))[20]
   
   sub <- subset(temp_data_species, div_glue_area < threshold)
   x_labels_sub = format_label(factor_name = "Species",
-                          factor_labels = gg_data_test_species[["Species"]],
-                          stat_group = gg_data_test_species,
-                          n_data = sub)
+                              factor_labels = gg_data_test_species[["Species"]],
+                              stat_group = gg_data_test_species,
+                              n_data = sub)
   
   p_sub = ggplot(sub,
-             aes_string(x = "Species", y = "div_glue_area")) +
+                 aes_string(x = "Species", y = "div_glue_area")) +
     geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
     geom_jitter(position=position_dodge(0.5)) +
     scale_shape_manual(values = c(3, 4)) +
