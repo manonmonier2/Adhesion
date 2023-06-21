@@ -169,7 +169,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -722,4 +722,19 @@ for (i in 1:length(parameter_list)){
 ggsave(file = paste0(plot_path_one_parameter_normalisation, "/all_parameters_all_species", ".pdf"), 
        plot=p, width=30, height=20, device = cairo_pdf)
 
-###
+### STATS
+
+comment_stats = gg_data %>%
+  filter(Comment == "ok" | 
+           Comment == "cuticle_broke" | 
+           Comment == "not_detached") %>%
+  select(Species, Comment) %>%
+  group_by(Species) %>%
+  table()
+
+comment_stats = as.data.frame(comment_stats)
+
+ggplot(data = comment_stats,
+       aes(x = Species, y = Freq, fill = Comment)) +
+  geom_bar(stat = "identity")
+
