@@ -174,7 +174,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -510,12 +510,32 @@ for (i in 1:length(parameter_list)){
       mutate("median_y" = median((!!sym(parameter_list[j])))) %>%
       mutate("sd_y" = sd((!!sym(parameter_list[j]))))
     
+    # construct data for the geom_text_repel function
+    gg_repel_data = temp_data_species %>%
+      select(Species, median_x, median_y) %>%
+      distinct() 
+    
+    short_name = gg_repel_data$Species
+    short_name = gsub("_", " ", short_name, fixed = T)
+    short_name = gsub("Drosophila", "D.", short_name, fixed = T)
+    short_name = gsub("Megaselia", "M.", short_name, fixed = T)
+    short_name = gsub("Scaptodrosophila", "S.", short_name, fixed = T)
+    short_name = gsub("Zaprionus", "Z.", short_name, fixed = T)
+    short_name = substr(short_name, 1, 8)
+    
+    gg_repel_data = cbind(gg_repel_data, 
+                          data.frame("species_number" = 1:nrow(gg_repel_data),
+                                     "species_short" = short_name))
+    
+    
     #plot
     
     p = ggplot(temp_data_species,
                aes(x = median_x,
                    y = median_y,
                    color = Species)) +
+      geom_point(temp_data_species,
+                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       geom_point(size = 5, shape = 3) +
       geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
@@ -525,21 +545,21 @@ for (i in 1:length(parameter_list)){
            max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
       ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
            max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
-      geom_point(temp_data_species,
-                 mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
+      
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-      geom_text_repel(data = temp_data_species,
-                      #nudge_y = ,
-                      size          = 4,
-                      box.padding   = 1.5,
-                      point.padding = 0.5,
-                      force         = 100,
-                      segment.size  = 0.2,
-                      segment.color = "grey50",
-                      direction     = "x") +
+      geom_text_repel(data = gg_repel_data,
+                      aes(x = median_x,
+                          y = median_y,
+                          label = species_short),
+                      # nudge_y = max(gg_repel_data$median_y),
+                      segment.linetype = "dashed",
+                      force = 50,
+                      # direction = "y",
+                      color = 1) +
       scale_colour_manual(values = c27) +
-      theme_bw(base_size = 22)
+      theme_bw(base_size = 22) +
+      theme(legend.position = "none")
     
     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], ".pdf"),
            plot=p, width=16, height=8, device = "pdf")
