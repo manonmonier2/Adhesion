@@ -382,6 +382,13 @@ for (i in 1:length(parameter_list)){
                                    factor_name = "Species",
                                    parameter = parameter_list[i])
   
+  temp_data_species %>%
+    filter(Species == "Drosophila_rhopaloa") %>%
+    nrow()
+  
+  temp_data_all_comment %>%
+    filter(Species == "Drosophila_rhopaloa") %>%
+    nrow()
   
   # reorder species for the plot
   species_order = reorder_by_factor(data = temp_data_species, 
