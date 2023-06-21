@@ -11,6 +11,7 @@ library("DescTools")
 library("ggtext")
 library("Polychrome")
 #library("ggpmisc")
+library("ggrepel")
 
 library("extrafont")
 #font_import()
@@ -528,6 +529,15 @@ for (i in 1:length(parameter_list)){
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
+      geom_text_repel(data = temp_data_species,
+                      #nudge_y = ,
+                      size          = 4,
+                      box.padding   = 1.5,
+                      point.padding = 0.5,
+                      force         = 100,
+                      segment.size  = 0.2,
+                      segment.color = "grey50",
+                      direction     = "x") +
       scale_colour_manual(values = c27) +
       theme_bw(base_size = 22)
     
@@ -570,8 +580,16 @@ for (id in temp_data$Sample_ID){
 
 p_el = ggplot(data = temp_gg_data, aes(x = extension, y = load, color = protocol, group = id)) +
   #group permet de separer les jeux de données par id, evite les courbes liees entre elles
-  geom_path()
+  geom_path() + xlab("Captor position (mm)") + ylab("Load (N)") +
+  theme_bw(base_size = 22) +
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.subtitle = element_text(hjust = 0.5), 
+        axis.text.x = element_text(family = "Courier New"), 
+        axis.text.y= element_text(family = "Courier New"))
 p_el
+
+ggsave(file = paste0(plot_path_two_parameters_by_species, "extension_load_superposition_025N_standard", ".pdf"),
+       plot=p_el, width=16, height=8, device = "pdf")
 
 ### next is potentially useful
 # #plot species protocol standard and strong force 0,25N
