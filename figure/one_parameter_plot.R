@@ -169,7 +169,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -724,17 +724,82 @@ ggsave(file = paste0(plot_path_one_parameter_normalisation, "/all_parameters_all
 
 ### STATS
 
+#standard protocol
 comment_stats = gg_data %>%
+  filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+           (Species != "Drosophila_melanogaster")) %>%
   filter(Comment == "ok" | 
            Comment == "cuticle_broke" | 
            Comment == "not_detached") %>%
+  filter(Protocol == "standard") %>%
   select(Species, Comment) %>%
   group_by(Species) %>%
   table()
 
 comment_stats = as.data.frame(comment_stats)
 
-ggplot(data = comment_stats,
-       aes(x = Species, y = Freq, fill = Comment)) +
-  geom_bar(stat = "identity")
+p_standard = ggplot(data = comment_stats,
+       aes(x = Species, y = Freq, fill = Comment)) + coord_flip() +
+  geom_bar(stat = "identity") + theme_bw(base_size = 18) +
+  theme(axis.title.y = element_blank(),
+        axis.text.x = element_text(family = "Courier New"),
+        axis.text.y= element_text(family = "Courier New")) +
+  ylab("Cumulative number of pupae after standard adhesion assay") +
+  geom_text(data=subset(comment_stats,Freq != 0), aes(label = Freq), size = 3, position = position_stack(vjust = 0.5))
 
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_standard", ".pdf"), 
+       plot=p_standard, width=16, height=8, device = cairo_pdf)
+
+
+#species with strong tape and standard
+comment_stats_strong = gg_data %>%
+  filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+           (Species != "Drosophila_melanogaster")) %>%
+  filter(Comment == "ok" | 
+           Comment == "cuticle_broke" | 
+           Comment == "not_detached") %>%
+  filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  select(Species, Comment) %>%
+  group_by(Species) %>%
+  table()
+
+comment_stats_strong = as.data.frame(comment_stats_strong)
+
+p_strong_025N = ggplot(data = comment_stats_strong,
+       aes(x = Species, y = Freq, fill = Comment)) + coord_flip() +
+  geom_bar(stat = "identity") + theme_bw(base_size = 18) +
+  theme(axis.title.y = element_blank(),
+        axis.text.x = element_text(family = "Courier New"),
+        axis.text.y= element_text(family = "Courier New")) +
+  ylab("Cumulative number of pupae after '1 strong tape ; glue ; 0.25 N' adhesion assay") +
+  geom_text(data=subset(comment_stats_strong,Freq != 0), aes(label = Freq), size = 3, position = position_stack(vjust = 0.5))
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_strong_025N", ".pdf"), 
+       plot=p_strong_025N, width=16, height=8, device = cairo_pdf)
+
+### PCA
+
+library("stats")
+library("ggcorrplot")
+
+sgs = read.table("/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_22_03_23/data/species_proteins.csv", 
+                            sep = ",", header = T, check.names = F)
+
+temp_data_species = temp_data_species %>%
+  group_by(Species) %>%
+  mutate("median_detachment_force" = median((!!sym(parameter_list[1]))))
+
+
+pca_data = temp_data_species %>%
+  select(Species, median_detachment_force) %>%
+  distinct()
+
+pca_data_sgs <- base::merge(sgs, pca_data, by = "Species")
+
+pca_data_sgs_select <- pca_data_sgs[,2:15]
+
+corr_matrix <- cor(pca_data_sgs_select)
+
+ggcorrplot(corr_matrix)
+
+pca = princomp(pca_data_sgs_select)
