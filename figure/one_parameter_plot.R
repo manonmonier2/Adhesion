@@ -107,7 +107,7 @@ reorder_by_factor = function(data, factor_name, fun, parameter) {
 }
 
 
-format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA) {
+format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = NULL) {
   if (factor_name == "Species"){
     
     a_col = levels(factor_labels)
@@ -169,7 +169,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -186,6 +186,12 @@ unit_list = gsub(" +$", "",
                  gsub("^ +", "", unlist(strsplit(opt$unit_list, ","))))
 stat_list = gsub(" +$", "", 
                  gsub("^ +", "", unlist(strsplit(opt$stat_list, ","))))
+
+comment_list = gsub(" +$", "", 
+                    gsub("^ +", "", unlist(strsplit(opt$comment_list, ","))))
+
+comment_lab_list = gsub(" +$", "", 
+                        gsub("^ +", "", unlist(strsplit(opt$comment_lab_list, ","))))
 
 # read data figure
 gg_data = read.table(paste0(plot_path, "/data_figure.csv"), 
@@ -740,12 +746,24 @@ comment_stats = gg_data %>%
 
 comment_stats = as.data.frame(comment_stats)
 
+x_labels = format_label(factor_name = "Species",
+                       factor_labels = comment_stats[["Species"]])
+x_labels = gsub(" *$", "", x_labels)
+
+
+pretty_comment = comment_lab_list
+names(pretty_comment) = comment_list
+
+legend_labels = pretty_comment[levels(comment_stats[["Comment"]])]
+
 p_standard = ggplot(data = comment_stats,
        aes(x = Species, y = Freq, fill = Comment)) + coord_flip() +
   geom_bar(stat = "identity") + theme_bw(base_size = 18) +
   theme(axis.title.y = element_blank(),
         axis.text.x = element_text(family = "Courier New"),
         axis.text.y= element_text(family = "Courier New")) +
+  scale_x_discrete(labels = x_labels) +
+  scale_fill_discrete(name = "Name", labels = legend_labels) +
   ylab("Cumulative number of pupae after standard adhesion assay") +
   geom_text(data=subset(comment_stats,Freq != 0), aes(label = Freq), size = 3, position = position_stack(vjust = 0.5))
 
@@ -784,27 +802,27 @@ ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_strong_025N"
 
 ### PCA
 
-library("stats")
-library("ggcorrplot")
-
-sgs = read.table("/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_22_03_23/data/species_proteins.csv", 
-                            sep = ",", header = T, check.names = F)
-
-temp_data_species = temp_data_species %>%
-  group_by(Species) %>%
-  mutate("median_detachment_force" = median((!!sym(parameter_list[1]))))
-
-
-pca_data = temp_data_species %>%
-  select(Species, median_detachment_force) %>%
-  distinct()
-
-pca_data_sgs <- base::merge(sgs, pca_data, by = "Species")
-
-pca_data_sgs_select <- pca_data_sgs[,2:15]
-
-corr_matrix <- cor(pca_data_sgs_select)
-
-ggcorrplot(corr_matrix)
-
-pca = princomp(pca_data_sgs_select)
+# library("stats")
+# library("ggcorrplot")
+# 
+# sgs = read.table("/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_22_03_23/data/species_proteins.csv", 
+#                             sep = ",", header = T, check.names = F)
+# 
+# temp_data_species = temp_data_species %>%
+#   group_by(Species) %>%
+#   mutate("median_detachment_force" = median((!!sym(parameter_list[1]))))
+# 
+# 
+# pca_data = temp_data_species %>%
+#   select(Species, median_detachment_force) %>%
+#   distinct()
+# 
+# pca_data_sgs <- base::merge(sgs, pca_data, by = "Species")
+# 
+# pca_data_sgs_select <- pca_data_sgs[,2:15]
+# 
+# corr_matrix <- cor(pca_data_sgs_select)
+# 
+# ggcorrplot(corr_matrix)
+# 
+# pca = princomp(pca_data_sgs_select)
