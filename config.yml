@@ -48,6 +48,12 @@ default:
   # Stat (R function name) to perform
   stat_list: mean, max, min, median, sd
   
+  # Raw comment names
+  comment_list: cuticle_broke, not_detached, ok
+  
+  # Pretty comment names (must be in same order as comment_list)
+  comment_lab_list: a, b, c
+
 portable:
   # Absolute path to batches data files.
   batches: C:\Users\jean-noel.lorenzi\/Documents/Adhesion/data/batch/raw
