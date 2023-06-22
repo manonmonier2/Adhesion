@@ -731,6 +731,8 @@ comment_stats = gg_data %>%
   filter(Comment == "ok" | 
            Comment == "cuticle_broke" | 
            Comment == "not_detached") %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Drosophila_quadraria") %>%
   filter(Protocol == "standard") %>%
   select(Species, Comment) %>%
   group_by(Species) %>%
@@ -758,6 +760,8 @@ comment_stats_strong = gg_data %>%
   filter(Comment == "ok" | 
            Comment == "cuticle_broke" | 
            Comment == "not_detached") %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Drosophila_quadraria") %>%
   filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
   select(Species, Comment) %>%
   group_by(Species) %>%
