@@ -772,6 +772,7 @@ p_strong_025N = ggplot(data = comment_stats_strong,
         axis.text.x = element_text(family = "Courier New"),
         axis.text.y= element_text(family = "Courier New")) +
   ylab("Cumulative number of pupae after '1 strong tape ; glue ; 0.25 N' adhesion assay") +
+  scale_fill_discrete(name="Pupa after detachment") +
   geom_text(data=subset(comment_stats_strong,Freq != 0), aes(label = Freq), size = 3, position = position_stack(vjust = 0.5))
 
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_strong_025N", ".pdf"), 
