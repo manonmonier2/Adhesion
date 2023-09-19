@@ -1,0 +1,336 @@
+rm(list = ls())
+
+library("config")
+library("ggplot2")
+library("dplyr")
+library("rcompanion")
+library("agricolae")
+library("FSA")
+library("ggpubr")
+library("DescTools")
+library("ggtext")
+
+library("extrafont")
+# font_import()
+loadfonts(device = "win")
+
+#### FUNCTIONS ####
+
+n_fun <- function(data){
+  y_pos = min(data) + (max(data) - min(data)) * 0.1
+  return(data.frame(y = y_pos, label = paste0("n = ",length(data))))
+}
+
+
+make_stat = function(data, factor_name, parameter){
+  
+  data[[factor_name]] = as.factor(data[[factor_name]])
+  test_stat = c()
+  
+  # shapiro
+  res_shapiro_global = shapiro.test(data[, which(colnames(data) == parameter)])
+  shapiro_global_handler = res_shapiro_global$p.value >= 0.01
+  test_stat = c(test_stat, shapiro_global_handler)
+  
+  
+  # bartlett
+  res_bartlett = bartlett.test(x = data[, which(colnames(data) == parameter)], 
+                               g = data[, which(colnames(data) == factor_name)], 
+                               data = data)
+  bartlett_reject = res_bartlett$p.value >= 0.01 #si p value superieure a 0.01 on accepte H0 donc variance egales entre protocoles
+  test_stat = c(test_stat, bartlett_reject)
+  
+  # anova
+  aov_res = aov(data[[parameter]] ~ data[[factor_name]])
+  anova_res = anova(aov_res)
+  anova_handler = anova_res$`Pr(>F)`[1] >= 0.01
+  
+  test_stat = c(test_stat, anova_handler)
+  
+  # kruskal wallis
+  kruskal_res = kruskal.test(data[[parameter]] ~ data[[factor_name]])
+  kruskal_handler = kruskal_res$p.value >= 0.01
+  
+  test_stat = c(test_stat, anova_handler)
+  
+  names(test_stat) = c("shapiro", "bartlett", "anova", "kruskal-wallis")
+  
+  # Tukey
+  tukey_res = TukeyHSD(aov_res, conf.level = 0.99)
+  HSD_res = HSD.test(aov_res, "data[[factor_name]]", group = T)
+  tukey_group = HSD_res$groups
+  tukey_group = cbind(rownames(tukey_group), tukey_group[, -1])#on extrait les noms de ligne et on les place dans une nouvelle colonne à gauche avec cbind
+  #puis on append le tableau de resultats tukey_group auquel on retire les moyennes en colonne 1
+  colnames(tukey_group) = c(factor_name, "groups")
+  tukey_group = as.data.frame(tukey_group)
+  
+  
+  # Dunn
+  dunn_res = dunnTest(data[[parameter]] ~ data[[factor_name]])
+  
+  dunn_group = cldList(P.adj ~ Comparison, threshold = 0.01, data = dunn_res$res, 
+                       remove.zero = F,
+                       remove.space = T)
+  dunn_group = dunn_group[, -3]
+  colnames(dunn_group) = c(factor_name, "groups")
+  # correction of dunn group name (add space)
+  for(true_name in unique(data[[factor_name]])){
+    dunn_name = gsub(" ", "", true_name)
+    dunn_group[[factor_name]][which(dunn_group[[factor_name]] == dunn_name)] = true_name
+  }
+  dunn_group = dunn_group[order(dunn_group$groups), ]#order donne la position des valeurs non ordonnees apres ordre alphabetique
+  #order est donne pour lignes car on veut ordonner lignes
+  ###
+  
+  used_test = NA
+  if (test_stat["shapiro"] & test_stat["bartlett"]){
+    data_test = tukey_group
+    used_test = "Tukey"
+  } else {
+    data_test = dunn_group
+    used_test = "Dunn"
+  }
+  return(data_test)
+}
+
+
+reorder_by_factor = function(data, factor_name, fun, parameter) {
+  order_data = data %>%
+    group_by(!!as.symbol(factor_name)) %>% 
+    filter(!is.na(!!as.symbol(parameter))) %>%
+    filter(is.finite(!!as.symbol(parameter))) %>%
+    summarise(fun = 
+                do.call(fun, list(x = (!!as.symbol(parameter)))))
+  order_data = as.data.frame(order_data[order(order_data$fun), ])
+  
+  return(order_data[[factor_name]])
+}
+
+
+format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = NULL) {
+  if (factor_name == "Species"){
+    
+    a_col = levels(factor_labels)
+    a_col = gsub("_", " ", a_col, fixed = T)
+    a_col = gsub("Drosophila", "D.", a_col, fixed = T)
+    a_col = gsub("Megaselia", "M.", a_col, fixed = T)
+    a_col = gsub("Scaptodrosophila", "S.", a_col, fixed = T)
+    a_col = gsub("Zaprionus", "Z.", a_col, fixed = T)
+    a_col = substr(a_col, 1, 8)
+    # a_col = paste0("*", a_col, "*")
+    a_col = StrAlign(a_col, sep = "\\l")
+  } else {
+    a_col = StrAlign(levels(factor_labels), sep = "\\r")
+  }
+  
+  if (length(stat_group) > 0){
+    ordered_groups = unlist(lapply(levels(stat_group[[factor_name]]),
+                                   function(x) {
+                                     stat_group[stat_group[[factor_name]] == x, ]$groups
+                                   }))
+    group_diversity = sort(unique(unlist(lapply(ordered_groups, function(x) {
+      return(base::unlist(strsplit(x, split = "")))
+    }))))
+    
+    edited_groups = unlist(lapply(ordered_groups, function(g) {
+      base::paste(unlist(lapply(group_diversity, function(x) {
+        if (grepl(x, g)) {
+          return(x)
+        } else {
+          return(" ")
+        }
+      })), collapse = "")
+    }))
+    
+    
+    b_col = edited_groups
+  } else {
+    b_col = ""
+  }
+  
+  if (length(n_data) > 0){
+    
+    n_count = unlist(lapply(levels(n_data[[factor_name]]), 
+                            function(x) {
+                              sum(n_data[[factor_name]] == x)
+                            }))
+    c_col = StrAlign(paste0(n_count), sep = "\\r")
+  } else {
+    c_col = ""
+  }
+  
+  labels =  paste(a_col,
+                  b_col,
+                  c_col,
+                  sep = "   ")
+  return(labels)
+}
+
+####
+
+# load config file
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+
+# retrieve parameters
+# Input
+path_index = opt$index_path
+path_batch_by_id = opt$batch_by_id
+plot_path = opt$plot_path
+path_integral = opt$integral_path
+
+parameter_list = gsub(" +$", "", 
+                      gsub("^ +", "", unlist(strsplit(opt$parameter_list, ","))))
+lab_list = gsub(" +$", "", 
+                gsub("^ +", "", unlist(strsplit(opt$lab_list, ","))))
+unit_list = gsub(" +$", "",
+                 gsub("^ +", "", unlist(strsplit(opt$unit_list, ","))))
+stat_list = gsub(" +$", "", 
+                 gsub("^ +", "", unlist(strsplit(opt$stat_list, ","))))
+
+comment_list = gsub(" +$", "", 
+                    gsub("^ +", "", unlist(strsplit(opt$comment_list, ","))))
+
+comment_lab_list = gsub(" +$", "", 
+                        gsub("^ +", "", unlist(strsplit(opt$comment_lab_list, ","))))
+
+# read data figure
+gg_data = read.table(paste0(plot_path, "/data_figure.csv"), 
+                     stringsAsFactors = F,
+                     sep = "\t",
+                     header = T)
+
+species_list = unique(gg_data$Species)
+stock_list = unique(gg_data$Stock)
+protocol_list = unique(gg_data$Protocol)
+
+
+# one parameter plot
+## D. melanogaster protocols
+
+plot_path_one_parameter_by_protocol_and_species = paste0(plot_path, "/one_parameter/by_protocol_and_species/")
+dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE, recursive = T)
+
+
+manual_order = ordered(c( 
+  "speed x3", 
+  "speed /3", 
+  "0 s",
+  "5 min", 
+  "3 d", "0.25 N", "no tape ; glue", 
+  "1 strong tape ; glue", "2 tapes ; no glue", 
+  "1 tape ; no glue", "standard"))
+
+## by species
+plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
+dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
+
+list_plot = list()
+list_plot_log = list()
+
+i = 1
+  
+temp_data_species = gg_data %>%
+  filter(Comment == "ok") %>%
+  filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_suzukii" & Stock == "WT3") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
+                        "Drosophila_biarmipes", "Drosophila_simulans")) 
+  ) %>%
+  filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+  group_by(Species) %>%
+  filter(length(!!as.symbol(parameter_list[i])) > 1)
+
+temp_data_all_comment = gg_data %>%
+  filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
+  filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_suzukii" & Stock == "WT3") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
+                        "Drosophila_biarmipes", "Drosophila_simulans")) 
+  ) %>%
+  filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+  group_by(Species) %>%
+  filter(length(!!as.symbol(parameter_list[i])) > 1)
+
+temp_data_species = as.data.frame(temp_data_species)
+
+gg_data_test_species = make_stat(data = temp_data_species,
+                                 factor_name = "Species",
+                                 parameter = parameter_list[i])
+
+temp_data_species %>%
+  filter(Species == "Drosophila_rhopaloa") %>%
+  nrow()
+
+temp_data_all_comment %>%
+  filter(Species == "Drosophila_rhopaloa") %>%
+  nrow()
+
+# reorder species for the plot
+species_order = reorder_by_factor(data = temp_data_species, 
+                                  factor_name = "Species", 
+                                  fun = "median", 
+                                  parameter = parameter_list[1])
+
+temp_data_species$Species = factor(temp_data_species$Species,
+                                   levels = species_order,
+                                   ordered = T)
+
+temp_data_all_comment$Species = factor(temp_data_all_comment$Species,
+                                       levels = species_order,
+                                       ordered = T)
+
+gg_data_test_species$Species = factor(gg_data_test_species$Species,
+                                      levels = species_order,
+                                      ordered = T)
+
+# change labels name
+gg_data_test_species$groups = 
+  gsub('G', 'i',
+       gsub('A', 'h',
+            gsub('B', 'g', 
+                 gsub('C', 'f', 
+                      gsub('D', 'e',
+                           gsub('F', 'd',
+                                gsub('E', 'c',
+                                     gsub('H', 'b',
+                                          gsub('I', 'a', toupper(gg_data_test_species$groups))))))))))
+
+x_labels = format_label(factor_name = "Species",
+                        factor_labels = gg_data_test_species[["Species"]],
+                        stat_group = gg_data_test_species,
+                        n_data = temp_data_all_comment)
+
+#plot
+p = ggplot(temp_data_species,
+           aes_string(x = "Species", y = parameter_list[i])) +
+  geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
+  geom_jitter(position=position_dodge(0.5)) +
+  scale_shape_manual(values = c(3, 4)) +
+  scale_color_manual(values = rep(1, 8)) +
+  theme_bw(base_size = 18) +
+  ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
+  xlab("Species") +
+  coord_flip() + 
+  scale_x_discrete(labels = x_labels) +
+  theme(axis.title.y = element_blank(),
+        axis.text.x = element_text(family = "Courier New"),
+        axis.text.y = element_text(family = "Courier New"))
+
+
+# ggsave(file = paste0(plot_path_one_parameter_by_species, "/", parameter_list[i], ".pdf"), 
+#        plot=p, width=16, height=8, device = cairo_pdf)
+
+
+
