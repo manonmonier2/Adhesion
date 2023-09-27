@@ -174,7 +174,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -405,7 +405,7 @@ for (i in 1:length(parameter_list)){
     temp_data_species = gg_data
     if (parameter_list[i] %in% c("Glue_area", "log10_glue_area") | parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
       if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
-        temp_data_species = temp_data_species %>% 
+        temp_data_species = temp_data_species %>%
           filter(Species != "Megaselia_abdita") %>%
           filter(Species != "Drosophila_elegans") %>%
           filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
@@ -414,9 +414,9 @@ for (i in 1:length(parameter_list)){
           filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
           group_by(Species) %>%
           filter(length(!!as.symbol(parameter_list[i])) > 1)
-      } 
+      }
       if (parameter_list[j] %in% c("Glue_area", "log10_glue_area")){
-        temp_data_species = temp_data_species %>% 
+        temp_data_species = temp_data_species %>%
           filter(Species != "Megaselia_abdita") %>%
           filter(Species != "Drosophila_elegans") %>%
           filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
@@ -536,16 +536,20 @@ for (i in 1:length(parameter_list)){
                    color = Species)) +
       geom_point(temp_data_species,
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
-      geom_point(size = 5, shape = 3) +
+      geom_smooth(method='lm', formula= y ~ x) +
+      geom_point(size = 5, shape = 3) + 
       geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
       geom_errorbar(ymin = temp_data_species$median_y - temp_data_species$sd_y,
                     ymax = temp_data_species$median_y + temp_data_species$sd_y) +
-      xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T),
-           max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
-      ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
-           max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
+      # xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T),
+      #      max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
+      # ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
+      #      max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
       
+      xlim(c(4.5, 6.75)) +
+      ylim(c(-4, 0.5)) +
+
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       geom_text_repel(data = gg_repel_data,
@@ -553,16 +557,17 @@ for (i in 1:length(parameter_list)){
                           y = median_y,
                           label = species_short),
                       # nudge_y = max(gg_repel_data$median_y),
-                      segment.linetype = "dashed",
+                      segment.linetype = "solid",
+                      segment.color = "grey",
                       force = 50,
                       # direction = "y",
-                      color = 1) +
+                      color = "black") +
       scale_colour_manual(values = c27) +
       theme_bw(base_size = 22) +
       theme(legend.position = "none")
     
     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], ".pdf"),
-           plot=p, width=16, height=8, device = "pdf")
+           plot=p, width=10, height=8, device = "pdf")
   }
 }
 
