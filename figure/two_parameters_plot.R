@@ -174,7 +174,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -539,19 +539,21 @@ for (i in 1:length(parameter_list)){
       geom_smooth(temp_data_species, 
                   mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), 
                   inherit.aes = F, method = 'lm', formula = y ~ x) +
+      stat_regline_equation(mapping = aes_string(x = parameter_list[i], y = parameter_list[j]),
+                            temp_data_species, aes(label = ..rr.label..), inherit.aes = TRUE) +
       geom_point(size = 5, shape = 3) + 
       geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
       geom_errorbar(ymin = temp_data_species$median_y - temp_data_species$sd_y,
                     ymax = temp_data_species$median_y + temp_data_species$sd_y) +
-      xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T),
-           max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
-      ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
-           max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
+      # xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T),
+      #      max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
+      # ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
+      #      max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
+      # 
+      xlim(c(4.5, 6.75)) +
+      ylim(c(-4, 0.5)) +
       
-      # xlim(c(4.5, 6.75)) +
-      # ylim(c(-4, 0.5)) +
-
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       geom_text_repel(data = gg_repel_data,
