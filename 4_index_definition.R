@@ -194,21 +194,30 @@ for(id in list_id){
       max_noise_6_temp = max(noise_6_temp)
       
       amp_noise_6_temp = abs(min_noise_6_temp) + abs(max_noise_6_temp)
+      #we define noise on region 6
       
       ## index 5
       #
       min_detach = min(data$load)
       #
-      
+
+      #if the pic is big enough meaning 3* amplitude
+      #we go through index 4 to the end
+      #vect_bool = we test load is inferior or equal to amplitude which give a vector of true and false
       if(abs(min_detach) > (3 * amp_noise_6_temp)){
         temp = data$load[index_4:length(data$load)]
         vect_bool = temp <= - amp_noise_6_temp
-        
+
+        #detect first time there is a false so when it is superior to noise amplitude 
+        #while stops when while is false
+        #the goal is to detect when we reach the noise amplitude after index 4
         i = 1
         while(!vect_bool[i]){
           i = i + 1
         }
-        
+
+        #we detect when we reach for the second time the noise amplitude
+        #it is defined as index 5
         while(vect_bool[i]){
           i = i + 1
         }
@@ -219,12 +228,18 @@ for(id in list_id){
       }
       
       ## cas o? l'index 5 n'est pas trouv?
+      #s'il n'y a pas de pic ou pour autre raison on a pas pu définir avex la methode precedente
+      #we take the median because we are sure to find a pic, there is 50 percent of the data on both side
+      #we define index5 as soon as we enter into noise
+      #this case is less precise, index5 should be a bit more on the left
       if (is.na(index_5)) {
         temp = data$load[index_4:length(data$load)]
         median_noise_6_temp = median(noise_6_temp)
         vect_bool = temp < median_noise_6_temp
-        first_true = min(which(vect_bool))
-        first_false = min(which(! vect_bool[first_true:length(vect_bool)])) + first_true - 1
+        first_true = min(which(vect_bool)) #when we are inferior to the median
+        #corresponds to the first while
+        first_false = min(which(! vect_bool[first_true:length(vect_bool)])) + first_true - 1 #
+        #corresponds to the second which
         index_5 = first_false + index_4 - 1
         true_index_5 = "inf"
       }
