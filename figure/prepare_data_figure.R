@@ -17,7 +17,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -47,6 +47,9 @@ detachment_position = c()
 pression_extension = c()
 pupa_area = c()
 pupa_length = c()
+glue_area_mm = c()
+
+# id ="2022012104"
 
 for (id in gg_data$Sample_ID){
   sample = read.table(paste0(path_batch_by_id, "/", id, '.csv'), sep = "\t", header = T)
@@ -70,16 +73,28 @@ for (id in gg_data$Sample_ID){
   
   
   if(length(which(metadata$Sample_ID == id)) == 1) {
-    current_pupa_area = ((gg_data$Scale_um[gg_data$Sample_ID == id]^2) * gg_data$Area[gg_data$Sample_ID == id]) / (gg_data$Scale_px[gg_data$Sample_ID == id]^2)
+    current_pupa_area = (((gg_data$Scale_um[gg_data$Sample_ID == id]^2) * gg_data$Area[gg_data$Sample_ID == id]) / (gg_data$Scale_px[gg_data$Sample_ID == id]^2))/1000000
   } else {
     current_pupa_area = NA
   }
   
   if(length(which(metadata$Sample_ID == id)) == 1) {
-    current_pupa_length = gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id]
+    current_pupa_length = (gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id])/1000
   } else {
     current_pupa_length = NA
   }
+  
+  if(length(which(metadata$Sample_ID == id)) == 1) {
+    current_glue_area = gg_data$Glue_area[gg_data$Sample_ID == id]/1000000
+  } else {
+    current_glue_area = NA
+  }
+  
+  # if(length(which(metadata$Sample_ID == id)) == 1 & gg_data$Glue_area[gg_data$Sample_ID == id] == 0) {
+  #     current_force_div_glue == 0
+  # } else {
+  #   current_force_div_glue = current_detachment_force/current_glue_area
+  # }
   
   
   detachment_force = c(detachment_force, current_detachment_force)
@@ -90,18 +105,20 @@ for (id in gg_data$Sample_ID){
   pression_extension = c(pression_extension, current_pression_extension)
   pupa_area = c(pupa_area, current_pupa_area)
   pupa_length = c(pupa_length, current_pupa_length)
+  glue_area_mm = c(glue_area_mm, current_glue_area)
   
 }
 
 gg_data = cbind(gg_data, 
                 detachment_force,
-                energy,
-                negative_energy,
-                rigidity,
-                position_difference,
+                 energy,
+                 negative_energy,
+                 rigidity,
+                  position_difference,
                 pression_extension,
                 pupa_area,
                 pupa_length,
+                glue_area_mm,
                 log10_na(detachment_force),
                 log10_na(energy),
                 log10_na(negative_energy),
@@ -110,7 +127,7 @@ gg_data = cbind(gg_data,
                 log10_na(pression_extension),
                 log10_na(pupa_area),
                 log10_na(pupa_length),
-                log10_na(gg_data$Glue_area)
+                log10_na(glue_area_mm)
 )
 
 colnames(gg_data)[(ncol(gg_data) - 8) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_pupa_area", "log10_pupa_length", "log10_glue_area")
@@ -133,5 +150,4 @@ write.table(x = gg_data,
             col.names = T,
             row.names = F,
             quote = F)
-
 
