@@ -180,8 +180,16 @@ for(file_type in list_type){
                                 pattern = paste0(file_type, ".csv$"))
   concatenate_by_type = data.frame()
   for(imagej_file in list_imagej_file){
-    imagej_data = read.table(imagej_file, sep = ";", header = T)
     
+    
+    # automatically load the file with a ";" separator or a "," separator if ";"
+    # is not found in the first line of the file
+    imagej_data = 
+      if( ";" %in% strsplit(readLines(imagej_file, n=1)[1], split="")[[1]] ) { 
+      read.table(imagej_file, sep=";", header = T) }
+    else{
+        read.table(imagej_file, sep=",", header = T) }
+  
     # remove duplicated unique id (keep first occurrences of each duplicated id)
     
     imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
