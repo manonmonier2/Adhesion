@@ -39,7 +39,7 @@ path_output = opt$index_path
 
 dir.create(dirname(path_output), showWarnings = FALSE)
 
-metadata_file = read.table(path_metadata_file, sep = "\t", header = T)
+metadata_file = read.table(path_metadata_file, sep = "\t", header = T, check.names = F)
 
 # definition of the time limit for a noise peak
 time_limit = 3
