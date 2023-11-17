@@ -403,8 +403,8 @@ for (i in 1:length(parameter_list)){
     if (i == j) next
     
     temp_data_species = gg_data
-    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area") | parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
-      if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
+    if (parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm") | parameter_list[j] %in% c("glue_area_mm", "log10_glue_area_mm")) {
+      if (parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm")) {
         temp_data_species = temp_data_species %>%
           filter(Species != "Megaselia_abdita") %>%
           filter(Species != "Drosophila_elegans") %>%
@@ -415,7 +415,7 @@ for (i in 1:length(parameter_list)){
           group_by(Species) %>%
           filter(length(!!as.symbol(parameter_list[i])) > 1)
       }
-      if (parameter_list[j] %in% c("Glue_area", "log10_glue_area")){
+      if (parameter_list[j] %in% c("glue_area_mm", "log10_glue_area_mm")){
         temp_data_species = temp_data_species %>%
           filter(Species != "Megaselia_abdita") %>%
           filter(Species != "Drosophila_elegans") %>%
@@ -429,7 +429,7 @@ for (i in 1:length(parameter_list)){
     }
     
     
-    if ( ! parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
+    if ( ! parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
         filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
@@ -449,7 +449,7 @@ for (i in 1:length(parameter_list)){
         filter(length(!!as.symbol(parameter_list[i])) > 1)
     }
     
-    if ( ! parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
+    if ( ! parameter_list[j] %in% c("glue_area_mm", "log10_glue_area_mm")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
         filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
