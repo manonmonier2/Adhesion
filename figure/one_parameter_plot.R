@@ -9,6 +9,9 @@ library("FSA")
 library("ggpubr")
 library("DescTools")
 library("ggtext")
+library("doBy")
+library("ggrepel")
+library("reshape2")
 
 library("extrafont")
 # font_import()
@@ -117,7 +120,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
     a_col = gsub("Scaptodrosophila", "S.", a_col, fixed = T)
     a_col = gsub("Zaprionus", "Z.", a_col, fixed = T)
     a_col = substr(a_col, 1, 8)
-    # a_col = paste0("*", a_col, "*")
+    #a_col = paste0("*", a_col, "*")
     a_col = StrAlign(a_col, sep = "\\l")
   } else {
     a_col = StrAlign(levels(factor_labels), sep = "\\r")
@@ -169,7 +172,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -197,8 +200,7 @@ comment_lab_list = gsub(" +$", "",
 gg_data = read.table(paste0(plot_path, "/data_figure.csv"), 
                      stringsAsFactors = F,
                      sep = "\t",
-                     header = T,
-                     check.names = F)
+                     header = T)
 
 species_list = unique(gg_data$Species)
 stock_list = unique(gg_data$Stock)
@@ -326,8 +328,9 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 list_plot = list()
 list_plot_log = list()
 for (i in 1:length(parameter_list)){
-  if (parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm", "detachment_force_div_glue_area", "log10_detachment_force_div_glue_area")) {
+  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
     temp_data_species = gg_data %>% 
+      filter(Comment == "ok") %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_elegans") %>%
       filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
@@ -338,6 +341,7 @@ for (i in 1:length(parameter_list)){
       filter(length(!!as.symbol(parameter_list[i])) > 1)
     
     temp_data_all_comment = gg_data %>% 
+      filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Drosophila_elegans") %>%
       filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
@@ -449,6 +453,12 @@ for (i in 1:length(parameter_list)){
   #list_plot_log[[parameter_list[i]]] = p
 }
 
+
+#recuperation mediane detachment force par especes
+stat = aggregate(gg_data$detachment_force ~ gg_data$Species, data = gg_data, median)
+stat = as.data.frame(stat)
+write.csv(stat, "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_22_03_23/data/stat_by_species.csv", row.names=FALSE)
+
 p1 = ggarrange(list_plot[[5]], list_plot[[6]], list_plot[[4]], 
                nrow = 3, 
                common.legend = T, 
@@ -496,7 +506,7 @@ for (i in 1:length(parameter_list)){
     focus_lab = gsub("Zaprionus", "Z.", focus_lab, fixed = T)
     focus_lab = StrAlign(focus_lab, sep = "\\l")
     focus_lab = substr(focus_lab, 1, 8)
-    if (parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm", "detachment_force_div_glue_area", "log10_detachment_force_div_glue_area")) {
+    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
       temp_data_stock = gg_data %>%
         filter(Species == focus) %>%
         filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
@@ -603,6 +613,9 @@ for (i in 1:length(parameter_list)){
                 common.legend = T,
                 align = c("v"), 
                 labels = c("A", "B", "C"))
+  
+  df_res = ggplot_build(p)$data[[1]]
+  
   ggsave(file = paste0(plot_path_one_parameter_by_stock, "/", parameter_list[i], 
                        "_stock", ".pdf"), 
          plot=p, 
@@ -616,209 +629,239 @@ for (i in 1:length(parameter_list)){
 #        plot=p, width=30, height=40, device = cairo_pdf)
 
 ###
-## normalisation by glue area
+## normalisation by glue area - comment ok
 plot_path_one_parameter_normalisation = paste0(plot_path, "/one_parameter/normalisation/")
 dir.create(plot_path_one_parameter_normalisation, showWarnings = FALSE, recursive = T)
 
 list_plot = list()
 list_plot_log = list()
 for (i in 1:length(parameter_list)){
-  if (parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm")) next
+  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) next
   
-  if (parameter_list[i] %in%  c("detachment_force_div_glue_area", "log10_detachment_force_div_glue_area")) {
-    temp_data_species = gg_data %>%
-      filter(Comment == "ok") %>%
-      filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
-      filter(Species != "Megaselia_abdita") %>%
-      filter(Species != "Drosophila_quadraria") %>%
-      filter(
-        ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-           (Species == "Drosophila_suzukii" & Stock == "WT3") |
-           (Species == "Drosophila_biarmipes" & Stock == "G224") |
-           (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
-          (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
-                            "Drosophila_biarmipes", "Drosophila_simulans")) 
-      ) %>%
-      filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-      filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
-      group_by(Species) 
-    
-    temp_data_species = as.data.frame(temp_data_species)
-    
-    gg_data_test_species = make_stat(data = temp_data_species,
-                                     factor_name = "Species",
-                                     parameter = "detachment_force_div_glue_area")
-    
-    
-    # reorder species for the plot
-    species_order = reorder_by_factor(data = temp_data_species, 
-                                      factor_name = "Species", 
-                                      fun = "median", 
-                                      parameter = parameter_list[1])
-    
-    temp_data_species$Species = factor(temp_data_species$Species,
-                                       levels = species_order,
-                                       ordered = T)
-    
-    gg_data_test_species$Species = factor(gg_data_test_species$Species,
-                                          levels = species_order,
-                                          ordered = T)
-    
-    x_labels = format_label(factor_name = "Species",
-                            factor_labels = gg_data_test_species[["Species"]],
-                            stat_group = gg_data_test_species,
-                            n_data = temp_data_species)
-    
-    #plot
-    p = ggplot(temp_data_species,
-               aes_string(x = "Species", y = "detachment_force_div_glue_area")) +
-      geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
-      geom_jitter(position=position_dodge(0.5)) +
-      scale_shape_manual(values = c(3, 4)) +
-      scale_color_manual(values = rep(1, 8)) +
-      theme_bw(base_size = 18) +
-      ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-      xlab("Species") +
-      coord_flip() + 
-      scale_x_discrete(labels = x_labels) +
-      theme(axis.title.y = element_blank(),
-            axis.text.x = element_text(family = "Courier New"),
-            axis.text.y= element_text(family = "Courier New"))
-    
-    # recuperation de stat ggplot avec ggplot_build()
-    df_res = ggplot_build(p)$data[[1]]
-    
-    ggsave(file = paste0(plot_path_one_parameter_normalisation, "/", parameter_list[i], ".pdf"), 
-           plot=p, width=16, height=8, device = cairo_pdf)
-    
-    list_plot_log[[parameter_list[i]]] = p
-    
-    threshold = quantile(temp_data_species[["detachment_force_div_glue_area"]], probs = seq(0, 1, 0.05))[20]
-    
-    sub <- subset(temp_data_species, detachment_force_div_glue_area < threshold)
-    x_labels_sub = format_label(factor_name = "Species",
-                                factor_labels = gg_data_test_species[["Species"]],
-                                stat_group = gg_data_test_species,
-                                n_data = sub)
-    
-    p_sub = ggplot(sub,
-                   aes_string(x = "Species", y = "detachment_force_div_glue_area")) +
-      geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
-      geom_jitter(position=position_dodge(0.5)) +
-      scale_shape_manual(values = c(3, 4)) +
-      scale_color_manual(values = rep(1, 8)) +
-      theme_bw(base_size = 18) +
-      ylab(paste0(lab_list[i], " (", unit_list[i], ")")) +
-      xlab("Species") +
-      coord_flip() + 
-      scale_x_discrete(labels = x_labels_sub) +
-      theme(axis.title.y = element_blank(),
-            axis.text.x = element_text(family = "Courier New"),
-            axis.text.y= element_text(family = "Courier New"))
-    
-    ggsave(file = paste0(plot_path_one_parameter_normalisation, "/", parameter_list[i], "_sub_95.pdf"), 
-           plot=p_sub, width=16, height=8, device = cairo_pdf)
-  } else {
-    temp_data_species = gg_data %>%
-      filter(Comment == "ok") %>%
-      filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
-      filter(Species != "Megaselia_abdita") %>%
-      filter(Species != "Drosophila_quadraria") %>%
-      filter(
-        ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-           (Species == "Drosophila_suzukii" & Stock == "WT3") |
-           (Species == "Drosophila_biarmipes" & Stock == "G224") |
-           (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
-          (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
-                            "Drosophila_biarmipes", "Drosophila_simulans")) 
-      ) %>%
-      filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-      filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
-      group_by(Species) 
-    
-    temp_data_species = temp_data_species %>%
-      mutate("div_glue_area" = !!as.symbol(parameter_list[i]) / glue_area_mm) %>%
-      filter(! is.na(div_glue_area)) %>%
-      filter(is.finite(div_glue_area)) %>%
-      filter(length(div_glue_area) > 4)
+  raw_temp_data_species = gg_data %>%
+    filter(Comment == "ok") %>%
+    filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+    filter(Species != "Megaselia_abdita") %>%
+    filter(Species != "Drosophila_quadraria") %>%
+    filter(
+      ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+         (Species == "Drosophila_suzukii" & Stock == "WT3") |
+         (Species == "Drosophila_biarmipes" & Stock == "G224") |
+         (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
+        (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
+                          "Drosophila_biarmipes", "Drosophila_simulans")) 
+    ) %>%
+    filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+    filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+    group_by(Species) 
   
-    temp_data_species = as.data.frame(temp_data_species)
-    
-    gg_data_test_species = make_stat(data = temp_data_species,
-                                     factor_name = "Species",
-                                     parameter = "div_glue_area")
-    
-    
-    # reorder species for the plot
-    species_order = reorder_by_factor(data = temp_data_species, 
-                                      factor_name = "Species", 
-                                      fun = "median", 
-                                      parameter = parameter_list[1])
-    
-    temp_data_species$Species = factor(temp_data_species$Species,
-                                       levels = species_order,
-                                       ordered = T)
-    
-    gg_data_test_species$Species = factor(gg_data_test_species$Species,
-                                          levels = species_order,
-                                          ordered = T)
-    
-    x_labels = format_label(factor_name = "Species",
-                            factor_labels = gg_data_test_species[["Species"]],
-                            stat_group = gg_data_test_species,
-                            n_data = temp_data_species)
-    
-    #plot
-    p = ggplot(temp_data_species,
-               aes_string(x = "Species", y = "div_glue_area")) +
-      geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
-      geom_jitter(position=position_dodge(0.5)) +
-      scale_shape_manual(values = c(3, 4)) +
-      scale_color_manual(values = rep(1, 8)) +
-      theme_bw(base_size = 18) +
-      ylab(paste0(lab_list[i], " divided by glue area", " (", unit_list[i], "/mm²", ")")) +
-      xlab("Species") +
-      coord_flip() + 
-      scale_x_discrete(labels = x_labels) +
-      theme(axis.title.y = element_blank(),
-            axis.text.x = element_text(family = "Courier New"),
-            axis.text.y= element_text(family = "Courier New"))
-    
-    # recuperation de stat ggplot avec ggplot_build()
-    df_res = ggplot_build(p)$data[[1]]
-    
-    ggsave(file = paste0(plot_path_one_parameter_normalisation, "/", parameter_list[i], ".pdf"), 
-           plot=p, width=16, height=8, device = cairo_pdf)
-    
-    list_plot_log[[parameter_list[i]]] = p
-    
-    threshold = quantile(temp_data_species[["div_glue_area"]], probs = seq(0, 1, 0.05))[20]
-    
-    sub <- subset(temp_data_species, div_glue_area < threshold)
-    x_labels_sub = format_label(factor_name = "Species",
-                                factor_labels = gg_data_test_species[["Species"]],
-                                stat_group = gg_data_test_species,
-                                n_data = sub)
-    
-    p_sub = ggplot(sub,
-                   aes_string(x = "Species", y = "div_glue_area")) +
-      geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
-      geom_jitter(position=position_dodge(0.5)) +
-      scale_shape_manual(values = c(3, 4)) +
-      scale_color_manual(values = rep(1, 8)) +
-      theme_bw(base_size = 18) +
-      ylab(paste0(lab_list[i], " divided by glue area", " (", unit_list[i], "/mm²", ")")) +
-      xlab("Species") +
-      coord_flip() + 
-      scale_x_discrete(labels = x_labels_sub) +
-      theme(axis.title.y = element_blank(),
-            axis.text.x = element_text(family = "Courier New"),
-            axis.text.y= element_text(family = "Courier New"))
-    
-    ggsave(file = paste0(plot_path_one_parameter_normalisation, "/", parameter_list[i], "_sub_95.pdf"), 
-           plot=p_sub, width=16, height=8, device = cairo_pdf)
-  }
+  temp_data_species = raw_temp_data_species %>%
+    mutate("div_glue_area" = !!as.symbol(parameter_list[i]) / Glue_area) %>%
+    filter(! is.na(div_glue_area)) %>%
+    filter(is.finite(div_glue_area)) %>%
+    filter(length(div_glue_area) > 4)
+  
+  temp_data_species = as.data.frame(temp_data_species)
+  
+  gg_data_test_species = make_stat(data = temp_data_species,
+                                   factor_name = "Species",
+                                   parameter = "div_glue_area")
+  
+  
+  # reorder species for the plot
+  species_order = reorder_by_factor(data = temp_data_species, 
+                                    factor_name = "Species", 
+                                    fun = "median", 
+                                    parameter = parameter_list[1])
+  
+  temp_data_species$Species = factor(temp_data_species$Species,
+                                     levels = species_order,
+                                     ordered = T)
+  
+  gg_data_test_species$Species = factor(gg_data_test_species$Species,
+                                        levels = species_order,
+                                        ordered = T)
+  
+  x_labels = format_label(factor_name = "Species",
+                          factor_labels = gg_data_test_species[["Species"]],
+                          stat_group = gg_data_test_species,
+                          n_data = temp_data_species)
+  
+  #plot
+  p = ggplot(temp_data_species,
+             aes_string(x = "Species", y = "div_glue_area")) +
+    geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
+    geom_jitter(position=position_dodge(0.5)) +
+    scale_shape_manual(values = c(3, 4)) +
+    scale_color_manual(values = rep(1, 8)) +
+    theme_bw(base_size = 18) +
+    ylab(paste0(lab_list[i], " divided by glue area", " (", unit_list[i], "/mm²", ")")) +
+    xlab("Species") +
+    coord_flip() + 
+    scale_x_discrete(labels = x_labels) +
+    theme(axis.title.y = element_blank(),
+          axis.text.x = element_text(family = "Courier New"),
+          axis.text.y= element_text(family = "Courier New"))
+
+  # recuperation de stat ggplot avec ggplot_build()
+  df_res = ggplot_build(p)$data[[1]]
+  
+  ggsave(file = paste0(plot_path_one_parameter_normalisation, "/", parameter_list[i], ".pdf"), 
+         plot=p, width=16, height=8, device = cairo_pdf)
+  
+  list_plot_log[[parameter_list[i]]] = p
+  
+  threshold = quantile(temp_data_species[["div_glue_area"]], probs = seq(0, 1, 0.05))[20]
+  
+  sub <- subset(temp_data_species, div_glue_area < threshold)
+  x_labels_sub = format_label(factor_name = "Species",
+                              factor_labels = gg_data_test_species[["Species"]],
+                              stat_group = gg_data_test_species,
+                              n_data = sub)
+  
+  p_sub = ggplot(sub,
+                 aes_string(x = "Species", y = "div_glue_area")) +
+    geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
+    geom_jitter(position=position_dodge(0.5)) +
+    scale_shape_manual(values = c(3, 4)) +
+    scale_color_manual(values = rep(1, 8)) +
+    theme_bw(base_size = 18) +
+    ylab(paste0(lab_list[i], " divided by glue area", " (", unit_list[i], "/mm²", ")")) +
+    xlab("Species") +
+    coord_flip() + 
+    scale_x_discrete(labels = x_labels_sub) +
+    theme(axis.title.y = element_blank(),
+          axis.text.x = element_text(family = "Courier New"),
+          axis.text.y= element_text(family = "Courier New"))
+  
+  ggsave(file = paste0(plot_path_one_parameter_normalisation, "/", parameter_list[i], "_sub_95.pdf"), 
+         plot=p_sub, width=16, height=8, device = cairo_pdf)
 }
+
+
+ggsave(file = paste0(plot_path_one_parameter_normalisation, "/all_parameters_all_species", ".pdf"), 
+       plot=p, width=30, height=20, device = cairo_pdf)
+
+#recuperation mediane detachment force par especes
+stat = aggregate(temp_data_species$div_glue_area ~ temp_data_species$Species, data = temp_data_species, median)
+stat = as.data.frame(stat)
+write.csv(stat, "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_22_03_23/data/stat_normalisation_by_species.csv", row.names=FALSE)
+
+
+
+## normalisation by glue area - other comments
+plot_path_one_parameter_normalisation = paste0(plot_path, "/one_parameter/normalisation_other_comments/")
+dir.create(plot_path_one_parameter_normalisation, showWarnings = FALSE, recursive = T)
+
+list_plot = list()
+list_plot_log = list()
+for (i in 1:length(parameter_list)){
+  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) next
+  
+  raw_temp_data_species = gg_data %>%
+    filter(Comment == "not_detached" | Comment == "cuticle_broke" | Comment == "ok") %>%
+    filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+    filter(Species != "Megaselia_abdita") %>%
+    filter(Species != "Drosophila_quadraria") %>%
+    filter(
+      ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+         (Species == "Drosophila_suzukii" & Stock == "WT3") |
+         (Species == "Drosophila_biarmipes" & Stock == "G224") |
+         (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
+        (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
+                          "Drosophila_biarmipes", "Drosophila_simulans")) 
+    ) %>%
+    filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+    filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+    group_by(Species) 
+  
+  temp_data_species = raw_temp_data_species %>%
+    mutate("div_glue_area" = !!as.symbol(parameter_list[i]) / Glue_area) %>%
+    filter(! is.na(div_glue_area)) %>%
+    filter(is.finite(div_glue_area)) %>%
+    filter(length(div_glue_area) > 4)
+  
+  temp_data_species = as.data.frame(temp_data_species)
+  
+  gg_data_test_species = make_stat(data = temp_data_species,
+                                   factor_name = "Species",
+                                   parameter = "div_glue_area")
+  
+  
+  # reorder species for the plot
+  species_order = reorder_by_factor(data = temp_data_species, 
+                                    factor_name = "Species", 
+                                    fun = "median", 
+                                    parameter = parameter_list[1])
+  
+  temp_data_species$Species = factor(temp_data_species$Species,
+                                     levels = species_order,
+                                     ordered = T)
+  
+  gg_data_test_species$Species = factor(gg_data_test_species$Species,
+                                        levels = species_order,
+                                        ordered = T)
+  
+  x_labels = format_label(factor_name = "Species",
+                          factor_labels = gg_data_test_species[["Species"]],
+                          stat_group = gg_data_test_species,
+                          n_data = temp_data_species)
+  
+  #plot
+  p = ggplot(temp_data_species,
+             aes_string(x = "Species", y = "div_glue_area")) +
+    geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
+    geom_jitter(position=position_dodge(0.5)) +
+    scale_shape_manual(values = c(3, 4)) +
+    scale_color_manual(values = rep(1, 8)) +
+    theme_bw(base_size = 18) +
+    ylab(paste0(lab_list[i], " divided by glue area", " (", unit_list[i], "/mm²", ")")) +
+    xlab("Species") +
+    coord_flip() + 
+    scale_x_discrete(labels = x_labels) +
+    theme(axis.title.y = element_blank(),
+          axis.text.x = element_text(family = "Courier New"),
+          axis.text.y= element_text(family = "Courier New"))
+  
+  # recuperation de stat ggplot avec ggplot_build()
+  df_res = ggplot_build(p)$data[[1]]
+  
+  ggsave(file = paste0(plot_path_one_parameter_normalisation, "/", parameter_list[i], ".pdf"), 
+         plot=p, width=16, height=8, device = cairo_pdf)
+  
+  list_plot_log[[parameter_list[i]]] = p
+  
+  threshold = quantile(temp_data_species[["div_glue_area"]], probs = seq(0, 1, 0.05))[20]
+  
+  sub <- subset(temp_data_species, div_glue_area < threshold)
+  x_labels_sub = format_label(factor_name = "Species",
+                              factor_labels = gg_data_test_species[["Species"]],
+                              stat_group = gg_data_test_species,
+                              n_data = sub)
+  
+  p_sub = ggplot(sub,
+                 aes_string(x = "Species", y = "div_glue_area")) +
+    geom_boxplot(width= 0.4, colour= "black", outlier.colour = "grey") + 
+    geom_jitter(position=position_dodge(0.5)) +
+    scale_shape_manual(values = c(3, 4)) +
+    scale_color_manual(values = rep(1, 8)) +
+    theme_bw(base_size = 18) +
+    ylab(paste0(lab_list[i], " divided by glue area", " (", unit_list[i], "/mm²", ")")) +
+    xlab("Species") +
+    coord_flip() + 
+    scale_x_discrete(labels = x_labels_sub) +
+    theme(axis.title.y = element_blank(),
+          axis.text.x = element_text(family = "Courier New"),
+          axis.text.y= element_text(family = "Courier New"))
+  
+  ggsave(file = paste0(plot_path_one_parameter_normalisation, "/", parameter_list[i], "_sub_95.pdf"), 
+         plot=p_sub, width=16, height=8, device = cairo_pdf)
+}
+
+#recuperation mediane detachment force par especes
+stat = aggregate(temp_data_species$div_glue_area ~ temp_data_species$Species, data = temp_data_species, median)
+stat = as.data.frame(stat)
+write.csv(stat, "/perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_22_03_23/data/stat_all_comment_normalisation_by_species.csv", row.names=FALSE)
 
 
 ggsave(file = paste0(plot_path_one_parameter_normalisation, "/all_parameters_all_species", ".pdf"), 
@@ -826,15 +869,25 @@ ggsave(file = paste0(plot_path_one_parameter_normalisation, "/all_parameters_all
 
 ### STATS
 
+plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
+dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
+
+
 #standard protocol
 comment_stats = gg_data %>%
-  filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-           (Species != "Drosophila_melanogaster")) %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
   filter(Comment == "ok" | 
            Comment == "cuticle_broke" | 
            Comment == "not_detached") %>%
   filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
   filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
   filter(Protocol == "standard") %>%
   select(Species, Comment) %>%
   group_by(Species) %>%
@@ -843,7 +896,7 @@ comment_stats = gg_data %>%
 comment_stats = as.data.frame(comment_stats)
 
 x_labels = format_label(factor_name = "Species",
-                       factor_labels = comment_stats[["Species"]])
+                        factor_labels = comment_stats[["Species"]])
 x_labels = gsub(" *$", "", x_labels)
 
 
@@ -853,15 +906,15 @@ names(pretty_comment) = comment_list
 legend_labels = pretty_comment[levels(comment_stats[["Comment"]])]
 
 p_standard = ggplot(data = comment_stats,
-       aes(x = Species, y = Freq, fill = Comment)) + coord_flip() +
+                    aes(x = Species, y = perc, fill = Comment)) + coord_flip() +
   geom_bar(stat = "identity") + theme_bw(base_size = 18) +
   theme(axis.title.y = element_blank(),
         axis.text.x = element_text(family = "Courier New"),
         axis.text.y= element_text(family = "Courier New")) +
   scale_x_discrete(labels = x_labels) +
-  scale_fill_discrete(name = "Name", labels = legend_labels) +
+  scale_fill_discrete(name = "Pupa state after detachment", labels = legend_labels) +
   ylab("Cumulative number of pupae after standard adhesion assay") +
-  geom_text(data=subset(comment_stats,Freq != 0), aes(label = Freq), size = 3, position = position_stack(vjust = 0.5))
+  geom_text(data=subset(comment_stats,Freq != 0), aes(label = Freq), size = 7, position = position_stack(vjust = 0.5))
 
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_standard", ".pdf"), 
        plot=p_standard, width=16, height=8, device = cairo_pdf)
@@ -883,18 +936,237 @@ comment_stats_strong = gg_data %>%
 
 comment_stats_strong = as.data.frame(comment_stats_strong)
 
+x_labels = format_label(factor_name = "Species",
+                        factor_labels = comment_stats_strong[["Species"]])
+x_labels = gsub(" *$", "", x_labels)
+
+
+pretty_comment = comment_lab_list
+names(pretty_comment) = comment_list
+
+legend_labels = pretty_comment[levels(comment_stats[["Comment"]])]
+
+
 p_strong_025N = ggplot(data = comment_stats_strong,
-       aes(x = Species, y = Freq, fill = Comment)) + coord_flip() +
+                       aes(x = Species, y = Freq, fill = Comment)) + coord_flip() +
   geom_bar(stat = "identity") + theme_bw(base_size = 18) +
   theme(axis.title.y = element_blank(),
         axis.text.x = element_text(family = "Courier New"),
         axis.text.y= element_text(family = "Courier New")) +
   ylab("Cumulative number of pupae after '1 strong tape ; glue ; 0.25 N' adhesion assay") +
-  scale_fill_discrete(name="Pupa after detachment") +
-  geom_text(data=subset(comment_stats_strong,Freq != 0), aes(label = Freq), size = 3, position = position_stack(vjust = 0.5))
+  scale_x_discrete(labels = x_labels) +
+  scale_fill_discrete(name = "Pupa state after detachment", labels = legend_labels) +
+  geom_text(data=subset(comment_stats_strong,Freq != 0), aes(label = Freq), size = 7, position = position_stack(vjust = 0.5))
 
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_strong_025N", ".pdf"), 
        plot=p_strong_025N, width=16, height=8, device = cairo_pdf)
+
+
+p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
+
+
+# percentage of ok and not ok
+comment_stats_ok = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+
+  filter(Protocol == "standard" | Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(ok = sum(Comment == 'ok'))
+
+comment_stats_ok = as.data.frame(comment_stats_ok)
+
+
+comment_stats_cuticle_broke = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  filter(Protocol == "standard" | Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(cuticle_broke = sum(Comment == 'cuticle_broke'))
+
+comment_stats_cuticle_broke = as.data.frame(comment_stats_cuticle_broke)
+
+
+comment_stats_not_detached = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  filter(Protocol == "standard" | Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(not_detached = sum(Comment == 'not_detached'))
+
+comment_stats_not_detached = as.data.frame(comment_stats_not_detached)
+
+
+a = base::merge(comment_stats_ok, comment_stats_cuticle_broke, by = 'Species')
+b = base::merge(a, comment_stats_not_detached, by = 'Species')
+
+b$not_ok = b$not_detached + b$cuticle_broke
+b$Total = b$not_detached + b$cuticle_broke + b$ok
+b$percent_cuticle_broke = b$cuticle_broke*100/b$Total
+b$percent_not_detached = b$not_detached*100/b$Total
+b$percent_ok = b$ok*100/b$Total
+b$percent_not_ok = b$not_ok*100/b$Total
+
+
+p1 = ggplot(b, aes(x=Total, y=ok)) + 
+  geom_point() + theme_classic() + labs(x = "Total number of tested pupae", y = "Number of detached pupae") +
+  geom_text_repel(aes(label = Species),
+                  max.overlaps = 50,
+                  size = 4,
+                  segment.color = 'grey50') +
+  geom_abline(slope=1, intercept = 0) +
+  geom_abline(slope=0.535, intercept = 0, linetype="dotted") +
+  scale_x_continuous(expand = c(0, 0), limits = c(0, 150)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 80))
+p1
+
+#barplot comments percentage
+
+comment_stats_ok = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  filter(Protocol == "standard") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(ok = sum(Comment == 'ok'))
+
+comment_stats_ok = as.data.frame(comment_stats_ok)
+
+
+
+comment_stats_cuticle_broke = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  filter(Protocol == "standard") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(cuticle_broke = sum(Comment == 'cuticle_broke'))
+
+comment_stats_cuticle_broke = as.data.frame(comment_stats_cuticle_broke)
+
+
+comment_stats_not_detached = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  filter(Protocol == "standard") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(not_detached = sum(Comment == 'not_detached'))
+
+comment_stats_not_detached = as.data.frame(comment_stats_not_detached)
+
+
+c = base::merge(comment_stats_ok, comment_stats_cuticle_broke, by = 'Species')
+d = base::merge(c, comment_stats_not_detached, by = 'Species')
+
+d$not_ok = d$not_detached + d$cuticle_broke
+d$Total = d$not_detached + d$cuticle_broke + d$ok
+d$percent_cuticle_broke = d$cuticle_broke*100/d$Total
+d$percent_not_detached = d$not_detached*100/d$Total
+d$percent_ok = d$ok*100/d$Total
+
+mdat = melt(d, id.vars=c("Species"),
+            measure.vars=c("percent_ok", "percent_not_detached", "percent_cuticle_broke"))
+
+mdat = as.data.frame(mdat)
+
+x_labels = format_label(factor_name = "Species",
+                        factor_labels = mdat[["Species"]])
+x_labels = gsub(" *$", "", x_labels)
+
+pretty_comment = comment_lab_list
+names(pretty_comment) = comment_list
+
+legend_labels = pretty_comment[levels(d[["Comment"]])]
+
+p_standard = ggplot(data = mdat,
+                    aes(x = Species, y = value, fill = variable)) + coord_flip() +
+  geom_bar(position="stack", stat = "identity", colour="black") + theme_bw(base_size = 18) +
+  theme(axis.title.y = element_blank(),
+        axis.text.x = element_text(family = "Courier New"),
+        axis.text.y= element_text(family = "Courier New")) +
+  scale_x_discrete(labels = x_labels) +
+  scale_fill_manual(name = "Pupa state after detachment", labels = c("Detached", "Not detached", "Cuticle broke"), 
+                      values=c('black', 'grey', 'white')) +
+  ylab("Percentage of pupae after standard adhesion assay")
+  # geom_text(data=subset(mdat, value != 100), aes(label = value), size = 7, position = position_stack(vjust = 0.5))
+
+
+
 
 ### PCA
 
