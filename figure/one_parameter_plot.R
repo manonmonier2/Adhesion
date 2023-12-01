@@ -872,100 +872,7 @@ ggsave(file = paste0(plot_path_one_parameter_normalisation, "/all_parameters_all
 plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
 dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
-
-#standard protocol
-comment_stats = gg_data %>%
-  filter(
-    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
-       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
-       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
-      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
-  filter(Comment == "ok" | 
-           Comment == "cuticle_broke" | 
-           Comment == "not_detached") %>%
-  filter(Species != "Megaselia_abdita") %>%
-  filter(Species != "Megaselia_scalaris") %>%
-  filter(Species != "Drosophila_quadraria") %>%
-  filter(Species != "Drosophila_elegans") %>%
-  filter(Protocol == "standard") %>%
-  select(Species, Comment) %>%
-  group_by(Species) %>%
-  table()
-
-comment_stats = as.data.frame(comment_stats)
-
-x_labels = format_label(factor_name = "Species",
-                        factor_labels = comment_stats[["Species"]])
-x_labels = gsub(" *$", "", x_labels)
-
-
-pretty_comment = comment_lab_list
-names(pretty_comment) = comment_list
-
-legend_labels = pretty_comment[levels(comment_stats[["Comment"]])]
-
-p_standard = ggplot(data = comment_stats,
-                    aes(x = Species, y = perc, fill = Comment)) + coord_flip() +
-  geom_bar(stat = "identity") + theme_bw(base_size = 18) +
-  theme(axis.title.y = element_blank(),
-        axis.text.x = element_text(family = "Courier New"),
-        axis.text.y= element_text(family = "Courier New")) +
-  scale_x_discrete(labels = x_labels) +
-  scale_fill_discrete(name = "Pupa state after detachment", labels = legend_labels) +
-  ylab("Cumulative number of pupae after standard adhesion assay") +
-  geom_text(data=subset(comment_stats,Freq != 0), aes(label = Freq), size = 7, position = position_stack(vjust = 0.5))
-
-ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_standard", ".pdf"), 
-       plot=p_standard, width=16, height=8, device = cairo_pdf)
-
-
-#species with strong tape and standard
-comment_stats_strong = gg_data %>%
-  filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-           (Species != "Drosophila_melanogaster")) %>%
-  filter(Comment == "ok" | 
-           Comment == "cuticle_broke" | 
-           Comment == "not_detached") %>%
-  filter(Species != "Megaselia_abdita") %>%
-  filter(Species != "Drosophila_quadraria") %>%
-  filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
-  select(Species, Comment) %>%
-  group_by(Species) %>%
-  table()
-
-comment_stats_strong = as.data.frame(comment_stats_strong)
-
-x_labels = format_label(factor_name = "Species",
-                        factor_labels = comment_stats_strong[["Species"]])
-x_labels = gsub(" *$", "", x_labels)
-
-
-pretty_comment = comment_lab_list
-names(pretty_comment) = comment_list
-
-legend_labels = pretty_comment[levels(comment_stats[["Comment"]])]
-
-
-p_strong_025N = ggplot(data = comment_stats_strong,
-                       aes(x = Species, y = Freq, fill = Comment)) + coord_flip() +
-  geom_bar(stat = "identity") + theme_bw(base_size = 18) +
-  theme(axis.title.y = element_blank(),
-        axis.text.x = element_text(family = "Courier New"),
-        axis.text.y= element_text(family = "Courier New")) +
-  ylab("Cumulative number of pupae after '1 strong tape ; glue ; 0.25 N' adhesion assay") +
-  scale_x_discrete(labels = x_labels) +
-  scale_fill_discrete(name = "Pupa state after detachment", labels = legend_labels) +
-  geom_text(data=subset(comment_stats_strong,Freq != 0), aes(label = Freq), size = 7, position = position_stack(vjust = 0.5))
-
-ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_strong_025N", ".pdf"), 
-       plot=p_strong_025N, width=16, height=8, device = cairo_pdf)
-
-
-p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
-
-
-# percentage of ok and not ok
+# graph percentage of ok and not ok
 comment_stats_ok = gg_data %>%
   filter(
     ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
@@ -980,7 +887,7 @@ comment_stats_ok = gg_data %>%
   
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
 
-  filter(Protocol == "standard" | Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  filter(Protocol == "standard") %>%
   
   select(Species, Comment) %>%
   group_by(Species) %>% 
@@ -1003,7 +910,7 @@ comment_stats_cuticle_broke = gg_data %>%
   
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
   
-  filter(Protocol == "standard" | Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  filter(Protocol == "standard") %>%
   
   select(Species, Comment) %>%
   group_by(Species) %>% 
@@ -1026,7 +933,7 @@ comment_stats_not_detached = gg_data %>%
   
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
   
-  filter(Protocol == "standard" | Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  filter(Protocol == "standard") %>%
   
   select(Species, Comment) %>%
   group_by(Species) %>% 
@@ -1045,20 +952,30 @@ b$percent_not_detached = b$not_detached*100/b$Total
 b$percent_ok = b$ok*100/b$Total
 b$percent_not_ok = b$not_ok*100/b$Total
 
+x_labels = format_label(factor_name = "Species", factor_labels = as.factor(b[["Species"]]))
+x_labels = gsub(" *$", "", x_labels)
 
-p1 = ggplot(b, aes(x=Total, y=ok)) + 
-  geom_point() + theme_classic() + labs(x = "Total number of tested pupae", y = "Number of detached pupae") +
-  geom_text_repel(aes(label = Species),
+pretty_comment = comment_lab_list
+names(pretty_comment) = comment_list
+
+legend_labels = pretty_comment[levels(d[["Comment"]])]
+
+
+p_total_detached = ggplot(b, aes(x=Total, y=ok)) + 
+  geom_point() + theme_bw(base_size = 18) + labs(x = "Total number of tested pupae", y = "Number of detached and not broken pupae") +
+  geom_text_repel(aes(label = x_labels),
                   max.overlaps = 50,
                   size = 4,
                   segment.color = 'grey50') +
+  theme(axis.text.x = element_text(family = "Courier New"),
+        axis.text.y= element_text(family = "Courier New")) +
   geom_abline(slope=1, intercept = 0) +
-  geom_abline(slope=0.535, intercept = 0, linetype="dotted") +
+  geom_abline(slope=0.8, intercept = 0, linetype="dotted") +
   scale_x_continuous(expand = c(0, 0), limits = c(0, 150)) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 80))
-p1
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 65))
+p_total_detached #augmenter police
 
-#barplot comments percentage
+#barplot comments percentage standard protocol
 
 comment_stats_ok = gg_data %>%
   filter(
@@ -1081,7 +998,6 @@ comment_stats_ok = gg_data %>%
   summarise(ok = sum(Comment == 'ok'))
 
 comment_stats_ok = as.data.frame(comment_stats_ok)
-
 
 
 comment_stats_cuticle_broke = gg_data %>%
@@ -1139,13 +1055,12 @@ d$percent_cuticle_broke = d$cuticle_broke*100/d$Total
 d$percent_not_detached = d$not_detached*100/d$Total
 d$percent_ok = d$ok*100/d$Total
 
-mdat = melt(d, id.vars=c("Species"),
+mdat_standard = melt(d, id.vars=c("Species"),
             measure.vars=c("percent_ok", "percent_not_detached", "percent_cuticle_broke"))
 
-mdat = as.data.frame(mdat)
+mdat_standard = as.data.frame(mdat_standard)
 
-x_labels = format_label(factor_name = "Species",
-                        factor_labels = mdat[["Species"]])
+x_labels = format_label(factor_name = "Species", factor_labels = as.factor(mdat_standard[["Species"]]))
 x_labels = gsub(" *$", "", x_labels)
 
 pretty_comment = comment_lab_list
@@ -1153,9 +1068,9 @@ names(pretty_comment) = comment_list
 
 legend_labels = pretty_comment[levels(d[["Comment"]])]
 
-p_standard = ggplot(data = mdat,
+p_standard = ggplot(data = mdat_standard,
                     aes(x = Species, y = value, fill = variable)) + coord_flip() +
-  geom_bar(position="stack", stat = "identity", colour="black") + theme_bw(base_size = 18) +
+  geom_bar(position="stack", stat = "identity", colour="black", width = 0.8) + theme_bw(base_size = 18) +
   theme(axis.title.y = element_blank(),
         axis.text.x = element_text(family = "Courier New"),
         axis.text.y= element_text(family = "Courier New")) +
@@ -1163,7 +1078,127 @@ p_standard = ggplot(data = mdat,
   scale_fill_manual(name = "Pupa state after detachment", labels = c("Detached", "Not detached", "Cuticle broke"), 
                       values=c('black', 'grey', 'white')) +
   ylab("Percentage of pupae after standard adhesion assay")
-  # geom_text(data=subset(mdat, value != 100), aes(label = value), size = 7, position = position_stack(vjust = 0.5))
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_standard", ".pdf"), 
+       plot=p_strong_025N, width=16, height=8, device = cairo_pdf)
+
+
+#barplot comments percentage 1 strong tape ; glue ; 0.25 N protocol
+comment_stats_ok = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(ok = sum(Comment == 'ok')) 
+
+comment_stats_ok = as.data.frame(comment_stats_ok)
+
+
+
+comment_stats_cuticle_broke = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(cuticle_broke = sum(Comment == 'cuticle_broke'))
+
+comment_stats_cuticle_broke = as.data.frame(comment_stats_cuticle_broke)
+
+
+comment_stats_not_detached = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  
+  select(Species, Comment) %>%
+  group_by(Species) %>% 
+  summarise(not_detached = sum(Comment == 'not_detached'))
+
+comment_stats_not_detached = as.data.frame(comment_stats_not_detached)
+
+
+c = base::merge(comment_stats_ok, comment_stats_cuticle_broke, by = 'Species')
+d = base::merge(c, comment_stats_not_detached, by = 'Species')
+
+d$not_ok = d$not_detached + d$cuticle_broke
+d$Total = d$not_detached + d$cuticle_broke + d$ok
+d$percent_cuticle_broke = d$cuticle_broke*100/d$Total
+d$percent_not_detached = d$not_detached*100/d$Total
+d$percent_ok = d$ok*100/d$Total
+
+mdat_strong_025N = melt(d, id.vars=c("Species"),
+            measure.vars=c("percent_ok", "percent_not_detached", "percent_cuticle_broke"))
+
+mdat_strong_025N = as.data.frame(mdat_strong_025N)
+
+x_labels = format_label(factor_name = "Species", factor_labels = as.factor(mdat_strong_025N[["Species"]]))
+x_labels = gsub(" *$", "", x_labels)
+
+pretty_comment = comment_lab_list
+names(pretty_comment) = comment_list
+
+legend_labels = pretty_comment[levels(d[["Comment"]])]
+
+p_strong_025N = ggplot(data = mdat_strong_025N,
+                    aes(x = Species, y = value, fill = variable)) + coord_flip() +
+  geom_bar(position="stack", stat = "identity", colour="black", width = 0.8) + theme_bw(base_size = 18) +
+  theme(axis.title.y = element_blank(),
+        axis.text.x = element_text(family = "Courier New"),
+        axis.text.y= element_text(family = "Courier New")) +
+  scale_x_discrete(labels = x_labels) +
+  scale_fill_manual(name = "Pupa state after detachment", labels = c("Detached", "Not detached", "Cuticle broke"), 
+                    values=c('black', 'grey', 'white')) +
+  ylab("Percentage of pupae after '1 strong tape ; glue ; 0.25 N' adhesion assay")
+# geom_text(data=subset(mdat, value != 100), aes(label = value), size = 7, position = position_stack(vjust = 0.5))
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_strong_025N", ".pdf"), 
+       plot=p_strong_025N, width=16, height=8, device = cairo_pdf)
+
+
+p = ggarrange(p_standard, p_strong_025N, ncol = 1, common.legend = T, align = c("v"))
+
+p1 = ggarrange(p_total_detached, p, ncol = 1, common.legend = T, align = c("v"))
+
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/stat_bar_plot_standard_strong_025N", ".pdf"), 
+       plot=p1, width=8, height=12, device = cairo_pdf)
 
 
 
