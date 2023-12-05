@@ -309,6 +309,20 @@ p2 = ggarrange(list_plot[[1]], list_plot[[3]], list_plot[[2]],
                labels = c("D", "E", "F"), 
                font.label=list(color="black",size=30))
 
+p3 = ggarrange(list_plot[[2]], list_plot[[3]], 
+               nrow = 2,
+               common.legend = T, 
+               align = c("v"), 
+               labels = c("A", "B"), 
+               font.label=list(color="black",size=30))
+
+p4 = ggarrange(list_plot[[4]], list_plot[[5]], list_plot[[6]],
+               nrow = 3,
+               common.legend = T, 
+               align = c("v"), 
+               labels = c("A", "B", "C"), 
+               font.label=list(color="black",size=30))
+
 p = ggarrange(p1, p2, ncol = 2, common.legend = T, align = c("v"))
 
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/all_parameters_Drosophila_melanogaster", ".pdf"), 
@@ -319,6 +333,12 @@ ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/position
 
 ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/force_energy_Drosophila_melanogaster", ".pdf"), 
        plot=p2, width=20, height=30, device = cairo_pdf)
+
+ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/two_energies_Drosophila_melanogaster", ".pdf"), 
+       plot=p3, width=17, height=15, device = cairo_pdf)
+
+ggsave(file = paste0(plot_path_one_parameter_by_protocol_and_species, "/rigidity_dr_mde_Drosophila_melanogaster", ".pdf"), 
+       plot=p4, width=20, height=30, device = cairo_pdf)
 
 
 ## by species
@@ -702,7 +722,7 @@ for (i in 1:length(parameter_list)){
     theme(axis.title.y = element_blank(),
           axis.text.x = element_text(family = "Courier New"),
           axis.text.y= element_text(family = "Courier New"))
-
+  
   # recuperation de stat ggplot avec ggplot_build()
   df_res = ggplot_build(p)$data[[1]]
   
@@ -886,7 +906,7 @@ comment_stats_ok = gg_data %>%
   filter(Species != "Drosophila_elegans") %>%
   
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
-
+  
   filter(Protocol == "standard") %>%
   
   select(Species, Comment) %>%
@@ -1056,7 +1076,7 @@ d$percent_not_detached = d$not_detached*100/d$Total
 d$percent_ok = d$ok*100/d$Total
 
 mdat_standard = melt(d, id.vars=c("Species"),
-            measure.vars=c("percent_ok", "percent_not_detached", "percent_cuticle_broke"))
+                     measure.vars=c("percent_ok", "percent_not_detached", "percent_cuticle_broke"))
 
 mdat_standard = as.data.frame(mdat_standard)
 
@@ -1076,7 +1096,7 @@ p_standard = ggplot(data = mdat_standard,
         axis.text.y= element_text(family = "Courier New")) +
   scale_x_discrete(labels = x_labels) +
   scale_fill_manual(name = "Pupa state after detachment", labels = c("Detached", "Not detached", "Cuticle broke"), 
-                      values=c('black', 'grey', 'white')) +
+                    values=c('black', 'grey', 'white')) +
   ylab("Percentage of pupae after standard adhesion assay")
 
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_standard", ".pdf"), 
@@ -1164,7 +1184,7 @@ d$percent_not_detached = d$not_detached*100/d$Total
 d$percent_ok = d$ok*100/d$Total
 
 mdat_strong_025N = melt(d, id.vars=c("Species"),
-            measure.vars=c("percent_ok", "percent_not_detached", "percent_cuticle_broke"))
+                        measure.vars=c("percent_ok", "percent_not_detached", "percent_cuticle_broke"))
 
 mdat_strong_025N = as.data.frame(mdat_strong_025N)
 
@@ -1177,7 +1197,7 @@ names(pretty_comment) = comment_list
 legend_labels = pretty_comment[levels(d[["Comment"]])]
 
 p_strong_025N = ggplot(data = mdat_strong_025N,
-                    aes(x = Species, y = value, fill = variable)) + coord_flip() +
+                       aes(x = Species, y = value, fill = variable)) + coord_flip() +
   geom_bar(position="stack", stat = "identity", colour="black", width = 0.8) + theme_bw(base_size = 18) +
   theme(axis.title.y = element_blank(),
         axis.text.x = element_text(family = "Courier New"),
@@ -1199,9 +1219,6 @@ p1 = ggarrange(p_total_detached, p, ncol = 1, common.legend = T, align = c("v"))
 
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/stat_bar_plot_standard_strong_025N", ".pdf"), 
        plot=p1, width=8, height=12, device = cairo_pdf)
-
-
-
 
 ### PCA
 
