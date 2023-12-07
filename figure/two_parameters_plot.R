@@ -174,7 +174,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -231,23 +231,26 @@ for (i in 1:length(parameter_list)){
     temp_data = gg_data %>%
       filter(Species == "Drosophila_melanogaster" & 
                Stock == "cantonS" & Protocol != "water") %>%
-      filter(Comment == "ok" | Comment == "cuticle_broke" | 
-               Comment == "not_detached") %>%
+      filter(Comment == "ok" ) %>%
       group_by(Protocol)
+    
+    
+    # | Comment == "cuticle_broke" | 
+    # Comment == "not_detached"
     
     temp_data$Protocol = factor(temp_data$Protocol, 
                                 levels = c("standard",
                                            "speed /3",
                                            "speed x3",
-                                           "strong tape",
+                                           "1 strong tape ; glue",
                                            "5 min",
                                            "0 s",
-                                           "3 days",
+                                           "3 d",
                                            "0.25 N",
-                                           "pupae attached on tesa tape",
-                                           "detached pupae and speed x3",
-                                           "detached pupae",
-                                           "no tape"),
+                                           "2 tapes ; no glue",
+                                           "1 tape ; no glue ; speed x3",
+                                           "1 tape ; no glue",
+                                           "no tape ; glue"),
                                 ordered = T)
     
     names(mypal_protocol) <- levels(temp_data$Protocol)
@@ -271,7 +274,7 @@ for (i in 1:length(parameter_list)){
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       scale_colour_manual(values = mypal_protocol) +
-      theme_bw(base_size = 22)
+      theme_bw(base_size = 40)
     
     ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster", ".pdf"), 
            plot=p, width=16, height=8, device = "pdf")
@@ -317,6 +320,9 @@ for (i in 1:length(parameter_list)){
                     mapping = aes_string(x = parameter_list[i], 
                                          y = parameter_list[j]),
                     color="black", formula = y ~ x, se = F) +
+        # stat_regline_equation(aes(label = ..rr.label..)) +
+        stat_cor(aes(label=..rr.label..), label.x=-1, label.y=-0.7) +
+        #stat_poly_eq avec package ggpmisc ne fonctionne pas sur PC Manon
         # stat_poly_eq(data = temp_data,
         #              method =lm,
         #              mapping = aes_string(x = parameter_list[i],
@@ -403,8 +409,8 @@ for (i in 1:length(parameter_list)){
     if (i == j) next
     
     temp_data_species = gg_data
-    if (parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm") | parameter_list[j] %in% c("glue_area_mm", "log10_glue_area_mm")) {
-      if (parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm")) {
+    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area") | parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
+      if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
         temp_data_species = temp_data_species %>%
           filter(Species != "Megaselia_abdita") %>%
           filter(Species != "Drosophila_elegans") %>%
@@ -415,7 +421,7 @@ for (i in 1:length(parameter_list)){
           group_by(Species) %>%
           filter(length(!!as.symbol(parameter_list[i])) > 1)
       }
-      if (parameter_list[j] %in% c("glue_area_mm", "log10_glue_area_mm")){
+      if (parameter_list[j] %in% c("Glue_area", "log10_glue_area")){
         temp_data_species = temp_data_species %>%
           filter(Species != "Megaselia_abdita") %>%
           filter(Species != "Drosophila_elegans") %>%
@@ -429,7 +435,7 @@ for (i in 1:length(parameter_list)){
     }
     
     
-    if ( ! parameter_list[i] %in% c("glue_area_mm", "log10_glue_area_mm")) {
+    if ( ! parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
         filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
@@ -449,7 +455,7 @@ for (i in 1:length(parameter_list)){
         filter(length(!!as.symbol(parameter_list[i])) > 1)
     }
     
-    if ( ! parameter_list[j] %in% c("glue_area_mm", "log10_glue_area_mm")) {
+    if ( ! parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
         filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
@@ -551,13 +557,13 @@ for (i in 1:length(parameter_list)){
                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
       geom_errorbar(ymin = temp_data_species$median_y - temp_data_species$sd_y,
                     ymax = temp_data_species$median_y + temp_data_species$sd_y) +
-      xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T),
-           max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
-      ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
-           max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
-      # 
-      # xlim(c(4.5, 6.75)) +
-      # ylim(c(-4, 0.5)) +
+      # xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T),
+      #      max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
+      # ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
+      #      max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
+
+      xlim(c(4.5, 6.75)) +
+      ylim(c(-4, 0.5)) +
       
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
@@ -612,9 +618,13 @@ for (id in temp_data$Sample_ID){
                                   "id" = rep(id, length(index1 : index2))))
 }
 
+legend_title <- "OMG My Title"
+
 p_el = ggplot(data = temp_gg_data, aes(x = extension, y = load, color = protocol, group = id)) +
   #group permet de separer les jeux de données par id, evite les courbes liees entre elles
   geom_path() + xlab("Captor position (mm)") + ylab("Load (N)") +
+  scale_color_manual(values = c("black", "grey")) +
+  scale_fill_manual(legend_title) +
   theme_bw(base_size = 22) +
   theme(plot.title = element_text(hjust = 0.5), 
         plot.subtitle = element_text(hjust = 0.5), 
