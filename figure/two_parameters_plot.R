@@ -308,6 +308,8 @@ for (i in 1:length(parameter_list)){
                  aes_string("median_x", y = "median_y", colour = "Protocol")) +
         geom_point(temp_data,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
+        stat_cor(cor.coef.name = "r", aes(label = paste(..r.label..)), color = "black",
+                 label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
         # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
         # stat_poly_eq(data = temp_data,
         #              color = "red",
@@ -317,11 +319,10 @@ for (i in 1:length(parameter_list)){
         #              formula = y ~ x) +
         geom_smooth(data = temp_data,
                     method =lm,
-                    mapping = aes_string(x = parameter_list[i], 
+                    mapping = aes_string(x = parameter_list[i],
                                          y = parameter_list[j]),
                     color="black", formula = y ~ x, se = F) +
         # stat_regline_equation(aes(label = ..rr.label..)) +
-        stat_cor(aes(label=..rr.label..), label.x=-1, label.y=-0.7) +
         #stat_poly_eq avec package ggpmisc ne fonctionne pas sur PC Manon
         # stat_poly_eq(data = temp_data,
         #              method =lm,
