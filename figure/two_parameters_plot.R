@@ -230,7 +230,7 @@ for (i in 1:length(parameter_list)){
     # filter data and computes stats
     temp_data = gg_data %>%
       filter(Species == "Drosophila_melanogaster" & 
-               Stock == "cantonS" & Protocol != "water") %>%
+               Stock == "cantonS" & Protocol != "water" & Protocol != "1 tape ; no glue ; speed x3") %>%
       filter(Comment == "ok" ) %>%
       group_by(Protocol)
     
@@ -274,8 +274,16 @@ for (i in 1:length(parameter_list)){
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       scale_colour_manual(values = mypal_protocol) +
-      theme_bw(base_size = 40)
+      theme_bw(base_size = 50) +
+      theme(plot.title = element_text(hjust = 0.5), 
+            plot.subtitle = element_text(hjust = 0.5), 
+            legend.position = c(0.25, 0.8),
+            axis.text.x = element_text(family = "Courier New"), 
+            axis.text.y= element_text(family = "Courier New"),
+            aspect.ratio=1)
+
     
+
     ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster", ".pdf"), 
            plot=p, width=16, height=8, device = "pdf")
     
@@ -623,80 +631,106 @@ legend_title <- "OMG My Title"
 
 p_el = ggplot(data = temp_gg_data, aes(x = extension, y = load, color = protocol, group = id)) +
   #group permet de separer les jeux de données par id, evite les courbes liees entre elles
-  geom_path() + xlab("Captor position (mm)") + ylab("Load (N)") +
+  geom_path() + xlab("Captor position (mm)") + ylab("Force (N)") +
   scale_color_manual(values = c("black", "grey")) +
   scale_fill_manual(legend_title) +
   theme_bw(base_size = 22) +
   theme(plot.title = element_text(hjust = 0.5), 
         plot.subtitle = element_text(hjust = 0.5), 
+        legend.position = c(0.25, 0.8),
         axis.text.x = element_text(family = "Courier New"), 
-        axis.text.y= element_text(family = "Courier New"))
+        axis.text.y= element_text(family = "Courier New"),
+        aspect.ratio=1)
 p_el
 
 ggsave(file = paste0(plot_path_two_parameters_by_species, "extension_load_superposition_025N_standard", ".pdf"),
        plot=p_el, width=16, height=8, device = "pdf")
 
-### next is potentially useful
-# #plot species protocol standard and strong force 0,25N
-# plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
-# dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
-# 
-# species_to_keep = 
-#   unique(gg_data$Species[which(gg_data$Protocol == 
-#                                  "strong tape and 0,25 N")])[
-#                                    unique(gg_data$Species[
-#                                      which(gg_data$Protocol == 
-#                                              "strong tape and 0,25 N")]) %in% 
-#                                      unique(gg_data$Species[
-#                                        which(gg_data$Protocol == "standard")])]
-# 
-# temp_data = gg_data %>%
-#   filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached" ) %>%
-#   filter(Species %in% species_to_keep) %>%
-#   filter(Protocol == "strong tape and 0,25 N" | Protocol == "standard") %>%
-#   group_by(Species, Protocol) %>%
-#   summarise(median = median(detachment_force),
-#             sd = sd(detachment_force))
-# 
-# index_standard =which(temp_data$Protocol == "standard")
-# index_strong_tape_and_0.25_N = 
-#   which(temp_data$Protocol == "strong tape and 0,25 N")
-# 
-# temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
-#                           median_standard = temp_data$median[index_standard],
-#                           median_strong_tape_and_0.25_N = 
-#                             temp_data$median[index_strong_tape_and_0.25_N],
-#                           sd_standard = temp_data$sd[index_standard],
-#                           sd_strong_tape_and_0.25_N = 
-#                             temp_data$sd[index_strong_tape_and_0.25_N]) 
-# 
-# p = ggplot(temp_gg_data, aes(x = median_standard, 
-#                              y = median_strong_tape_and_0.25_N,
-#                              color = Species)) +
-#   geom_errorbar(xmin = temp_gg_data$median_standard - 
-#                   temp_gg_data$sd_standard,
-#                 xmax = temp_gg_data$median_standard +
-#                   temp_gg_data$sd_standard) +
-#   geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N - 
-#                   temp_gg_data$sd_strong_tape_and_0.25_N,
-#                 ymax = temp_gg_data$median_strong_tape_and_0.25_N +
-#                   temp_gg_data$sd_strong_tape_and_0.25_N) +
-#   geom_point() +
-#   xlim(c(min(temp_gg_data$median_standard - 
-#                temp_gg_data$sd_standard), 
-#          max(temp_gg_data$median_standard + 
-#                temp_gg_data$sd_standard))) +
-#   ylim(c(min(temp_gg_data$median_strong_tape_and_0.25_N - 
-#                temp_gg_data$sd_strong_tape_and_0.25_N), 
-#          max(temp_gg_data$median_strong_tape_and_0.25_N + 
+
+#plot species protocol standard and strong force 0,25N
+plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
+dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
+
+species_to_keep =
+  unique(gg_data$Species[which(gg_data$Protocol ==
+                                 "1 strong tape ; glue ; 0.25 N")])[
+                                   unique(gg_data$Species[
+                                     which(gg_data$Protocol ==
+                                             "1 strong tape ; glue ; 0.25 N")]) %in%
+                                     unique(gg_data$Species[
+                                       which(gg_data$Protocol == "standard")])]
+
+temp_data = gg_data %>%
+  filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
+  filter(Species %in% species_to_keep) %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard") %>%
+  group_by(Species, Protocol) %>%
+  summarise(median = median(detachment_force),
+            sd = sd(detachment_force))
+
+
+index_standard =which(temp_data$Protocol == "standard")
+index_strong_tape_and_0.25_N =
+  which(temp_data$Protocol == "1 strong tape ; glue ; 0.25 N")
+
+temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
+                          median_standard = temp_data$median[index_standard],
+                          median_strong_tape_and_0.25_N =
+                            temp_data$median[index_strong_tape_and_0.25_N],
+                          sd_standard = temp_data$sd[index_standard],
+                          sd_strong_tape_and_0.25_N =
+                            temp_data$sd[index_strong_tape_and_0.25_N])
+
+c5 <- c("dodgerblue2", "orange", "red",
+         "green4","#6A3D9A")
+
+# "purple",
+#          "#FF7F00", "black", 
+#          "gold1","skyblue2", "#FB9A99", 
+#          "#ffb6c1","palegreen2","#CAB2D6",
+#          "#CBC3E3","#FDBF6F", "#FFD580",
+#          "gray70", "khaki2","maroon", 
+#          "orchid1", "deeppink1", "blue1", 
+#          "steelblue4","darkturquoise", "green1")
+
+names(c5) <- levels(temp_gg_data$Species)
+
+p = ggplot(temp_gg_data, aes(x = median_standard,
+                             y = median_strong_tape_and_0.25_N,
+                             color = Species)) +
+  geom_errorbar(xmin = temp_gg_data$median_standard -
+                  temp_gg_data$sd_standard,
+                xmax = temp_gg_data$median_standard +
+                  temp_gg_data$sd_standard) +
+  geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N -
+                  temp_gg_data$sd_strong_tape_and_0.25_N,
+                ymax = temp_gg_data$median_strong_tape_and_0.25_N +
+                  temp_gg_data$sd_strong_tape_and_0.25_N) +
+  geom_point() +  scale_colour_manual(values = c5) +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..r.label..)), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  xlim(c(0,
+         max(temp_gg_data$median_standard +
+               temp_gg_data$sd_standard))) +
+  ylim(c(0,
+         max(temp_gg_data$median_strong_tape_and_0.25_N +
+               temp_gg_data$sd_strong_tape_and_0.25_N))) +
+  geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "red", se = FALSE) +
+  xlab("Detachment force for protocol standard (N)") +
+  ylab("Detachment force for protocol '1 strong tape ; glue ; 0.25 N' (N)") +
+  theme_bw(base_size = 22)
+
+#à reutiliser si besoin
+# xlim(c(min(temp_gg_data$median_standard -
+#              temp_gg_data$sd_standard),
+#        max(temp_gg_data$median_standard +
+#              temp_gg_data$sd_standard))) +
+#   ylim(c(min(temp_gg_data$median_strong_tape_and_0.25_N -
+#                temp_gg_data$sd_strong_tape_and_0.25_N),
+#          max(temp_gg_data$median_strong_tape_and_0.25_N +
 #                temp_gg_data$sd_strong_tape_and_0.25_N))) +
-#   geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "red") +
-#   xlab("Detachment force for protocol standard (N)") +
-#   ylab("Detachment force for Protocol strong tape and 0,25 N (N)") +
-#   ggtitle("Detachment force for species strongly attached")+
-#   theme_bw(base_size = 22) 
-# 
-# ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
-#        plot=p, width=16, height=8, device = "pdf")
-# 
-# 
+
+ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
+       plot=p, width=16, height=8, device = "pdf")
+
