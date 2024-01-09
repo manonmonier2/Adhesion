@@ -40,7 +40,7 @@ default:
   parameter_list: detachment_force, energy, negative_energy, rigidity, position_difference, pression_extension, pupa_area, pupa_length, glue_area_mm, detachment_force_div_glue_area, log10_detachment_force, log10_energy, log10_negative_energy, log10_rigidity, log10_position_difference, log10_pression_extension, log10_pupa_area, log10_pupa_length, log10_glue_area_mm, log10_detachment_force_div_glue_area
 
   # Pretty parameter names (must be in same order as parameter_list)
-  lab_list: Detachment force, Two ways detachment energy, One way detachment energy, Rigidity, Deformation reversibility, Maximal difference of extension, Pupa area, Pupa length, Glue area, Detachment force divided by glue area, log10(Detachment force), log10(Two ways detachment energy), log10(One way detachment energy), log10(Rigidity), log10(Last - first position), log10(Maximum - first position) , log10(Pupa area), log10(Pupa length), log10(Glue area), log10(Detachment force divided by glue area)
+  lab_list: Detachment force, Two-way detachment energy, One-way detachment energy, Rigidity, Deformation reversibility, Maximal difference of extension, Pupa area, Pupa length, Glue area, Detachment force divided by glue area, log10(Detachment force), log10(Two-way detachment energy), log10(One-way detachment energy), log10(Rigidity), log10(Deformation reversibility), log10(Maximal difference of extension) , log10(Pupa area), log10(Pupa length), log10(Glue area), log10(Detachment force divided by glue area)
   
   # Unit of each parameter (must be in same order as parameter_list)
   unit_list: N, N.mm, N.mm, N/mm, mm, mm, mm^2, mm, mm^2, N/mm^2, N, N.mm, N.mm, N/mm, mm, mm, mm^2, mm, mm^2, N/mm^2
