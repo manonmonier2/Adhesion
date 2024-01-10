@@ -174,7 +174,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -576,8 +576,7 @@ for (i in 1:length(parameter_list)){
                                      y = temp_data_species$median_y),
                 color="black", formula = y ~ x, se = F, linetype = "dashed") +
       stat_cor(cor.coef.name = "r", aes(label = paste(..r.label..)), color = "black",
-               label.y.npc="top", label.x.npc = "left", inherit.aes = aes(x = temp_data_species$median_x,
-                                                                                 y = temp_data_species$median_y)) +
+               label.y.npc="top", label.x.npc = "left", inherit.aes = T) +
       geom_point(size = 5, shape = 3) + 
       geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
@@ -606,7 +605,7 @@ for (i in 1:length(parameter_list)){
       scale_colour_manual(values = c25) +
       theme_bw(base_size = 22) +
       theme(legend.position = "none")
-    
+    p
     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], ".pdf"),
            plot=p, width=10, height=8, device = "pdf")
     
