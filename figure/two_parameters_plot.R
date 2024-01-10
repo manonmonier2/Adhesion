@@ -605,7 +605,7 @@ for (i in 1:length(parameter_list)){
       scale_colour_manual(values = c25) +
       theme_bw(base_size = 22) +
       theme(legend.position = "none")
-    p
+    
     ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], ".pdf"),
            plot=p, width=10, height=8, device = "pdf")
     
