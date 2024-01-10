@@ -629,6 +629,23 @@ for (i in 1:length(parameter_list)){
         mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
         mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
       
+      # construct data for the geom_text_repel function
+      gg_repel_data_trimmed = temp_data_species %>%
+        select(Species, median_x, median_y) %>%
+        distinct() 
+      
+      short_name = gg_repel_data_trimmed$Species
+      short_name = gsub("_", " ", short_name, fixed = T)
+      short_name = gsub("Drosophila", "D.", short_name, fixed = T)
+      short_name = gsub("Megaselia", "M.", short_name, fixed = T)
+      short_name = gsub("Scaptodrosophila", "S.", short_name, fixed = T)
+      short_name = gsub("Zaprionus", "Z.", short_name, fixed = T)
+      short_name = substr(short_name, 1, 8)
+      
+      gg_repel_data_trimmed = cbind(gg_repel_data_trimmed, 
+                            data.frame("species_number" = 1:nrow(gg_repel_data_trimmed),
+                                       "species_short" = short_name))
+      
       t = ggplot(temp_data_species,
                  aes_string("median_x", y = "median_y", colour = "Species")) +
         geom_point(temp_data_species,
@@ -663,11 +680,11 @@ for (i in 1:length(parameter_list)){
                       ymax = temp_data_species[["median_y"]] + temp_data_species[["sd_y"]]) +
         xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
         ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-        geom_text_repel(data = gg_repel_data,
+        geom_text_repel(data = gg_repel_data_trimmed,
                         aes(x = median_x,
                             y = median_y,
                             label = species_short),
-                        # nudge_y = max(gg_repel_data$median_y),
+                        # nudge_y = max(gg_repel_data_trimmed$median_y),
                         segment.linetype = "solid",
                         segment.color = "grey",
                         force = 50,
