@@ -568,13 +568,16 @@ for (i in 1:length(parameter_list)){
       #                       inherit.aes = F) +
       # stat_regline_equation(mapping = aes_string(x = parameter_list[i], y = parameter_list[j]),
       #                       temp_data_species, aes(label = ..rr.label..), inherit.aes = F) +
-    stat_cor(cor.coef.name = "r", aes(label = paste(..r.label..)), color = "black",
-             label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+
+    geom_abline(slope=1) +
     geom_smooth(data = temp_data_species,
                 method =lm,
-                mapping = aes_string(x = parameter_list[i],
-                                     y = parameter_list[j]),
-                color="black", formula = y ~ x, se = F) +
+                mapping = aes_string(x = temp_data_species$median_x,
+                                     y = temp_data_species$median_y),
+                color="black", formula = y ~ x, se = F, linetype = "dashed") +
+      stat_cor(cor.coef.name = "r", aes(label = paste(..r.label..)), color = "black",
+               label.y.npc="top", label.x.npc = "left", inherit.aes = aes(x = temp_data_species$median_x,
+                                                                                 y = temp_data_species$median_y)) +
       geom_point(size = 5, shape = 3) + 
       geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
@@ -631,8 +634,7 @@ for (i in 1:length(parameter_list)){
                  aes_string("median_x", y = "median_y", colour = "Species")) +
         geom_point(temp_data_species,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
-        stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
-                 label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+
         # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
         # stat_poly_eq(data = temp_data_species,
         #              color = "red",
@@ -640,11 +642,14 @@ for (i in 1:length(parameter_list)){
         #              method = lm,
         #              mapping = aes_string("median_x", y = "median_y"),
         #              formula = y ~ x) +
+        geom_abline(slope=1) +
         geom_smooth(data = temp_data_species,
                     method =lm,
-                    mapping = aes_string(x = parameter_list[i],
-                                         y = parameter_list[j]),
-                    color="black", formula = y ~ x, se = F) +
+                    mapping = aes_string(x = temp_data_species$median_x,
+                                         y = temp_data_species$median_y),
+                    color="black", formula = y ~ x, se = F, linetype = "dashed") +
+        stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+                 label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
         # stat_regline_equation(aes(label = ..rr.label..)) +
         #stat_poly_eq avec package ggpmisc ne fonctionne pas sur PC Manon
         # stat_poly_eq(data = temp_data_species,
@@ -805,7 +810,7 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
   ylim(c(0,
          max(temp_gg_data$median_strong_tape_and_0.25_N +
                temp_gg_data$sd_strong_tape_and_0.25_N))) +
-  geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "red", se = FALSE) +
+  geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "black", se = FALSE, linetype = "dashed") +
   xlab("Detachment force for protocol standard (N)") +
   ylab("Detachment force for protocol '1 strong tape ; glue ; 0.25 N' (N)") +
   theme_bw(base_size = 22)
