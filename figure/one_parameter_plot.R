@@ -173,7 +173,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -349,7 +349,7 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 list_plot = list()
 list_plot_log = list()
 for (i in 1:length(parameter_list)){
-  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
+  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")) {
     temp_data_species = gg_data %>% 
       filter(Comment == "ok") %>%
       filter(Species != "Megaselia_abdita") %>%
@@ -533,7 +533,7 @@ for (i in 1:length(parameter_list)){
     focus_lab = gsub("Zaprionus", "Z.", focus_lab, fixed = T)
     focus_lab = StrAlign(focus_lab, sep = "\\l")
     focus_lab = substr(focus_lab, 1, 8)
-    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
+    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")) {
       temp_data_stock = gg_data %>%
         filter(Species == focus) %>%
         filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
@@ -663,7 +663,7 @@ dir.create(plot_path_one_parameter_normalisation, showWarnings = FALSE, recursiv
 list_plot = list()
 list_plot_log = list()
 for (i in 1:length(parameter_list)){
-  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) next
+  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")) next
   
   raw_temp_data_species = gg_data %>%
     filter(Comment == "ok") %>%
@@ -783,7 +783,7 @@ dir.create(plot_path_one_parameter_normalisation, showWarnings = FALSE, recursiv
 list_plot = list()
 list_plot_log = list()
 for (i in 1:length(parameter_list)){
-  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) next
+  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")) next
   
   raw_temp_data_species = gg_data %>%
     filter(Comment == "not_detached" | Comment == "cuticle_broke" | Comment == "ok") %>%
@@ -1329,8 +1329,11 @@ number_pupae_tested = gg_data %>%
   filter(Protocol != "water" & Protocol != "1 tape ; no glue ; speed x3") %>%
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
   select(Species, Protocol, Comment) %>%
-  group_by(Protocol) %>%
-  summarise(not_detached = sum(Comment)) %>%
+  group_by(Protocol)
+
+# 
+# %>%
+#   summarise(not_detached = sum(Comment))
 
   
 #solutions qui ne marchent pas à cause des library  
