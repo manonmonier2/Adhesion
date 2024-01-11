@@ -174,7 +174,7 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -560,23 +560,14 @@ for (i in 1:length(parameter_list)){
                    color = Species)) +
       geom_point(temp_data_species,
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j]), alpha = 0.3) +
-      # stat_regline_equation(data = temp_data_species,
-      #                       mapping = aes_string(x = parameter_list[i], y = parameter_list[j], label = "..eq.label.."),
-      #                       label.x.npc = "left",
-      #                       label.y.npc = "top",
-      #                       formula = y ~ x,
-      #                       inherit.aes = F) +
-      # stat_regline_equation(mapping = aes_string(x = parameter_list[i], y = parameter_list[j]),
-      #                       temp_data_species, aes(label = ..rr.label..), inherit.aes = F) +
-
     geom_abline(slope=1) +
     geom_smooth(data = temp_data_species,
                 method =lm,
                 mapping = aes_string(x = temp_data_species$median_x,
                                      y = temp_data_species$median_y),
                 color="black", formula = y ~ x, se = F, linetype = "dashed") +
-      stat_cor(cor.coef.name = "r", aes(label = paste(..r.label..)), color = "black",
-               label.y.npc="top", label.x.npc = "left", inherit.aes = T) +
+      stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+               label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
       geom_point(size = 5, shape = 3) + 
       geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
@@ -601,7 +592,8 @@ for (i in 1:length(parameter_list)){
                       segment.color = "grey",
                       force = 50,
                       # direction = "y",
-                      color = "black") +
+                      color = "black", 
+                      size=5) +
       scale_colour_manual(values = c25) +
       theme_bw(base_size = 22) +
       theme(legend.position = "none")
@@ -629,35 +621,10 @@ for (i in 1:length(parameter_list)){
         mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
         mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
       
-      # construct data for the geom_text_repel function
-      gg_repel_data_trimmed = temp_data_species %>%
-        select(Species, median_x, median_y) %>%
-        distinct() 
-      
-      short_name = gg_repel_data_trimmed$Species
-      short_name = gsub("_", " ", short_name, fixed = T)
-      short_name = gsub("Drosophila", "D.", short_name, fixed = T)
-      short_name = gsub("Megaselia", "M.", short_name, fixed = T)
-      short_name = gsub("Scaptodrosophila", "S.", short_name, fixed = T)
-      short_name = gsub("Zaprionus", "Z.", short_name, fixed = T)
-      short_name = substr(short_name, 1, 8)
-      
-      gg_repel_data_trimmed = cbind(gg_repel_data_trimmed, 
-                            data.frame("species_number" = 1:nrow(gg_repel_data_trimmed),
-                                       "species_short" = short_name))
-      
       t = ggplot(temp_data_species,
                  aes_string("median_x", y = "median_y", colour = "Species")) +
         geom_point(temp_data_species,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
-
-        # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
-        # stat_poly_eq(data = temp_data_species,
-        #              color = "red",
-        #              inherit.aes = F,
-        #              method = lm,
-        #              mapping = aes_string("median_x", y = "median_y"),
-        #              formula = y ~ x) +
         geom_abline(slope=1) +
         geom_smooth(data = temp_data_species,
                     method =lm,
@@ -666,13 +633,6 @@ for (i in 1:length(parameter_list)){
                     color="black", formula = y ~ x, se = F, linetype = "dashed") +
         stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
                  label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
-        # stat_regline_equation(aes(label = ..rr.label..)) +
-        #stat_poly_eq avec package ggpmisc ne fonctionne pas sur PC Manon
-        # stat_poly_eq(data = temp_data_species,
-        #              method =lm,
-        #              mapping = aes_string(x = parameter_list[i],
-        #                                   y = parameter_list[j]),
-        #              color="blue", formula = y ~ x, label.x = "right") +
         geom_point(size = 1) +
         geom_errorbar(xmin = temp_data_species[["median_x"]] - temp_data_species[["sd_x"]],
                       xmax = temp_data_species[["median_x"]] + temp_data_species[["sd_x"]]) +
@@ -680,20 +640,21 @@ for (i in 1:length(parameter_list)){
                       ymax = temp_data_species[["median_y"]] + temp_data_species[["sd_y"]]) +
         xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
         ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
-        geom_text_repel(data = gg_repel_data_trimmed,
+        geom_text_repel(data = gg_repel_data,
                         aes(x = median_x,
                             y = median_y,
                             label = species_short),
-                        # nudge_y = max(gg_repel_data_trimmed$median_y),
+                        # nudge_y = max(gg_repel_data$median_y),
                         segment.linetype = "solid",
                         segment.color = "grey",
                         force = 50,
                         # direction = "y",
-                        color = "black") +
+                        color = "black",
+                        size=5) +
         scale_colour_manual(values = c25) +
         theme_bw(base_size = 22) +
         theme(legend.position = "none")
-      t
+      
       ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], "_trimmed", ".pdf"), 
              plot=t, width=12, height=8, device = "pdf")
     
