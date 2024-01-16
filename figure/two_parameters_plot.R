@@ -774,6 +774,7 @@ temp_data = gg_data %>%
   filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
   filter(Species %in% species_to_keep) %>%
   filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_hydei") %>%
   filter(Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard") %>%
   group_by(Species, Protocol) %>%
   summarise(median = median(detachment_force),
@@ -792,8 +793,8 @@ temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
                           sd_strong_tape_and_0.25_N =
                             temp_data$sd[index_strong_tape_and_0.25_N])
 
-c6 <- c("dodgerblue2", "orange", "red",
-        "green4","#6A3D9A", "blue4")
+c5 <- c("dodgerblue2", "orange", "red",
+        "green4","#6A3D9A")
 
 # "purple",
 #          "#FF7F00", "black", 
@@ -804,7 +805,7 @@ c6 <- c("dodgerblue2", "orange", "red",
 #          "orchid1", "deeppink1", "blue1", 
 #          "steelblue4","darkturquoise", "green1")
 
-names(c6) <- levels(temp_gg_data$Species)
+names(c5) <- levels(temp_gg_data$Species)
 
 # aes(label = paste(..r.label..)),
 
@@ -821,7 +822,7 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
                   temp_gg_data$sd_strong_tape_and_0.25_N,
                 ymax = temp_gg_data$median_strong_tape_and_0.25_N +
                   temp_gg_data$sd_strong_tape_and_0.25_N) +
-  geom_point() +  scale_colour_manual(values = c6) +
+  geom_point() +  scale_colour_manual(values = c5) +
   xlim(c(0,
          max(temp_gg_data$median_standard +
                temp_gg_data$sd_standard))) +
@@ -832,7 +833,6 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
   xlab("Detachment force for protocol standard (N)") +
   ylab("Detachment force for protocol '1 strong tape ; glue ; 0.25 N' (N)") +
   theme_bw(base_size = 22)
-
 
 
 #à reutiliser si besoin
@@ -846,4 +846,162 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
 #                temp_gg_data$sd_strong_tape_and_0.25_N))) +
 
 ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
+       plot=p, width=16, height=8, device = "pdf")
+
+
+
+#plot species force detached and not detached
+plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
+dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
+
+species_to_keep =
+  unique(gg_data$Species[which(gg_data$Comment ==
+                                 "ok")])[
+                                   unique(gg_data$Species[
+                                     which(gg_data$Comment ==
+                                             "ok")]) %in%
+                                     unique(gg_data$Species[
+                                       which(gg_data$Comment == "not_detached")])]
+
+temp_data = gg_data %>%
+  filter(Species %in% species_to_keep) %>%
+  filter(Comment == "ok" | Comment == "not_detached") %>%
+  filter(Species != "Drosophila_ananassae") %>%
+  filter(Species != "Drosophila_biarmipes") %>%
+  filter(Species != "Drosophila_suzukii") %>%
+  filter( (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; glue ; 0.25 N") |
+            ! Species %in% c("Drosophila_hydei")) %>%
+  filter(Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard") %>%
+  group_by(Species, Comment) %>%
+  summarise(median = median(detachment_force),
+            sd = sd(detachment_force))
+
+
+index_ok =which(temp_data$Comment == "ok")
+index_not_detached =
+  which(temp_data$Comment == "not_detached")
+
+temp_gg_data = data.frame(Species = temp_data$Species[index_ok],
+                          median_ok = temp_data$median[index_ok],
+                          median_not_detached = temp_data$median[index_not_detached],
+                          sd_ok = temp_data$sd[index_ok],
+                          sd_not_detached = temp_data$sd[index_not_detached])
+
+c22 <- c("dodgerblue2", "#E31A1C", "red",
+         "green4","#6A3D9A", "purple",
+         "#FF7F00", "orange","black", 
+         "skyblue2", "#FB9A99", 
+         "#ffb6c1","palegreen2","#CAB2D6",
+         "#FDBF6F", "#FFD580",
+         "gray70", "khaki2","maroon", 
+         "orchid1", "deeppink1", "blue1")
+
+names(c22) <- levels(temp_gg_data$Species)
+
+p = ggplot(temp_gg_data, aes(x = median_ok,
+                             y = median_not_detached,
+                             color = Species)) +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_errorbar(xmin = temp_gg_data$median_ok -
+                  temp_gg_data$sd_ok,
+                xmax = temp_gg_data$median_ok +
+                  temp_gg_data$sd_ok) +
+  geom_errorbar(ymin = temp_gg_data$median_not_detached -
+                  temp_gg_data$sd_not_detached,
+                ymax = temp_gg_data$median_not_detached +
+                  temp_gg_data$sd_not_detached) +
+  geom_point() +  scale_colour_manual(values = c22) +
+  xlim(c(0,
+         max(temp_gg_data$median_ok +
+               temp_gg_data$sd_ok))) +
+  ylim(c(0,
+         max(temp_gg_data$median_not_detached +
+               temp_gg_data$sd_not_detached))) +
+  geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "black", se = FALSE, linetype = "dashed") +
+  xlab("Detachment force for detached pupae (N)") +
+  ylab("Detachment force for not detached pupae (N)") +
+  theme_bw(base_size = 22)
+
+ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_ok_not_detached", ".pdf"),
+       plot=p, width=16, height=8, device = "pdf")
+
+
+#plot species force detached and cuticle broke
+plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
+dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
+
+species_to_keep =
+  unique(gg_data$Species[which(gg_data$Comment ==
+                                 "ok")])[
+                                   unique(gg_data$Species[
+                                     which(gg_data$Comment ==
+                                             "ok")]) %in%
+                                     unique(gg_data$Species[
+                                       which(gg_data$Comment == "cuticle_broke")])]
+
+temp_data = gg_data %>%
+  filter(Species %in% species_to_keep) %>%
+  filter(Comment == "ok" | Comment == "cuticle_broke") %>%
+  filter(Species != "Drosophila_funebris") %>% # especes retirees car moins de deux valeurs en cuticle broke
+  filter(Species != "Zaprionus_indianus") %>%
+  filter(Species != "Zaprionus_lachaisei") %>%
+  filter(Species != "Drosophila_suzukii") %>%
+  filter(Species != "Drosophila_biarmipes") %>% # especes retirées car trop peu de valeurs
+  filter(Species != "Drosophila_melanogaster") %>% #retirees car pas de valeurs cuticle broke
+  filter( (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; glue ; 0.25 N") |
+            ! Species %in% c("Drosophila_hydei")) %>%
+  filter(Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard") %>%
+  group_by(Species, Comment) %>%
+  summarise(median = median(detachment_force),
+            sd = sd(detachment_force))
+
+
+index_ok =which(temp_data$Comment == "ok")
+index_cuticle_broke =
+  which(temp_data$Comment == "cuticle_broke")
+
+temp_gg_data = data.frame(Species = temp_data$Species[index_ok],
+                          median_ok = temp_data$median[index_ok],
+                          median_cuticle_broke = temp_data$median[index_cuticle_broke],
+                          sd_ok = temp_data$sd[index_ok],
+                          sd_cuticle_broke = temp_data$sd[index_cuticle_broke])
+
+c20 <- c("dodgerblue2", "#E31A1C", "red",
+         "green4","#6A3D9A", "purple",
+         "#FF7F00", "orange","black", 
+         "skyblue2", "#FB9A99", 
+         "#ffb6c1","palegreen2","#CAB2D6",
+         "#FDBF6F", "#FFD580",
+         "gray70", "khaki2","maroon", 
+         "orchid1")
+
+names(c20) <- levels(temp_gg_data$Species)
+
+p = ggplot(temp_gg_data, aes(x = median_ok,
+                             y = median_cuticle_broke,
+                             color = Species)) +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_errorbar(xmin = temp_gg_data$median_ok -
+                  temp_gg_data$sd_ok,
+                xmax = temp_gg_data$median_ok +
+                  temp_gg_data$sd_ok) +
+  geom_errorbar(ymin = temp_gg_data$median_cuticle_broke -
+                  temp_gg_data$sd_cuticle_broke,
+                ymax = temp_gg_data$median_cuticle_broke +
+                  temp_gg_data$sd_cuticle_broke) +
+  geom_point() +  scale_colour_manual(values = c20) +
+  xlim(c(0,
+         max(temp_gg_data$median_ok +
+               temp_gg_data$sd_ok))) +
+  ylim(c(0,
+         max(temp_gg_data$median_cuticle_broke +
+               temp_gg_data$sd_cuticle_broke))) +
+  geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "black", se = FALSE, linetype = "dashed") +
+  xlab("Detachment force for detached pupae (N)") +
+  ylab("Detachment force for not detached pupae (N)") +
+  theme_bw(base_size = 22)
+
+ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_ok_cuticle_broke", ".pdf"),
        plot=p, width=16, height=8, device = "pdf")
