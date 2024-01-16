@@ -169,12 +169,12 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 
 ####
 
-
 #
-parameter_with_threshold = c("log10_detachment_force", "log10_energy", "log10_negative_energy")
+parameter_with_threshold = c("log10_detachment_force", "log10_energy",
+                             "log10_negative_energy", "log10_position_difference")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -275,15 +275,15 @@ for (i in 1:length(parameter_list)){
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       scale_colour_manual(values = mypal_protocol) +
       theme_bw(base_size = 40) 
-      # theme(plot.title = element_text(hjust = 0.5), 
-      #       plot.subtitle = element_text(hjust = 0.5), 
-      #       legend.position = c(0.25, 0.8),
-      #       axis.text.x = element_text(family = "Courier New"), 
-      #       axis.text.y= element_text(family = "Courier New"),
-      #       aspect.ratio=1)
-
+    # theme(plot.title = element_text(hjust = 0.5), 
+    #       plot.subtitle = element_text(hjust = 0.5), 
+    #       legend.position = c(0.25, 0.8),
+    #       axis.text.x = element_text(family = "Courier New"), 
+    #       axis.text.y= element_text(family = "Courier New"),
+    #       aspect.ratio=1)
     
-
+    
+    
     ggsave(file = paste0(plot_path_two_parameters_by_protocol_for_drosophila_melanogaster, "/x_", parameter_list[i], "_y_", parameter_list[j], "_Drosophila_melanogaster", ".pdf"), 
            plot=p, width=16, height=8, device = "pdf")
     
@@ -568,15 +568,15 @@ for (i in 1:length(parameter_list)){
       #                       inherit.aes = F) +
       # stat_regline_equation(mapping = aes_string(x = parameter_list[i], y = parameter_list[j]),
       #                       temp_data_species, aes(label = ..rr.label..), inherit.aes = F) +
-
-    geom_abline(slope=1) +
-    geom_smooth(data = temp_data_species,
-                method =lm,
-                mapping = aes_string(x = temp_data_species$median_x,
-                                     y = temp_data_species$median_y),
-                color="black", formula = y ~ x, se = F, linetype = "dashed") +
-      stat_cor(cor.coef.name = "r", aes(label = paste(..r.label..)), color = "black",
-               label.y.npc="top", label.x.npc = "left", inherit.aes = T) +
+      
+      geom_abline(slope=1) +
+      geom_smooth(data = temp_data_species,
+                  method =lm,
+                  mapping = aes_string(x = temp_data_species$median_x,
+                                       y = temp_data_species$median_y),
+                  color="black", formula = y ~ x, se = F, linetype = "dashed") +
+      stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+               label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
       geom_point(size = 5, shape = 3) + 
       geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
                     xmax = temp_data_species$median_x + temp_data_species$sd_x) +
@@ -586,7 +586,7 @@ for (i in 1:length(parameter_list)){
            max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
       ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
            max(temp_data_species[[parameter_list[j]]], na.rm = T)) +
-
+      
       # xlim(c(-5, 0.5)) +
       # ylim(c(-3, 0.5)) +
       
@@ -601,7 +601,8 @@ for (i in 1:length(parameter_list)){
                       segment.color = "grey",
                       force = 50,
                       # direction = "y",
-                      color = "black") +
+                      color = "black", 
+                      size = 7) +
       scale_colour_manual(values = c25) +
       theme_bw(base_size = 22) +
       theme(legend.position = "none")
@@ -643,14 +644,14 @@ for (i in 1:length(parameter_list)){
       short_name = substr(short_name, 1, 8)
       
       gg_repel_data_trimmed = cbind(gg_repel_data_trimmed, 
-                            data.frame("species_number" = 1:nrow(gg_repel_data_trimmed),
-                                       "species_short" = short_name))
+                                    data.frame("species_number" = 1:nrow(gg_repel_data_trimmed),
+                                               "species_short" = short_name))
       
       t = ggplot(temp_data_species,
                  aes_string("median_x", y = "median_y", colour = "Species")) +
         geom_point(temp_data_species,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
-
+        
         # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
         # stat_poly_eq(data = temp_data_species,
         #              color = "red",
@@ -689,16 +690,17 @@ for (i in 1:length(parameter_list)){
                         segment.color = "grey",
                         force = 50,
                         # direction = "y",
-                        color = "black") +
+                        color = "black",
+                        size = 7) +
         scale_colour_manual(values = c25) +
         theme_bw(base_size = 22) +
         theme(legend.position = "none")
       t
       ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], "_trimmed", ".pdf"), 
              plot=t, width=12, height=8, device = "pdf")
-    
-    
-  }
+      
+      
+    }
   }
 }
 
@@ -790,8 +792,8 @@ temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
                           sd_strong_tape_and_0.25_N =
                             temp_data$sd[index_strong_tape_and_0.25_N])
 
-c5 <- c("dodgerblue2", "orange", "red",
-         "green4","#6A3D9A")
+c6 <- c("dodgerblue2", "orange", "red",
+        "green4","#6A3D9A", "blue4")
 
 # "purple",
 #          "#FF7F00", "black", 
@@ -802,14 +804,14 @@ c5 <- c("dodgerblue2", "orange", "red",
 #          "orchid1", "deeppink1", "blue1", 
 #          "steelblue4","darkturquoise", "green1")
 
-names(c5) <- levels(temp_gg_data$Species)
+names(c6) <- levels(temp_gg_data$Species)
 
 # aes(label = paste(..r.label..)),
 
 p = ggplot(temp_gg_data, aes(x = median_standard,
                              y = median_strong_tape_and_0.25_N,
                              color = Species)) +
-  stat_cor(data= NULL, cor.coef.name = "r", color = "black",
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
            label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
   geom_errorbar(xmin = temp_gg_data$median_standard -
                   temp_gg_data$sd_standard,
@@ -819,7 +821,7 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
                   temp_gg_data$sd_strong_tape_and_0.25_N,
                 ymax = temp_gg_data$median_strong_tape_and_0.25_N +
                   temp_gg_data$sd_strong_tape_and_0.25_N) +
-  geom_point() +  scale_colour_manual(values = c5) +
+  geom_point() +  scale_colour_manual(values = c6) +
   xlim(c(0,
          max(temp_gg_data$median_standard +
                temp_gg_data$sd_standard))) +
@@ -845,4 +847,3 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
 
 ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_protocol", ".pdf"),
        plot=p, width=16, height=8, device = "pdf")
-
