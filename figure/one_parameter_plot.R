@@ -173,7 +173,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -216,13 +216,10 @@ dir.create(plot_path_one_parameter_by_protocol_and_species, showWarnings = FALSE
 
 
 manual_order = ordered(c( 
-  "speed x3", 
-  "speed /3", 
-  "0 s",
-  "5 min", 
-  "3 d", "0.25 N", "no tape ; glue", 
-  "1 strong tape ; glue", "2 tapes ; no glue", 
-  "1 tape ; no glue", "standard"))
+  "no tape", "1 tape ; detached", 
+  "2 tapes ; detached", "3 d", "1 strong tape",
+  "speed /3", "speed x3" , "5 min", 
+  "0 s", "0.25 N" , "standard"))
 
 list_plot = list()
 
@@ -232,14 +229,14 @@ for (i in 1:length(parameter_list)){
     filter(Comment == "ok" & 
              Species == "Drosophila_melanogaster" & 
              Protocol != "water" & 
-             Protocol != "1 tape ; no glue ; speed x3") %>%
+             Protocol != "1 tape ; detached ; speed x3") %>%
     filter(!is.na(!!as.symbol(parameter_list[[i]]))) %>%
     filter(is.finite(!!as.symbol(parameter_list[[i]])))
   
   temp_data_all_comment = gg_data %>% 
     filter(Species == "Drosophila_melanogaster" & 
              Stock == "cantonS" & Protocol != "water" & 
-             Protocol != "1 tape ; no glue ; speed x3") %>%
+             Protocol != "1 tape ; detached ; speed x3") %>%
     filter(Comment == "ok" | Comment == "cuticle_broke" | 
              Comment == "not_detached") %>%
     filter(!is.na(!!as.symbol(parameter_list[[i]])))
@@ -310,7 +307,7 @@ p2 = ggarrange(list_plot[[1]], list_plot[[3]], list_plot[[2]],
                labels = c("D", "E", "F"), 
                font.label=list(color="black",size=30))
 
-p3 = ggarrange(list_plot[[2]], list_plot[[3]], 
+p3 = ggarrange(list_plot[[3]], list_plot[[2]], 
                nrow = 2,
                common.legend = T, 
                align = c("v"), 
@@ -377,7 +374,7 @@ for (i in 1:length(parameter_list)){
   } else {
     temp_data_species = gg_data %>%
       filter(Comment == "ok") %>%
-      filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+      filter((Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard")) %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Megaselia_scalaris") %>%
       filter(Species != "Drosophila_elegans") %>%
@@ -396,7 +393,7 @@ for (i in 1:length(parameter_list)){
     
     temp_data_all_comment = gg_data %>%
       filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
-      filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+      filter((Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard")) %>%
       filter(Species != "Megaselia_abdita") %>%
       filter(Species != "Megaselia_scalaris") %>%
       filter(Species != "Drosophila_elegans") %>%
@@ -667,7 +664,7 @@ for (i in 1:length(parameter_list)){
   
   raw_temp_data_species = gg_data %>%
     filter(Comment == "ok") %>%
-    filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+    filter((Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard")) %>%
     filter(Species != "Megaselia_abdita") %>%
     filter(Species != "Drosophila_quadraria") %>%
     filter(
@@ -787,7 +784,7 @@ for (i in 1:length(parameter_list)){
   
   raw_temp_data_species = gg_data %>%
     filter(Comment == "not_detached" | Comment == "cuticle_broke" | Comment == "ok") %>%
-    filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+    filter((Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard")) %>%
     filter(Species != "Megaselia_abdita") %>%
     filter(Species != "Drosophila_quadraria") %>%
     filter(
@@ -1101,19 +1098,19 @@ mdat_standard$variable <- factor(mdat_standard$variable, levels=c('percent_not_d
 
 # Change species ordering manually
 mdat_standard$Species <- factor(mdat_standard$Species,
-                                   levels = c("Drosophila_hydei", "Drosophila_pachea",
-                                              "Drosophila_nannoptera", "Drosophila_virilis",
-                                              "Drosophila_immigrans", "Zaprionus_lachaisei",
-                                              "Drosophila_simulans", "Drosophila_yakuba",
-                                              "Drosophila_eugracilis", "Drosophila_malerkotliana",
-                                              "Zaprionus_indianus", "Drosophila_ananassae",
-                                              "Drosophila_funebris",
-                                              "Drosophila_biarmipes", "Drosophila_suzukii",
-                                              "Drosophila_kurseongensis", "Drosophila_mauritiana", 
-                                              "Drosophila_melanogaster", "Drosophila_prostipennis", 
-                                              "Drosophila_pseudoobscura", "Drosophila_rhopaloa", 
-                                              "Drosophila_takahashii", "Drosophila_tropicalis", 
-                                              "Scaptodrosophila_lebanonensis"))
+                                levels = c("Drosophila_hydei", "Drosophila_pachea",
+                                           "Drosophila_nannoptera", "Drosophila_virilis",
+                                           "Drosophila_immigrans", "Zaprionus_lachaisei",
+                                           "Drosophila_simulans", "Drosophila_yakuba",
+                                           "Drosophila_eugracilis", "Drosophila_malerkotliana",
+                                           "Zaprionus_indianus", "Drosophila_ananassae",
+                                           "Drosophila_funebris",
+                                           "Drosophila_biarmipes", "Drosophila_suzukii",
+                                           "Drosophila_kurseongensis", "Drosophila_mauritiana", 
+                                           "Drosophila_melanogaster", "Drosophila_prostipennis", 
+                                           "Drosophila_pseudoobscura", "Drosophila_rhopaloa", 
+                                           "Drosophila_takahashii", "Drosophila_tropicalis", 
+                                           "Scaptodrosophila_lebanonensis"))
 
 mdat_standard = as.data.frame(mdat_standard)
 
@@ -1150,7 +1147,7 @@ comment_stats_ok = gg_data %>%
   
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
   
-  filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  filter(Protocol == "1 strong tape ; 0.25 N") %>%
   
   select(Species, Comment) %>%
   group_by(Species) %>% 
@@ -1174,7 +1171,7 @@ comment_stats_cuticle_broke = gg_data %>%
   
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
   
-  filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  filter(Protocol == "1 strong tape ; 0.25 N") %>%
   
   select(Species, Comment) %>%
   group_by(Species) %>% 
@@ -1197,7 +1194,7 @@ comment_stats_not_detached = gg_data %>%
   
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
   
-  filter(Protocol == "1 strong tape ; glue ; 0.25 N") %>%
+  filter(Protocol == "1 strong tape ; 0.25 N") %>%
   
   select(Species, Comment) %>%
   group_by(Species) %>% 
@@ -1230,9 +1227,9 @@ mdat_strong_025N$variable <- factor(mdat_strong_025N$variable, levels=c('percent
 
 # Change species ordering manually
 mdat_strong_025N$Species <- factor(mdat_strong_025N$Species,                                    
-                  levels = c("Drosophila_pachea", "Drosophila_nannoptera",
-                             "Drosophila_littoralis", "Drosophila_virilis",
-                             "Drosophila_hydei", "Zaprionus_lachaisei"))
+                                   levels = c("Drosophila_pachea", "Drosophila_nannoptera",
+                                              "Drosophila_littoralis", "Drosophila_virilis",
+                                              "Drosophila_hydei", "Zaprionus_lachaisei"))
 
 mdat_strong_025N = as.data.frame(mdat_strong_025N)
 
@@ -1248,7 +1245,7 @@ p_strong_025N = ggplot(data = mdat_strong_025N,
   scale_x_discrete(labels = x_labels) +
   scale_fill_manual(name = "Pupa state after detachment", labels = c("Not detached", "Cuticle broke", "Detached"), 
                     values=c('white', 'grey', 'black')) +
-  ylab("Percentage of pupae after '1 strong tape ; glue ; 0.25 N' adhesion assay")
+  ylab("Percentage of pupae after '1 strong tape ; 0.25 N' adhesion assay")
 # geom_text(data=subset(mdat, value != 100), aes(label = value), size = 7, position = position_stack(vjust = 0.5))
 
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_strong_025N", ".pdf"), 
@@ -1268,7 +1265,7 @@ ggsave(file = paste0(plot_path_one_parameter_by_species, "/stat_bar_plot_standar
 melano_stats_ok = gg_data %>%
   filter(Species == "Drosophila_melanogaster" & 
            Stock == "cantonS" & Protocol != "water" & 
-           Protocol != "1 tape ; no glue ; speed x3") %>%
+           Protocol != "1 tape ; detached ; speed x3") %>%
   filter(Comment == "ok") %>%
   select(Protocol, Comment) %>%
   group_by(Protocol) %>% 
@@ -1279,7 +1276,7 @@ melano_stats_ok = as.data.frame(melano_stats_ok)
 melano_stats_not_detached = gg_data %>%
   filter(Species == "Drosophila_melanogaster" & 
            Stock == "cantonS" & Protocol != "water" & 
-           Protocol != "1 tape ; no glue ; speed x3") %>%
+           Protocol != "1 tape ; detached ; speed x3") %>%
   filter(Comment == "not_detached") %>%
   select(Protocol, Comment) %>%
   group_by(Protocol) %>% 
@@ -1290,7 +1287,7 @@ melano_stats_not_detached = as.data.frame(melano_stats_not_detached)
 melano_stats_cuticle_broke = gg_data %>%
   filter(Species == "Drosophila_melanogaster" & 
            Stock == "cantonS" & Protocol != "water" & 
-           Protocol != "1 tape ; no glue ; speed x3") %>%
+           Protocol != "1 tape ; detached ; speed x3") %>%
   filter(Comment == "cuticle_broke") %>%
   select(Protocol, Comment) %>%
   group_by(Protocol) %>% 
@@ -1317,16 +1314,16 @@ dev.off()
 ######test merge tableau
 number_pupae_tested = gg_data %>%
   filter((Species == "Drosophila_melanogaster" & 
-           Stock == "cantonS") |
-        (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
-        (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
-        (Species == "Drosophila_biarmipes" & Stock == "G224") |
-      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
+            Stock == "cantonS") |
+           (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+           (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+           (Species == "Drosophila_biarmipes" & Stock == "G224") |
+           (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes"))) %>%
   filter(Species != "Megaselia_abdita") %>%
   filter(Species != "Megaselia_scalaris") %>%
   filter(Species != "Drosophila_quadraria") %>%
   filter(Species != "Drosophila_elegans") %>%
-  filter(Protocol != "water" & Protocol != "1 tape ; no glue ; speed x3") %>%
+  filter(Protocol != "water" & Protocol != "1 tape ; detached ; speed x3") %>%
   filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
   select(Species, Protocol, Comment) %>%
   group_by(Protocol)
@@ -1335,7 +1332,7 @@ number_pupae_tested = gg_data %>%
 # %>%
 #   summarise(not_detached = sum(Comment))
 
-  
+
 #solutions qui ne marchent pas à cause des library  
 # library('data.table')
 # fonction dcast
