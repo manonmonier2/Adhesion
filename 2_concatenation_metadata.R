@@ -5,7 +5,7 @@ library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -39,7 +39,7 @@ raw_comment = c("cuticle_broked", "cuticule_broke", "cuticule broke", "cuticle b
 correct_comment = c("cuticle_broke", "cuticle_broke", "cuticle_broke", "cuticle_broke", "no_adhesive_paper", "no_adhesive_paper", "two_pupae", "two_pupae", "not_detached", "pb_machine", "pb_machine", "attached_at_the_bottom", "two_pupae", "pb_machine", "pb_machine", "pb_machine", "no_adhesive_paper", "pb_scotch")
 
 raw_protocol = c("noscotch", "no_scotch", "nocond", "no_cond", "default", "strong", "strongforce", "scotch_fin", "strongtape", "tesa", "div3", "x3", "scotch_fin_strong_force", "3japf", "cond1", "cond2", "cond3", "0,25 N", "0s", "5min")
-correct_protocol = c("no tape ; glue", "no tape ; glue", "standard", "standard", "standard", "0.25 N", "0.25 N", "1 strong tape ; glue", "1 strong tape ; glue", "standard", "speed /3", "speed x3", "1 strong tape ; glue ; 0.25 N", "3 d", "1 tape ; no glue", "2 tapes ; no glue", "1 tape ; no glue ; speed x3", "0.25 N", "0 s", "5 min")
+correct_protocol = c("no tape", "no tape", "standard", "standard", "standard", "0.25 N", "0.25 N", "1 strong tape", "1 strong tape", "standard", "speed /3", "speed x3", "1 strong tape ; 0.25 N", "3 d", "1 tape ; detached", "2 tapes ; detached", "1 tape ; detached ; speed x3", "0.25 N", "0 s", "5 min")
 
 species_with_incorrect_stock = c("Drosophila_takahashii", "Drosophila_pachea", "Drosophila_nannoptera", "Drosophila_pseudoobscura", "Drosophila_eugracilis", "Drosophila_elegans", "Drosophila_prostipennis", "Drosophila_funebris", "Drosophila_rhopaloa", "Drosophila_kurseongensis", "Scaptodrosophila_lebanonensis", "Zaprionus_lachaisei", "Drosophila_malerkotliana", "Zaprionus_indianus", "Drosophila_ananassae", "Drosophila_immigrans", "Drosophila_hydei", "Drosophila_quadraria", "Drosophila_tropicalis", "Drosophila_virilis")
 correct_stock_by_species = c("14022-0311.07", "15090-1698.01_14.2", "15090-1692.00", "14011-0121.94", "Prud_homme_Gompel", "14027-0461.03", "14022-0291.00", "M_Monier", "BaVi067", "SaPa058", "J_David", "S_Prigent", "S_Prigent", "S_Prigent", "Prud_homme_Gompel", "F_Borne", "F_Borne", "J_David", "S_Prigent", "15010-1051.86")
@@ -186,10 +186,10 @@ for(file_type in list_type){
     # is not found in the first line of the file
     imagej_data = 
       if( ";" %in% strsplit(readLines(imagej_file, n=1)[1], split="")[[1]] ) { 
-      read.table(imagej_file, sep=";", header = T) }
+        read.table(imagej_file, sep=";", header = T) }
     else{
-        read.table(imagej_file, sep=",", header = T) }
-  
+      read.table(imagej_file, sep=",", header = T) }
+    
     # remove duplicated unique id (keep first occurrences of each duplicated id)
     
     imagej_id = sub("^(\\d+)\\D+.*$", "\\1", imagej_data$Label)
