@@ -439,6 +439,8 @@ for (i in 1:length(parameter_list)){
           filter(Species != "Drosophila_elegans") %>%
           filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
                    (Species != "Drosophila_melanogaster")) %>%
+          filter((Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+                   (Species != "Drosophila_hydei")) %>%
           filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
           filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
           group_by(Species) %>%
@@ -451,6 +453,8 @@ for (i in 1:length(parameter_list)){
           filter(Species != "Drosophila_elegans") %>%
           filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
                    (Species != "Drosophila_melanogaster")) %>%
+          filter((Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+                   (Species != "Drosophila_hydei")) %>%
           filter(! is.na(!!as.symbol(parameter_list[j]))) %>%
           filter(is.finite(!!as.symbol(parameter_list[[j]]))) %>%
           group_by(Species) %>%
@@ -468,11 +472,13 @@ for (i in 1:length(parameter_list)){
         filter(Species != "Drosophila_quadraria") %>%
         filter(
           ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+             (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
              (Species == "Drosophila_suzukii" & Stock == "WT3") |
              (Species == "Drosophila_biarmipes" & Stock == "G224") |
              (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
             (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
-                              "Drosophila_biarmipes", "Drosophila_simulans")) 
+                              "Drosophila_biarmipes", "Drosophila_simulans",
+                              "Drosophila_hydei")) 
         ) %>%
         filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
         filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
@@ -490,10 +496,12 @@ for (i in 1:length(parameter_list)){
         filter(
           ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
              (Species == "Drosophila_suzukii" & Stock == "WT3") |
+             (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
              (Species == "Drosophila_biarmipes" & Stock == "G224") |
              (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
             (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
-                              "Drosophila_biarmipes", "Drosophila_simulans")) 
+                              "Drosophila_biarmipes", "Drosophila_simulans",
+                              "Drosophila_hydei")) 
         ) %>%
         filter(! is.na(!!as.symbol(parameter_list[j]))) %>%
         filter(is.finite(!!as.symbol(parameter_list[[j]]))) %>%
@@ -766,7 +774,7 @@ ggsave(file = paste0(plot_path_two_parameters_by_species, "extension_load_superp
 plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
 dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
 
-species_to_keep =
+# species_to_keep =
   unique(gg_data$Species[which(gg_data$Protocol ==
                                  "1 strong tape ; 0.25 N")])[
                                    unique(gg_data$Species[
@@ -775,10 +783,9 @@ species_to_keep =
                                      unique(gg_data$Species[
                                        which(gg_data$Protocol == "standard")])]
 
-#Comment == "ok" | Comment == "cuticle_broke" | 
 
 temp_data = gg_data %>%
-  filter(Comment == "not_detached") %>%
+  filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "cuticle_broke") %>%
   filter(Species %in% species_to_keep) %>%
   filter(Species != "Megaselia_scalaris") %>%
   # filter(Species != "Drosophila_hydei") %>%
@@ -788,7 +795,7 @@ temp_data = gg_data %>%
             sd = sd(detachment_force))
 
 
-index_standard =which(temp_data$Protocol == "standard")
+index_standard = which(temp_data$Protocol == "standard")
 index_strong_tape_and_0.25_N =
   which(temp_data$Protocol == "1 strong tape ; 0.25 N")
 
@@ -829,7 +836,13 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
                   temp_gg_data$sd_strong_tape_and_0.25_N,
                 ymax = temp_gg_data$median_strong_tape_and_0.25_N +
                   temp_gg_data$sd_strong_tape_and_0.25_N) +
-  geom_point() +  scale_colour_manual(values = c5) +
+  # geom_errorbar(ymin = 0.1220190 - 0.16868975,
+  #               ymax = 0.1220190 + 0.16868975) +
+  # geom_errorbar(ymin = 0.5984195 - 0.3208371,
+  #               ymax = 0.5984195 + 0.3208371) +
+  geom_point() +  
+  
+  scale_colour_manual(values = c5) +
   xlim(c(0,
          max(temp_gg_data$median_standard +
                temp_gg_data$sd_standard))) +
