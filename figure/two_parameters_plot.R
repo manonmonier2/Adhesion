@@ -170,8 +170,12 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 ####
 
 #
+parameter_with_threshold_melano = c("log10_detachment_force", "log10_energy",
+                             "log10_negative_energy")
+
 parameter_with_threshold = c("log10_detachment_force", "log10_energy",
-                             "log10_negative_energy", "log10_position_difference")
+                             "log10_negative_energy", "log10_position_difference",
+                             "log10_glue_area_mm")
 
 # load config file
 opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
@@ -230,7 +234,7 @@ for (i in 1:length(parameter_list)){
     # filter data and computes stats
     temp_data = gg_data %>%
       filter(Species == "Drosophila_melanogaster" & 
-               Stock == "cantonS" & Protocol != "water" & Protocol != "1 tape ; no glue ; speed x3") %>%
+               Stock == "cantonS" & Protocol != "water" & Protocol != "1 tape ; detached ; speed x3") %>%
       filter(Comment == "ok" ) %>%
       group_by(Protocol)
     
@@ -242,15 +246,15 @@ for (i in 1:length(parameter_list)){
                                 levels = c("standard",
                                            "speed /3",
                                            "speed x3",
-                                           "1 strong tape ; glue",
+                                           "1 strong tape",
                                            "5 min",
                                            "0 s",
                                            "3 d",
                                            "0.25 N",
-                                           "2 tapes ; no glue",
-                                           "1 tape ; no glue ; speed x3",
-                                           "1 tape ; no glue",
-                                           "no tape ; glue"),
+                                           "2 tapes ; detached",
+                                           "1 tape ; detached ; speed x3",
+                                           "1 tape ; detached",
+                                           "no tape"),
                                 ordered = T)
     
     names(mypal_protocol) <- levels(temp_data$Protocol)
@@ -295,13 +299,13 @@ for (i in 1:length(parameter_list)){
     
     
     # trimmed plot
-    if (parameter_list[i] %in% parameter_with_threshold | 
-        parameter_list[j] %in% parameter_with_threshold) {
-      if (parameter_list[i] %in% parameter_with_threshold) {
+    if (parameter_list[i] %in% parameter_with_threshold_melano | 
+        parameter_list[j] %in% parameter_with_threshold_melano) {
+      if (parameter_list[i] %in% parameter_with_threshold_melano) {
         temp_data = temp_data %>%
           filter(!!sym(parameter_list[i]) > as.numeric(thr_data[parameter_list[i]]))
       }
-      if (parameter_list[j] %in% parameter_with_threshold) {
+      if (parameter_list[j] %in% parameter_with_threshold_melano) {
         temp_data = temp_data %>%
           filter(!!sym(parameter_list[j]) > as.numeric(thr_data[parameter_list[j]]))
       }
@@ -316,7 +320,7 @@ for (i in 1:length(parameter_list)){
                  aes_string("median_x", y = "median_y", colour = "Protocol")) +
         geom_point(temp_data,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
-        stat_cor(cor.coef.name = "r", aes(label = paste(..r.label..)), color = "black",
+        stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
                  label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
         # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
         # stat_poly_eq(data = temp_data,
@@ -419,7 +423,8 @@ thr_data = gg_data %>%
   summarise("log10_detachment_force" = -3,
             "log10_energy" = -3.5,
             "log10_negative_energy" = -4.5, 
-            "log10_position_difference" = -2)
+            "log10_position_difference" = -2, 
+            "log10_glue_area_mm" = -2)
 
 for (i in 1:length(parameter_list)){
   for (j in 1:length(parameter_list)){
@@ -457,7 +462,7 @@ for (i in 1:length(parameter_list)){
     if ( ! parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
-        filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+        filter((Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard")) %>%
         filter(Species != "Megaselia_abdita") %>%
         filter(Species != "Megaselia_scalaris") %>%
         filter(Species != "Drosophila_quadraria") %>%
@@ -478,7 +483,7 @@ for (i in 1:length(parameter_list)){
     if ( ! parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
       temp_data_species = temp_data_species %>%
         filter(Comment == "ok") %>%
-        filter((Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard")) %>%
+        filter((Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard")) %>%
         filter(Species != "Megaselia_abdita") %>%          
         filter(Species != "Megaselia_scalaris") %>%
         filter(Species != "Drosophila_quadraria") %>%
@@ -659,7 +664,7 @@ for (i in 1:length(parameter_list)){
         #              method = lm,
         #              mapping = aes_string("median_x", y = "median_y"),
         #              formula = y ~ x) +
-        geom_abline(slope=1) +
+        # geom_abline(slope=1) +
         geom_smooth(data = temp_data_species,
                     method =lm,
                     mapping = aes_string(x = temp_data_species$median_x,
@@ -763,19 +768,21 @@ dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, r
 
 species_to_keep =
   unique(gg_data$Species[which(gg_data$Protocol ==
-                                 "1 strong tape ; glue ; 0.25 N")])[
+                                 "1 strong tape ; 0.25 N")])[
                                    unique(gg_data$Species[
                                      which(gg_data$Protocol ==
-                                             "1 strong tape ; glue ; 0.25 N")]) %in%
+                                             "1 strong tape ; 0.25 N")]) %in%
                                      unique(gg_data$Species[
                                        which(gg_data$Protocol == "standard")])]
 
+#Comment == "ok" | Comment == "cuticle_broke" | 
+
 temp_data = gg_data %>%
-  filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
+  filter(Comment == "not_detached") %>%
   filter(Species %in% species_to_keep) %>%
   filter(Species != "Megaselia_scalaris") %>%
-  filter(Species != "Drosophila_hydei") %>%
-  filter(Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard") %>%
+  # filter(Species != "Drosophila_hydei") %>%
+  filter(Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard") %>%
   group_by(Species, Protocol) %>%
   summarise(median = median(detachment_force),
             sd = sd(detachment_force))
@@ -783,7 +790,7 @@ temp_data = gg_data %>%
 
 index_standard =which(temp_data$Protocol == "standard")
 index_strong_tape_and_0.25_N =
-  which(temp_data$Protocol == "1 strong tape ; glue ; 0.25 N")
+  which(temp_data$Protocol == "1 strong tape ; 0.25 N")
 
 temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
                           median_standard = temp_data$median[index_standard],
@@ -794,7 +801,7 @@ temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
                             temp_data$sd[index_strong_tape_and_0.25_N])
 
 c5 <- c("dodgerblue2", "orange", "red",
-        "green4","#6A3D9A")
+        "green4","#6A3D9A", "black")
 
 # "purple",
 #          "#FF7F00", "black", 
@@ -831,7 +838,7 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
                temp_gg_data$sd_strong_tape_and_0.25_N))) +
   geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "black", se = FALSE, linetype = "dashed") +
   xlab("Detachment force for protocol standard (N)") +
-  ylab("Detachment force for protocol '1 strong tape ; glue ; 0.25 N' (N)") +
+  ylab("Detachment force for protocol '1 strong tape ; 0.25 N' (N)") +
   theme_bw(base_size = 22)
 
 
@@ -866,12 +873,13 @@ species_to_keep =
 temp_data = gg_data %>%
   filter(Species %in% species_to_keep) %>%
   filter(Comment == "ok" | Comment == "not_detached") %>%
+  filter(Species != "Megaselia_scalaris") %>%
   filter(Species != "Drosophila_ananassae") %>%
   filter(Species != "Drosophila_biarmipes") %>%
   filter(Species != "Drosophila_suzukii") %>%
-  filter( (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; glue ; 0.25 N") |
+  filter( (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
             ! Species %in% c("Drosophila_hydei")) %>%
-  filter(Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard") %>%
+  filter(Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard") %>%
   group_by(Species, Comment) %>%
   summarise(median = median(detachment_force),
             sd = sd(detachment_force))
@@ -887,14 +895,25 @@ temp_gg_data = data.frame(Species = temp_data$Species[index_ok],
                           sd_ok = temp_data$sd[index_ok],
                           sd_not_detached = temp_data$sd[index_not_detached])
 
-c22 <- c("dodgerblue2", "#E31A1C", "red",
-         "green4","#6A3D9A", "purple",
+c22 <- c("red", "dodgerblue2", "deeppink1", 
+         "green4","chartreuse2", "purple",
          "#FF7F00", "orange","black", 
-         "skyblue2", "#FB9A99", 
-         "#ffb6c1","palegreen2","#CAB2D6",
-         "#FDBF6F", "#FFD580",
-         "gray70", "khaki2","maroon", 
-         "orchid1", "deeppink1", "blue1")
+         "skyblue2", "gray70", "#ffb6c1")
+
+temp_gg_data$Species = factor(temp_gg_data$Species, 
+                                   levels = c("Drosophila_melanogaster",
+                                              "Drosophila_simulans",
+                                              "Drosophila_yakuba",
+                                              "Drosophila_eugracilis",
+                                              "Drosophila_immigrans",
+                                              "Drosophila_virilis",
+                                              "Drosophila_nannoptera",        
+                                              "Drosophila_pachea",
+                                              "Drosophila_malerkotliana",
+                                              "Zaprionus_lachaisei",          
+                                              "Drosophila_hydei",
+                                              "Drosophila_littoralis"),
+                              ordered = T)
 
 names(c22) <- levels(temp_gg_data$Species)
 
@@ -949,9 +968,9 @@ temp_data = gg_data %>%
   filter(Species != "Drosophila_suzukii") %>%
   filter(Species != "Drosophila_biarmipes") %>% # especes retirées car trop peu de valeurs
   filter(Species != "Drosophila_melanogaster") %>% #retirees car pas de valeurs cuticle broke
-  filter( (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; glue ; 0.25 N") |
+  filter( (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
             ! Species %in% c("Drosophila_hydei")) %>%
-  filter(Protocol == "1 strong tape ; glue ; 0.25 N" | Protocol == "standard") %>%
+  filter(Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard") %>%
   group_by(Species, Comment) %>%
   summarise(median = median(detachment_force),
             sd = sd(detachment_force))
@@ -967,14 +986,24 @@ temp_gg_data = data.frame(Species = temp_data$Species[index_ok],
                           sd_ok = temp_data$sd[index_ok],
                           sd_cuticle_broke = temp_data$sd[index_cuticle_broke])
 
-c20 <- c("dodgerblue2", "#E31A1C", "red",
-         "green4","#6A3D9A", "purple",
+c20 <- c("red", "dodgerblue2", "deeppink1", 
+         "green4","chartreuse2", "purple",
          "#FF7F00", "orange","black", 
-         "skyblue2", "#FB9A99", 
-         "#ffb6c1","palegreen2","#CAB2D6",
-         "#FDBF6F", "#FFD580",
-         "gray70", "khaki2","maroon", 
-         "orchid1")
+         "skyblue2", "gray70", "#ffb6c1")
+
+temp_gg_data$Species = factor(temp_gg_data$Species, 
+                              levels = c("Drosophila_melanogaster",
+                                         "Drosophila_simulans",
+                                         "Drosophila_yakuba",
+                                         "Drosophila_eugracilis",
+                                         "Drosophila_immigrans",
+                                         "Drosophila_virilis",
+                                         "Drosophila_nannoptera",        
+                                         "Drosophila_pachea",
+                                         "Drosophila_malerkotliana",
+                                         "Zaprionus_lachaisei",          
+                                         "Drosophila_hydei",
+                                         "Drosophila_littoralis"),ordered = T)
 
 names(c20) <- levels(temp_gg_data$Species)
 
@@ -1000,8 +1029,9 @@ p = ggplot(temp_gg_data, aes(x = median_ok,
                temp_gg_data$sd_cuticle_broke))) +
   geom_abline(slope=1) +  geom_smooth(method='lm', formula= y~x, color = "black", se = FALSE, linetype = "dashed") +
   xlab("Detachment force for detached pupae (N)") +
-  ylab("Detachment force for not detached pupae (N)") +
+  ylab("Detachment force for broken pupae (N)") +
   theme_bw(base_size = 22)
 
 ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_ok_cuticle_broke", ".pdf"),
        plot=p, width=16, height=8, device = "pdf")
+
