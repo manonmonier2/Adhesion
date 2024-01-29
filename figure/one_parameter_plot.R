@@ -354,6 +354,8 @@ for (i in 1:length(parameter_list)){
       filter(Species != "Megaselia_scalaris") %>%
       filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
                (! Species %in% c("Drosophila_melanogaster"))) %>%
+      filter((Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+               (! Species %in% c("Drosophila_hydei"))) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
@@ -366,6 +368,8 @@ for (i in 1:length(parameter_list)){
       filter(Species != "Drosophila_elegans") %>%
       filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
                (! Species %in% c("Drosophila_melanogaster"))) %>%
+      filter((Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+               (! Species %in% c("Drosophila_hydei"))) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
@@ -381,6 +385,7 @@ for (i in 1:length(parameter_list)){
       filter(Species != "Drosophila_quadraria") %>%
       filter(
         ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+           (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
            (Species == "Drosophila_suzukii" & Stock == "WT3") |
            (Species == "Drosophila_biarmipes" & Stock == "G224") |
            (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
@@ -400,6 +405,7 @@ for (i in 1:length(parameter_list)){
       filter(Species != "Drosophila_quadraria") %>%
       filter(
         ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+           (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
            (Species == "Drosophila_suzukii" & Stock == "WT3") |
            (Species == "Drosophila_biarmipes" & Stock == "G224") |
            (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
