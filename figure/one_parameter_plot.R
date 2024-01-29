@@ -173,7 +173,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -346,72 +346,54 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 list_plot = list()
 list_plot_log = list()
 for (i in 1:length(parameter_list)){
+  
+  temp_gg_data = gg_data  %>%
+    filter(Species != "Megaselia_abdita") %>%
+    filter(Species != "Megaselia_scalaris") %>%
+    filter(Species != "Drosophila_elegans") %>%
+    filter(Species != "Drosophila_quadraria") %>%
+    filter(
+      
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+    (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+    (Species == "Drosophila_suzukii" & Stock == "WT3") |
+    (Species == "Drosophila_biarmipes" & Stock == "G224") |
+    (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
+    |
+    (! Species %in% c("Drosophila_melanogaster", 
+                            "Drosophila_suzukii", 
+                            "Drosophila_biarmipes", 
+                            "Drosophila_simulans", 
+                            "Drosophila_hydei"))
+    )
+
   if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")) {
-    temp_data_species = gg_data %>% 
+    temp_data_species = temp_gg_data %>%
       filter(Comment == "ok") %>%
-      filter(Species != "Megaselia_abdita") %>%
-      filter(Species != "Drosophila_elegans") %>%
-      filter(Species != "Megaselia_scalaris") %>%
-      filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-               (! Species %in% c("Drosophila_melanogaster"))) %>%
-      filter((Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
-               (! Species %in% c("Drosophila_hydei"))) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
     
-    temp_data_all_comment = gg_data %>% 
+    temp_data_all_comment = temp_gg_data %>%
       filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
-      filter(Species != "Megaselia_abdita") %>%
-      filter(Species != "Megaselia_scalaris") %>%
-      filter(Species != "Drosophila_elegans") %>%
-      filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-               (! Species %in% c("Drosophila_melanogaster"))) %>%
-      filter((Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
-               (! Species %in% c("Drosophila_hydei"))) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
     
   } else {
-    temp_data_species = gg_data %>%
+    
+    temp_data_species = temp_gg_data %>%
       filter(Comment == "ok") %>%
       filter((Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard")) %>%
-      filter(Species != "Megaselia_abdita") %>%
-      filter(Species != "Megaselia_scalaris") %>%
-      filter(Species != "Drosophila_elegans") %>%
-      filter(Species != "Drosophila_quadraria") %>%
-      filter(
-        ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-           (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
-           (Species == "Drosophila_suzukii" & Stock == "WT3") |
-           (Species == "Drosophila_biarmipes" & Stock == "G224") |
-           (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
-          (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
-                            "Drosophila_biarmipes", "Drosophila_simulans")) 
-      ) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
     
-    temp_data_all_comment = gg_data %>%
+    temp_data_all_comment = temp_gg_data %>%
       filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
       filter((Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard")) %>%
-      filter(Species != "Megaselia_abdita") %>%
-      filter(Species != "Megaselia_scalaris") %>%
-      filter(Species != "Drosophila_elegans") %>%
-      filter(Species != "Drosophila_quadraria") %>%
-      filter(
-        ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-           (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
-           (Species == "Drosophila_suzukii" & Stock == "WT3") |
-           (Species == "Drosophila_biarmipes" & Stock == "G224") |
-           (Species == "Drosophila_simulans" & Stock == "simulans_vincennes")) |
-          (! Species %in% c("Drosophila_melanogaster", "Drosophila_suzukii", 
-                            "Drosophila_biarmipes", "Drosophila_simulans")) 
-      ) %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
       group_by(Species) %>%
       filter(length(!!as.symbol(parameter_list[i])) > 1)
@@ -479,7 +461,6 @@ for (i in 1:length(parameter_list)){
   if (! grepl("^log10_", parameter_list[i])){
     list_plot[[parameter_list[i]]] = p
   }
-  
   #list_plot_log[[parameter_list[i]]] = p
 }
 
