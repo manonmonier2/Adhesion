@@ -178,7 +178,7 @@ parameter_with_threshold = c("log10_detachment_force", "log10_energy",
                              "log10_glue_area_mm")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -416,6 +416,31 @@ c25 <- c("dodgerblue2", "#E31A1C", "red",
          "gray70", "khaki2","maroon", 
          "orchid1", "deeppink1", "blue1", 
          "steelblue4","darkturquoise", "green1")
+names(c25) = c("Drosophila_kurseongensis",
+           "Drosophila_biarmipes",
+           "Drosophila_melanogaster",
+           "Drosophila_suzukii",
+           "Drosophila_mauritiana",
+           "Drosophila_simulans",
+           "Drosophila_yakuba",
+           "Drosophila_takahashii",
+           "Drosophila_ananassae",
+           "Drosophila_prostipennis",
+           "Drosophila_eugracilis",
+           "Drosophila_rhopaloa",
+           "Drosophila_funebris",
+           "Drosophila_immigrans",
+           "Drosophila_virilis",
+           "Drosophila_tropicalis",
+           "Scaptodrosophila_lebanonensis",
+           "Drosophila_nannoptera",
+           "Drosophila_pachea",
+           "Drosophila_malerkotliana",
+           "Zaprionus_indianus",
+           "Zaprionus_lachaisei",
+           "Drosophila_hydei",
+           "Drosophila_littoralis",
+           "Drosophila_pseudoobscura")
 
 # get threshold values with "detached pupae" protocol
 thr_data = gg_data %>%
@@ -431,6 +456,7 @@ for (i in 1:length(parameter_list)){
     if (i == j) next
     
     temp_data_species = gg_data
+    
     if (parameter_list[i] %in% c("Glue_area", "log10_glue_area") | parameter_list[j] %in% c("Glue_area", "log10_glue_area")) {
       if (parameter_list[i] %in% c("Glue_area", "log10_glue_area")) {
         temp_data_species = temp_data_species %>%
@@ -510,34 +536,10 @@ for (i in 1:length(parameter_list)){
     }
     
     temp_data_species$Species = factor(temp_data_species$Species, 
-                                       levels = c("Drosophila_kurseongensis",
-                                                  "Drosophila_biarmipes",
-                                                  "Drosophila_melanogaster",
-                                                  "Drosophila_suzukii",
-                                                  "Drosophila_mauritiana",
-                                                  "Drosophila_simulans",
-                                                  "Drosophila_yakuba",
-                                                  "Drosophila_takahashii",        
-                                                  "Drosophila_ananassae",
-                                                  "Drosophila_prostipennis",
-                                                  "Drosophila_eugracilis",
-                                                  "Drosophila_rhopaloa",
-                                                  "Drosophila_funebris",
-                                                  "Drosophila_immigrans",
-                                                  "Drosophila_virilis",
-                                                  "Drosophila_tropicalis",
-                                                  "Scaptodrosophila_lebanonensis",
-                                                  "Drosophila_nannoptera",        
-                                                  "Drosophila_pachea",
-                                                  "Drosophila_malerkotliana",
-                                                  "Zaprionus_indianus",
-                                                  "Zaprionus_lachaisei",          
-                                                  "Drosophila_hydei",
-                                                  "Drosophila_littoralis",        
-                                                  "Drosophila_pseudoobscura"),
+                                       levels = unique(temp_data_species$Species),
                                        ordered = T)
     
-    names(c25) <- levels(temp_data_species$Species)
+    # names(c25) <- levels(temp_data_species$Species)
     
     
     # add stats
