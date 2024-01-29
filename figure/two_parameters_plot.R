@@ -664,7 +664,7 @@ for (i in 1:length(parameter_list)){
                  aes_string("median_x", y = "median_y", colour = "Species")) +
         geom_point(temp_data_species,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
-        
+        geom_abline(slope=1) +
         # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
         # stat_poly_eq(data = temp_data_species,
         #              color = "red",
