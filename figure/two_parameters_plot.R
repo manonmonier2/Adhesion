@@ -178,7 +178,7 @@ parameter_with_threshold = c("log10_detachment_force", "log10_energy",
                              "log10_glue_area_mm")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -317,38 +317,26 @@ for (i in 1:length(parameter_list)){
         mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
       
       t = ggplot(temp_data,
-                 aes_string("median_x", y = "median_y", colour = "Protocol")) +
-        geom_point(temp_data,
-                   mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
-        # stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
-        #          label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
-        stat_cor(data = temp_data, mapping = aes_string(x = parameter_list[i], y = parameter_list[j]),
-                 cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+                 aes_string(parameter_list[i], y = parameter_list[j], colour = "Protocol")) +
+        geom_point() +
+        stat_cor(cor.coef.name = "r", 
+                 aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), 
+                 color = "black",
                  label.y.npc="top", label.x.npc = "left") +
-        # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
-        # stat_poly_eq(data = temp_data,
-        #              color = "red",
-        #              inherit.aes = F,
-        #              method = lm,
-        #              mapping = aes_string("median_x", y = "median_y"),
-        #              formula = y ~ x) +
         geom_smooth(data = temp_data,
                     method =lm,
                     mapping = aes_string(x = parameter_list[i],
                                          y = parameter_list[j]),
                     color="black", formula = y ~ x, se = F) +
-        # stat_regline_equation(aes(label = ..rr.label..)) +
-        #stat_poly_eq avec package ggpmisc ne fonctionne pas sur PC Manon
-        # stat_poly_eq(data = temp_data,
-        #              method =lm,
-        #              mapping = aes_string(x = parameter_list[i],
-        #                                   y = parameter_list[j]),
-        #              color="blue", formula = y ~ x, label.x = "right") +
         geom_point(size = 1) +
-        geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
-                      xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
-        geom_errorbar(ymin = temp_data[["median_y"]] - temp_data[["sd_y"]],
-                      ymax = temp_data[["median_y"]] + temp_data[["sd_y"]]) +
+        geom_errorbar(aes_string("median_x", y = "median_y", colour = "Protocol"),
+                      xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
+                      xmax = temp_data[["median_x"]] + temp_data[["sd_x"]],
+                      inherit.aes = FALSE) +
+        geom_errorbar(aes_string("median_x", y = "median_y", colour = "Protocol"),
+                      ymin = temp_data[["median_y"]] - temp_data[["sd_y"]],
+                      ymax = temp_data[["median_y"]] + temp_data[["sd_y"]],
+                      inherit.aes = FALSE) +
         xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
         ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
         scale_colour_manual(values = mypal_protocol) +
