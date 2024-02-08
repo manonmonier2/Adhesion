@@ -171,14 +171,14 @@ format_label = function(factor_name, factor_labels, stat_group = NA, n_data = NA
 
 #
 parameter_with_threshold_melano = c("log10_detachment_force", "log10_energy",
-                             "log10_negative_energy")
+                                    "log10_negative_energy")
 
 parameter_with_threshold = c("log10_detachment_force", "log10_energy",
                              "log10_negative_energy", "log10_position_difference",
                              "log10_glue_area_mm")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -320,8 +320,11 @@ for (i in 1:length(parameter_list)){
                  aes_string("median_x", y = "median_y", colour = "Protocol")) +
         geom_point(temp_data,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
-        stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
-                 label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+        # stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+        #          label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+        stat_cor(data = temp_data, mapping = aes_string(x = parameter_list[i], y = parameter_list[j]),
+                 cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+                 label.y.npc="top", label.x.npc = "left") +
         # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
         # stat_poly_eq(data = temp_data,
         #              color = "red",
@@ -417,30 +420,30 @@ c25 <- c("dodgerblue2", "#E31A1C", "red",
          "orchid1", "deeppink1", "blue1", 
          "steelblue4","darkturquoise", "green1")
 names(c25) = c("Drosophila_kurseongensis",
-           "Drosophila_biarmipes",
-           "Drosophila_melanogaster",
-           "Drosophila_suzukii",
-           "Drosophila_mauritiana",
-           "Drosophila_simulans",
-           "Drosophila_yakuba",
-           "Drosophila_takahashii",
-           "Drosophila_ananassae",
-           "Drosophila_prostipennis",
-           "Drosophila_eugracilis",
-           "Drosophila_rhopaloa",
-           "Drosophila_funebris",
-           "Drosophila_immigrans",
-           "Drosophila_virilis",
-           "Drosophila_tropicalis",
-           "Scaptodrosophila_lebanonensis",
-           "Drosophila_nannoptera",
-           "Drosophila_pachea",
-           "Drosophila_malerkotliana",
-           "Zaprionus_indianus",
-           "Zaprionus_lachaisei",
-           "Drosophila_hydei",
-           "Drosophila_littoralis",
-           "Drosophila_pseudoobscura")
+               "Drosophila_biarmipes",
+               "Drosophila_melanogaster",
+               "Drosophila_suzukii",
+               "Drosophila_mauritiana",
+               "Drosophila_simulans",
+               "Drosophila_yakuba",
+               "Drosophila_takahashii",
+               "Drosophila_ananassae",
+               "Drosophila_prostipennis",
+               "Drosophila_eugracilis",
+               "Drosophila_rhopaloa",
+               "Drosophila_funebris",
+               "Drosophila_immigrans",
+               "Drosophila_virilis",
+               "Drosophila_tropicalis",
+               "Scaptodrosophila_lebanonensis",
+               "Drosophila_nannoptera",
+               "Drosophila_pachea",
+               "Drosophila_malerkotliana",
+               "Zaprionus_indianus",
+               "Zaprionus_lachaisei",
+               "Drosophila_hydei",
+               "Drosophila_littoralis",
+               "Drosophila_pseudoobscura")
 
 # get threshold values with "detached pupae" protocol
 thr_data = gg_data %>%
@@ -462,6 +465,7 @@ for (i in 1:length(parameter_list)){
         temp_data_species = temp_data_species %>%
           filter(Species != "Megaselia_abdita") %>%
           filter(Species != "Megaselia_scalaris") %>%
+          filter(Species != "Drosophila_quadraria") %>%
           filter(Species != "Drosophila_elegans") %>%
           filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
                    (Species != "Drosophila_melanogaster")) %>%
@@ -476,6 +480,7 @@ for (i in 1:length(parameter_list)){
         temp_data_species = temp_data_species %>%
           filter(Species != "Megaselia_abdita") %>%
           filter(Species != "Megaselia_scalaris") %>%
+          filter(Species != "Drosophila_quadraria") %>%
           filter(Species != "Drosophila_elegans") %>%
           filter((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
                    (Species != "Drosophila_melanogaster")) %>%
@@ -496,6 +501,7 @@ for (i in 1:length(parameter_list)){
         filter(Species != "Megaselia_abdita") %>%
         filter(Species != "Megaselia_scalaris") %>%
         filter(Species != "Drosophila_quadraria") %>%
+        filter(Species != "Drosophila_elegans") %>%
         filter(
           ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
              (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
@@ -519,6 +525,7 @@ for (i in 1:length(parameter_list)){
         filter(Species != "Megaselia_abdita") %>%          
         filter(Species != "Megaselia_scalaris") %>%
         filter(Species != "Drosophila_quadraria") %>%
+        filter(Species != "Drosophila_elegans") %>%
         filter(
           ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
              (Species == "Drosophila_suzukii" & Stock == "WT3") |
@@ -714,7 +721,6 @@ for (i in 1:length(parameter_list)){
       ggsave(file = paste0(plot_path_two_parameters_by_species, "/x_", parameter_list[i], "_y_", parameter_list[j], "_trimmed", ".pdf"), 
              plot=t, width=12, height=8, device = "pdf")
       
-      
     }
   }
 }
@@ -777,13 +783,13 @@ plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameter
 dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
 
 # species_to_keep =
-  unique(gg_data$Species[which(gg_data$Protocol ==
-                                 "1 strong tape ; 0.25 N")])[
+unique(gg_data$Species[which(gg_data$Protocol ==
+                               "1 strong tape ; 0.25 N")])[
+                                 unique(gg_data$Species[
+                                   which(gg_data$Protocol ==
+                                           "1 strong tape ; 0.25 N")]) %in%
                                    unique(gg_data$Species[
-                                     which(gg_data$Protocol ==
-                                             "1 strong tape ; 0.25 N")]) %in%
-                                     unique(gg_data$Species[
-                                       which(gg_data$Protocol == "standard")])]
+                                     which(gg_data$Protocol == "standard")])]
 
 
 temp_data = gg_data %>%
@@ -916,18 +922,18 @@ c22 <- c("red", "dodgerblue2", "deeppink1",
          "skyblue2", "gray70", "#ffb6c1")
 
 temp_gg_data$Species = factor(temp_gg_data$Species, 
-                                   levels = c("Drosophila_melanogaster",
-                                              "Drosophila_simulans",
-                                              "Drosophila_yakuba",
-                                              "Drosophila_eugracilis",
-                                              "Drosophila_immigrans",
-                                              "Drosophila_virilis",
-                                              "Drosophila_nannoptera",        
-                                              "Drosophila_pachea",
-                                              "Drosophila_malerkotliana",
-                                              "Zaprionus_lachaisei",          
-                                              "Drosophila_hydei",
-                                              "Drosophila_littoralis"),
+                              levels = c("Drosophila_melanogaster",
+                                         "Drosophila_simulans",
+                                         "Drosophila_yakuba",
+                                         "Drosophila_eugracilis",
+                                         "Drosophila_immigrans",
+                                         "Drosophila_virilis",
+                                         "Drosophila_nannoptera",        
+                                         "Drosophila_pachea",
+                                         "Drosophila_malerkotliana",
+                                         "Zaprionus_lachaisei",          
+                                         "Drosophila_hydei",
+                                         "Drosophila_littoralis"),
                               ordered = T)
 
 names(c22) <- levels(temp_gg_data$Species)
@@ -1049,4 +1055,3 @@ p = ggplot(temp_gg_data, aes(x = median_ok,
 
 ggsave(file = paste0(plot_path_two_parameters_detachment_protocol, "/detachment_force_species_ok_cuticle_broke", ".pdf"),
        plot=p, width=16, height=8, device = "pdf")
-
