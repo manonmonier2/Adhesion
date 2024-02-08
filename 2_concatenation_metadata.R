@@ -178,6 +178,7 @@ list_type = c("size", "glue", "side")
 for(file_type in list_type){
   list_imagej_file = list.files(path_imagej, full.names = T, 
                                 pattern = paste0(file_type, ".csv$"))
+  
   concatenate_by_type = data.frame()
   for(imagej_file in list_imagej_file){
     
@@ -186,9 +187,11 @@ for(file_type in list_type){
     # is not found in the first line of the file
     imagej_data = 
       if( ";" %in% strsplit(readLines(imagej_file, n=1)[1], split="")[[1]] ) { 
-        read.table(imagej_file, sep=";", header = T) }
-    else{
+        read.table(imagej_file, sep=";", header = T) 
+        } else {
       read.table(imagej_file, sep=",", header = T) }
+    
+    colnames(imagej_data) = gsub(".AF8.", "_", colnames(imagej_data), fixed = T)
     
     # remove duplicated unique id (keep first occurrences of each duplicated id)
     
