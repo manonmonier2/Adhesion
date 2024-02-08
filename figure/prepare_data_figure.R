@@ -17,7 +17,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -48,7 +48,10 @@ pression_extension = c()
 pupa_area = c()
 pupa_length = c()
 glue_area_mm = c()
+pupa_width = c()
 detachment_force_div_glue_area = c()
+pupa_shape = c()
+
 
 # id ="2022012104"
 
@@ -75,14 +78,24 @@ for (id in gg_data$Sample_ID){
   
   if(length(which(metadata$Sample_ID == id)) == 1) {
     current_pupa_area = (((gg_data$Scale_um[gg_data$Sample_ID == id]^2) * gg_data$Area[gg_data$Sample_ID == id]) / (gg_data$Scale_px[gg_data$Sample_ID == id]^2))/1000000
+    current_pupa_length = (gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id])/1000
+    current_pupa_shape = current_pupa_length/sqrt(current_pupa_length)
   } else {
     current_pupa_area = NA
+    current_pupa_length = NA
+    current_pupa_shape = NA
   }
   
+  # if(length(which(metadata$Sample_ID == id)) == 1) {
+  #   current_pupa_length = (gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id])/1000
+  # } else {
+  #   current_pupa_length = NA
+  # }
+  
   if(length(which(metadata$Sample_ID == id)) == 1) {
-    current_pupa_length = (gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id])/1000
+    current_pupa_width = gg_data$Side[gg_data$Sample_ID == id]/1000
   } else {
-    current_pupa_length = NA
+    current_pupa_width = NA
   }
   
   if(length(which(metadata$Sample_ID == id)) == 1) {
@@ -92,9 +105,8 @@ for (id in gg_data$Sample_ID){
     current_glue_area_mm = NA
     current_detachment_force_div_glue_area = NA
   }
+  
 
-  
-  
   detachment_force = c(detachment_force, current_detachment_force)
   energy = c(energy, current_energy)
   negative_energy = c(negative_energy, current_energy_negative)
@@ -103,7 +115,9 @@ for (id in gg_data$Sample_ID){
   pression_extension = c(pression_extension, current_pression_extension)
   pupa_area = c(pupa_area, current_pupa_area)
   pupa_length = c(pupa_length, current_pupa_length)
+  pupa_shape = c(pupa_shape, current_pupa_shape)
   glue_area_mm = c(glue_area_mm, current_glue_area_mm)
+  pupa_width = c(pupa_width, current_pupa_width)
   detachment_force_div_glue_area = c(detachment_force_div_glue_area, current_detachment_force_div_glue_area)
 }
 
@@ -116,6 +130,8 @@ gg_data = cbind(gg_data,
                 pression_extension,
                 pupa_area,
                 pupa_length,
+                pupa_shape,
+                pupa_width,
                 glue_area_mm,
                 detachment_force_div_glue_area, 
                 log10_na(detachment_force),
@@ -126,11 +142,13 @@ gg_data = cbind(gg_data,
                 log10_na(pression_extension),
                 log10_na(pupa_area),
                 log10_na(pupa_length),
+                log10_na(pupa_shape),
+                log10_na(pupa_width),
                 log10_na(glue_area_mm),
                 log10_na(detachment_force_div_glue_area)
 )
 
-colnames(gg_data)[(ncol(gg_data) - 9) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_pupa_area", "log10_pupa_length", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")
+colnames(gg_data)[(ncol(gg_data) - 11) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_pupa_area", "log10_pupa_length", "log10_pupa_shape", "log10_pupa_width", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")
 
 # add column "speed" in gg_data
 gg_data = gg_data %>%
@@ -142,7 +160,7 @@ gg_data = gg_data %>%
                          Protocol == "detached pupae", "1")) %>%
   mutate(Speed = replace(Speed, Protocol == "speed x3", "3")) %>%
   mutate(Speed = replace(Speed, 
-                         Protocol == "detached pupae and speed x3", "3"))
+                         Protocol == "1 tape ; detached ; speed x3", "3"))
 
 write.table(x = gg_data,
             file = paste0(plot_path, "/data_figure.csv"),
@@ -150,4 +168,3 @@ write.table(x = gg_data,
             col.names = T,
             row.names = F,
             quote = F)
-
