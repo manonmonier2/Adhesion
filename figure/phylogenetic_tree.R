@@ -14,8 +14,9 @@ library("ggrepel")
 library("reshape2")
 library("gridExtra")
 library("pivottabler") ### doc : http://www.pivottabler.org.uk/articles/v04-regularlayout.html
-
 library("extrafont")
+library("ggsci")
+library("ggnewscale")
 # font_import()
 loadfonts(device = "win")
 
@@ -94,7 +95,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -154,10 +155,10 @@ temp_gg_data = gg_data  %>%
   ) %>%
   filter(Comment == "ok") %>%
   group_by(Species)
-    
+
 temp_gg_data$Species = factor(temp_gg_data$Species, 
-                                   levels = unique(temp_gg_data$Species),
-                                   ordered = T)
+                              levels = unique(temp_gg_data$Species),
+                              ordered = T)
 
 result_df <- data.frame()
 
@@ -167,15 +168,16 @@ color_gradients <- list(detachment_force = c("blue", "red"),
                         pupa_shape = c("green", "red"),
                         detachment_force_div_glue_area = c("black", "red"),
                         glue_area_mm = c("yellow", "red")
-                        )
+)
 
 for (i in 1:length(parameter_list_tree)){
-
+  
   parameter_name <- parameter_list_tree[i]
   median_col_name <- paste0("median_", parameter_name)
   
   temp_gg_data <- temp_gg_data %>%
     mutate(!!median_col_name := median((!!sym(parameter_name)), na.rm = TRUE))
+  
 }
 
 # Extract relevant columns for gg_repel_data and aggregate by Species
@@ -201,20 +203,69 @@ result_df <- cbind(gg_repel_data,
 result_df <- melt(result_df)
 result_df <- setNames(result_df, c("Species", "species_short", "parameter", "median"))
 
-# result_df$species_short = factor(result_df$species_short, levels = )
+# result_df$Species = factor(result_df$Species,
+#                                  levels = c("Drosophila_mauritiana",
+#                                  "Drosophila_simulans",
+#                                  "Drosophila_melanogaster",
+#                                  "Drosophila_yakuba",
+#                                  "Drosophila_eugracilis",
+#                                  "Drosophila_biarmipes",
+#                                  "Drosophila_suzukii",
+#                                  "Drosophila_prostipennis",
+#                                  "Drosophila_takahashii",
+#                                  "Drosophila_rhopaloa",
+#                                  "Drosophila_kurseongensis",
+#                                  "Drosophila_malerkotliana",
+#                                  "Drosophila_ananassae",
+#                                  "Drosophila_pseudoobscura",
+#                                  "Drosophila_tropicalis",
+#                                  "Zaprionus_lachaisei",
+#                                  "Zaprionus_indianus",
+#                                  "Drosophila_immigrans",
+#                                  "Drosophila_funebris",
+#                                  "Drosophila_pachea",
+#                                  "Drosophila_nannoptera",
+#                                  "Drosophila_hydei",
+#                                  "Drosophila_littoralis",
+#                                  "Drosophila_virilis",
+#                                  "Scaptodrosophila_lebanonensis"), ordered = T)
+
+result_df$species_short = factor(result_df$species_short,
+                           levels = c("D. mauri",
+                                      "D. simul",
+                                      "D. melan",
+                                      "D. yakub",
+                                      "D. eugra",
+                                      "D. biarm",
+                                      "D. suzuk",
+                                      "D. prost",
+                                      "D. takah",
+                                      "D. rhopa",
+                                      "D. kurse",
+                                      "D. maler",
+                                      "D. anana",
+                                      "D. pseud",
+                                      "D. tropi",
+                                      "Z. lacha",
+                                      "Z. india",
+                                      "D. immig",
+                                      "D. funeb",
+                                      "D. pache",
+                                      "D. nanno",
+                                      "D. hydei",
+                                      "D. litto",
+                                      "D. viril",
+                                      "S. leban"), ordered = T)
+
+# names(color_gradients) <- levels(result_df$Species)
 
 ### categoriser les valeurs de medianes pour chaque parametre
 
-###example dataset (RUN)
-
-library(ggsci)
-library(ggnewscale)
-
-ggplot() +
+p <- ggplot() +
   geom_tile(
     data = result_df %>% filter(parameter == "median_detachment_force"), 
     aes(x = parameter, y = species_short, fill = median)
-    ) + 
+  ) + 
   scale_fill_gradient(low = "lightblue",
                       high =  "blue",
                       na.value = "white") +
@@ -227,10 +278,10 @@ ggplot() +
     aes(x = parameter, y = species_short, fill = median)
   ) + 
   scale_fill_gradient(low = "lightgreen",
-                      high =  "green",
+                      high =  "darkgreen",
                       na.value = "white") +
   labs(fill = "median_pupa_shape") +
-
+  
   new_scale_fill() +
   
   geom_tile(
@@ -241,7 +292,7 @@ ggplot() +
                       high =  "red",
                       na.value = "white") +
   labs(fill = "median_detachment_force_div_glue_area") +
-
+  
   new_scale_fill() +
   
   geom_tile(
@@ -254,6 +305,4 @@ ggplot() +
   labs(fill = "median_glue_area_mm") +
   theme(legend.position="bottom")
 
-
-####
-
+p
