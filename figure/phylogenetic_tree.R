@@ -17,6 +17,7 @@ library("pivottabler") ### doc : http://www.pivottabler.org.uk/articles/v04-regu
 library("extrafont")
 library("ggsci")
 library("ggnewscale")
+library("ape")
 # font_import()
 loadfonts(device = "win")
 
@@ -230,8 +231,7 @@ result_df <- setNames(result_df, c("Species", "species_short", "parameter", "med
 #                                  "Drosophila_virilis",
 #                                  "Scaptodrosophila_lebanonensis"), ordered = T)
 
-result_df$species_short = factor(result_df$species_short,
-                           levels = c("D. mauri",
+levels_order_species <- c("D. mauri",
                                       "D. simul",
                                       "D. melan",
                                       "D. yakub",
@@ -255,27 +255,36 @@ result_df$species_short = factor(result_df$species_short,
                                       "D. hydei",
                                       "D. litto",
                                       "D. viril",
-                                      "S. leban"), ordered = T)
+                                      "S. leban")
 
-# names(color_gradients) <- levels(result_df$Species)
+levels_order_parameter <- c("median_detachment_force_div_glue_area",
+                            "median_detachment_force",
+                            "median_glue_area_mm",
+                            "median_pupa_shape")
+
 
 ### categoriser les valeurs de medianes pour chaque parametre
 
 p <- ggplot() +
   geom_tile(
     data = result_df %>% filter(parameter == "median_detachment_force"), 
-    aes(x = parameter, y = species_short, fill = median)
+    aes(x = factor(parameter, level = levels_order_parameter), 
+        y = factor(species_short, level = levels_order_species), fill = median),
+    color = "white", lwd = 1.5, linetype = 1
   ) + 
   scale_fill_gradient(low = "lightblue",
                       high =  "blue",
                       na.value = "white") +
   labs(fill = "median_detachment_force") +
   
+
   new_scale_fill() +
   
   geom_tile(
     data = result_df %>% filter(parameter == "median_pupa_shape"), 
-    aes(x = parameter, y = species_short, fill = median)
+    aes(x = factor(parameter, level = levels_order_parameter), 
+        y = factor(species_short, level = levels_order_species), fill = median),
+    color = "white", lwd = 1.5, linetype = 1
   ) + 
   scale_fill_gradient(low = "lightgreen",
                       high =  "darkgreen",
@@ -286,7 +295,9 @@ p <- ggplot() +
   
   geom_tile(
     data = result_df %>% filter(parameter == "median_detachment_force_div_glue_area"), 
-    aes(x = parameter, y = species_short, fill = median)
+    aes(x = factor(parameter, level = levels_order_parameter), 
+        y = factor(species_short, level = levels_order_species), fill = median),
+    color = "white", lwd = 1.5, linetype = 1
   ) + 
   scale_fill_gradient(low = "orange",
                       high =  "red",
@@ -297,12 +308,44 @@ p <- ggplot() +
   
   geom_tile(
     data = result_df %>% filter(parameter == "median_glue_area_mm"), 
-    aes(x = parameter, y = species_short, fill = median)
+    aes(x = factor(parameter, level = levels_order_parameter), 
+        y = factor(species_short, level = levels_order_species), fill = median),
+    color = "white", lwd = 1.5, linetype = 1
   ) + 
   scale_fill_gradient(low = "pink",
                       high =  "purple",
                       na.value = "white") +
   labs(fill = "median_glue_area_mm") +
-  theme(legend.position="bottom")
+  theme(legend.position="bottom", 
+        axis.text.x = element_text(angle = 45, hjust = 1, family = "Courier New"),
+        axis.text.y = element_text(family = "Courier New"),
+        axis.title.x = element_blank(), axis.title.y = element_blank()) +
+  coord_equal() #square shaped
+
 
 p
+
+
+#####arbre phylo#######
+
+# Create a simple tree using the read.tree function
+# tree <- read.tree(text = "((A:1, B:1):2, C:3);")
+# tree <- read.tree(text = "((((D._ananassae,D._funebris),D._eugracilis),((D._immigrans,D._hydei),D._biarmipes)),((D._littoralis,D._kurseongensis),D._elegans));
+# ((((D._littoralis,((D._eugracilis,D._ananassae),D._biarmipes)),D._hydei),D._elegans),((D._kurseongensis,D._immigrans),D._funebris));
+# ((D._kurseongensis,((D._biarmipes,D._hydei),D._ananassae)),((((D._elegans,D._littoralis),D._immigrans),D._eugracilis),D._funebris));
+# ((D._ananassae,D._funebris),(D._immigrans,D._hydei,D._biarmipes),D._eugracilis,((D._littoralis,D._kurseongensis),D._elegans));
+# (((D._littoralis,(D._ananassae,D._biarmipes)),(D._kurseongensis,D._immigrans)),(D._elegans,D._funebris));")
+
+tree <- read.tree(text = "(((((((((((((D._mauritiana,D._simulans),D._melanogaster),D._yakuba),
+                  D._eugracilis),((D._biarmipes,D._suzukii),(D._prostipennis,D._takahashii))),
+                  ((D._rhopaloa,D._kurseongensis)))),(D._malerkotliana,D._ananassae))
+                  ,D._pseudoobscura),D._tropicalis),(((Z._lachaisei,Z._indianus),(D._immigrans,D._funebris)),
+                  (((D._pachea,D._nannoptera),D._hydei),(D._littoralis,D._virilis)))),S._lebanonensis));")
+
+# Plot the tree using plot.phylo
+plot(tree)
+
+
+
+
+
