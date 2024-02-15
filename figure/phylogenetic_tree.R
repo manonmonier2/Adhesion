@@ -96,7 +96,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -188,6 +188,12 @@ gg_repel_data <- temp_gg_data %>%
   summarise_all(mean, na.rm = TRUE) %>%
   distinct()
 
+new_names <- c( "Detachment force" = "median_detachment_force", 
+               "Pupa shape" = "median_pupa_shape",
+               "Detachment force divided by glue area" = "median_detachment_force_div_glue_area",
+               "Glue area" = "median_glue_area_mm")
+gg_repel_data <- rename(gg_repel_data, all_of(new_names))
+
 # Additional processing for short_name
 short_name <- gg_repel_data$Species
 short_name <- gsub("_", " ", short_name, fixed = TRUE)
@@ -203,6 +209,7 @@ result_df <- cbind(gg_repel_data,
 
 result_df <- melt(result_df)
 result_df <- setNames(result_df, c("Species", "species_short", "parameter", "median"))
+
 
 # result_df$Species = factor(result_df$Species,
 #                                  levels = c("Drosophila_mauritiana",
@@ -232,43 +239,46 @@ result_df <- setNames(result_df, c("Species", "species_short", "parameter", "med
 #                                  "Scaptodrosophila_lebanonensis"), ordered = T)
 
 levels_order_species <- c("D. mauri",
-                                      "D. simul",
-                                      "D. melan",
-                                      "D. yakub",
-                                      "D. eugra",
-                                      "D. biarm",
-                                      "D. suzuk",
-                                      "D. prost",
-                                      "D. takah",
-                                      "D. rhopa",
-                                      "D. kurse",
-                                      "D. maler",
-                                      "D. anana",
-                                      "D. pseud",
-                                      "D. tropi",
-                                      "Z. lacha",
-                                      "Z. india",
-                                      "D. immig",
-                                      "D. funeb",
-                                      "D. pache",
-                                      "D. nanno",
-                                      "D. hydei",
-                                      "D. litto",
-                                      "D. viril",
-                                      "S. leban")
+                          "D. simul",
+                          "D. melan",
+                          "D. yakub",
+                          "D. eugra",
+                          "D. biarm",
+                          "D. suzuk",
+                          "D. prost",
+                          "D. takah",
+                          "D. rhopa",
+                          "D. kurse",
+                          "D. maler",
+                          "D. anana",
+                          "D. pseud",
+                          "D. tropi",
+                          "Z. lacha",
+                          "Z. india",
+                          "D. immig",
+                          "D. funeb",
+                          "D. pache",
+                          "D. nanno",
+                          "D. hydei",
+                          "D. litto",
+                          "D. viril",
+                          "S. leban")
 
-levels_order_parameter <- c("median_detachment_force_div_glue_area",
-                            "median_detachment_force",
-                            "median_glue_area_mm",
-                            "median_pupa_shape")
+levels_order_parameter <- c("Pupa shape",
+                            "Glue area",
+                            "Detachment force",
+                            "Detachment force divided by glue area")
+
 
 
 ### categoriser les valeurs de medianes pour chaque parametre
+plot_path_one_parameter_by_species = paste0(plot_path, "/one_parameter/by_species/")
+dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive = T)
 
 p <- ggplot() +
   
   geom_tile(
-    data = result_df %>% filter(parameter == "median_detachment_force_div_glue_area"), 
+    data = result_df %>% filter(parameter == "Detachment force divided by glue area"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -276,12 +286,12 @@ p <- ggplot() +
   scale_fill_gradient(low = "orange",
                       high =  "red",
                       na.value = "white") +
-  labs(fill = "median_detachment_force_div_glue_area") +
+  labs(fill = "Detachment force divided by glue area") +
   
   new_scale_fill() +
   
   geom_tile(
-    data = result_df %>% filter(parameter == "median_detachment_force"), 
+    data = result_df %>% filter(parameter == "Detachment force"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -291,11 +301,11 @@ p <- ggplot() +
                       na.value = "white") +
   labs(fill = "median_detachment_force") +
   
-
+  
   new_scale_fill() +
   
   geom_tile(
-    data = result_df %>% filter(parameter == "median_pupa_shape"), 
+    data = result_df %>% filter(parameter == "Pupa shape"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -310,7 +320,7 @@ p <- ggplot() +
   
   
   geom_tile(
-    data = result_df %>% filter(parameter == "median_glue_area_mm"), 
+    data = result_df %>% filter(parameter == "Glue area"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -319,16 +329,20 @@ p <- ggplot() +
                       high =  "purple",
                       na.value = "white") +
   scale_x_discrete(limits = levels_order_parameter) +
+  # theme_bw(base_size = 18) +
   labs(fill = "median_glue_area_mm") +
-  theme(legend.position="bottom", 
-        axis.text.x = element_text(angle = 45, hjust = 1, family = "Courier New"),
-        axis.text.y = element_text(family = "Courier New"),
+  theme(legend.position="right",
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 15, family = "Courier New"),
+        axis.text.y = element_text( size = 15, family = "Courier New"),
         axis.title.x = element_blank(), axis.title.y = element_blank()) +
   coord_equal() #square shaped
 
 
 p
 
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/heatmap", ".pdf"), 
+       plot=p, width=20, height=10, device = cairo_pdf)
 
 #####arbre phylo#######
 
@@ -340,8 +354,3 @@ tree <- read.tree(text = "(((((((((((((D._mauritiana,D._simulans),D._melanogaste
 
 # Plot the tree using plot.phylo
 plot(tree)
-
-
-
-
-
