@@ -328,14 +328,6 @@ p
 
 #####arbre phylo#######
 
-# Create a simple tree using the read.tree function
-# tree <- read.tree(text = "((A:1, B:1):2, C:3);")
-# tree <- read.tree(text = "((((D._ananassae,D._funebris),D._eugracilis),((D._immigrans,D._hydei),D._biarmipes)),((D._littoralis,D._kurseongensis),D._elegans));
-# ((((D._littoralis,((D._eugracilis,D._ananassae),D._biarmipes)),D._hydei),D._elegans),((D._kurseongensis,D._immigrans),D._funebris));
-# ((D._kurseongensis,((D._biarmipes,D._hydei),D._ananassae)),((((D._elegans,D._littoralis),D._immigrans),D._eugracilis),D._funebris));
-# ((D._ananassae,D._funebris),(D._immigrans,D._hydei,D._biarmipes),D._eugracilis,((D._littoralis,D._kurseongensis),D._elegans));
-# (((D._littoralis,(D._ananassae,D._biarmipes)),(D._kurseongensis,D._immigrans)),(D._elegans,D._funebris));")
-
 tree <- read.tree(text = "(((((((((((((D._mauritiana,D._simulans),D._melanogaster),D._yakuba),
                   D._eugracilis),((D._biarmipes,D._suzukii),(D._prostipennis,D._takahashii))),
                   ((D._rhopaloa,D._kurseongensis)))),(D._malerkotliana,D._ananassae))
