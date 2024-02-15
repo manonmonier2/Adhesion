@@ -96,7 +96,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -266,9 +266,23 @@ levels_order_parameter <- c("median_detachment_force_div_glue_area",
 ### categoriser les valeurs de medianes pour chaque parametre
 
 p <- ggplot() +
+  
+  geom_tile(
+    data = result_df %>% filter(parameter == "median_detachment_force_div_glue_area"), 
+    aes(x = parameter, 
+        y = factor(species_short, level = levels_order_species), fill = median),
+    color = "white", lwd = 1.5, linetype = 1
+  ) + 
+  scale_fill_gradient(low = "orange",
+                      high =  "red",
+                      na.value = "white") +
+  labs(fill = "median_detachment_force_div_glue_area") +
+  
+  new_scale_fill() +
+  
   geom_tile(
     data = result_df %>% filter(parameter == "median_detachment_force"), 
-    aes(x = factor(parameter, level = levels_order_parameter), 
+    aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
   ) + 
@@ -282,7 +296,7 @@ p <- ggplot() +
   
   geom_tile(
     data = result_df %>% filter(parameter == "median_pupa_shape"), 
-    aes(x = factor(parameter, level = levels_order_parameter), 
+    aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
   ) + 
@@ -293,28 +307,18 @@ p <- ggplot() +
   
   new_scale_fill() +
   
-  geom_tile(
-    data = result_df %>% filter(parameter == "median_detachment_force_div_glue_area"), 
-    aes(x = factor(parameter, level = levels_order_parameter), 
-        y = factor(species_short, level = levels_order_species), fill = median),
-    color = "white", lwd = 1.5, linetype = 1
-  ) + 
-  scale_fill_gradient(low = "orange",
-                      high =  "red",
-                      na.value = "white") +
-  labs(fill = "median_detachment_force_div_glue_area") +
   
-  new_scale_fill() +
   
   geom_tile(
     data = result_df %>% filter(parameter == "median_glue_area_mm"), 
-    aes(x = factor(parameter, level = levels_order_parameter), 
+    aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
   ) + 
   scale_fill_gradient(low = "pink",
                       high =  "purple",
                       na.value = "white") +
+  scale_x_discrete(limits = levels_order_parameter) +
   labs(fill = "median_glue_area_mm") +
   theme(legend.position="bottom", 
         axis.text.x = element_text(angle = 45, hjust = 1, family = "Courier New"),
