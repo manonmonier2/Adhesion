@@ -96,7 +96,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -133,42 +133,66 @@ stock_list = unique(gg_data$Stock)
 protocol_list = unique(gg_data$Protocol)
 
 
-####data prepatation
+####data preparation
 
-# temp_gg_data = gg_data  %>%
-#   filter(Species != "Megaselia_abdita") %>%
-#   filter(Species != "Megaselia_scalaris") %>%
-#   filter(Species != "Drosophila_elegans") %>%
-#   filter(Species != "Drosophila_quadraria") %>%
-#   filter(
-#     
-#     ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-#        (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
-#        (Species == "Drosophila_suzukii" & Stock == "WT3") |
-#        (Species == "Drosophila_biarmipes" & Stock == "G224") |
-#        (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
-#     |
-#       (! Species %in% c("Drosophila_melanogaster", 
-#                         "Drosophila_suzukii", 
-#                         "Drosophila_biarmipes", 
-#                         "Drosophila_simulans", 
-#                         "Drosophila_hydei"))
-#   ) %>%
-#   filter(Comment == "ok") %>%
-#   filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
-#   group_by(Species)
-# 
-# temp_gg_data$Species = factor(temp_gg_data$Species, 
-#                               levels = unique(temp_gg_data$Species),
-#                               ordered = T)
-# 
-# threshold = quantile(temp_gg_data[["detachment_force_div_glue_area"]], probs = seq(0, 1, 0.05))[20]
-# 
-# temp_gg_data <- subset(temp_gg_data, detachment_force_div_glue_area < threshold)
+prep_gg_data = gg_data  %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+       (Species == "Drosophila_suzukii" & Stock == "WT3") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
+    |
+      (! Species %in% c("Drosophila_melanogaster",
+                        "Drosophila_suzukii",
+                        "Drosophila_biarmipes",
+                        "Drosophila_simulans",
+                        "Drosophila_hydei"))
+  ) %>%
+  filter(Comment == "ok")
 
+####
 
+gg_repel_data = setNames(data.frame(matrix(ncol = length(parameter_list_tree) + 1, 
+                                       nrow = length(unique(prep_gg_data$Species)))), 
+         c("Species", paste0("median_", parameter_list_tree)))
+gg_repel_data$Species = unique(prep_gg_data$Species)
 
-result_df <- data.frame()
+for (i in 1:length(parameter_list_tree)){
+  temp_gg_data = prep_gg_data
+  ## filter only for detachment_force_div_glue_area !
+  if(parameter_list_tree[[i]] == "detachment_force_div_glue_area"){
+    temp_gg_data = temp_gg_data %>%
+      filter(is.finite(!!as.symbol(parameter_list_tree[[i]]))) %>%
+      select(Species, !!as.symbol(parameter_list_tree[[i]]))
+    
+    threshold = quantile(temp_gg_data[[parameter_list_tree[[i]]]], probs = seq(0, 1, 0.05), na.rm = TRUE)[20]
+    
+    temp_gg_data = temp_gg_data %>%
+      filter(!!as.symbol(parameter_list_tree[[i]]) < threshold)
+  }
+  
+  median_col_name = paste0("median_", parameter_list_tree[i])
+  
+  temp_median = temp_gg_data %>%
+    group_by(Species) %>%
+    mutate(!!median_col_name := 
+             median(!!sym(parameter_list_tree[[i]]), na.rm = TRUE)) %>%
+    filter(!duplicated(Species)) %>%
+    select(Species, !!median_col_name)
+  
+  temp_median = as.data.frame(temp_median)
+  
+  for (s in temp_median$Species) {
+    gg_repel_data[which(gg_repel_data$Species == s), 
+              median_col_name] = temp_median[which(temp_median$Species == s), 
+                                             median_col_name]
+  }
+}
 
 # Create a list of color gradients for each parameter in parameter_list_tree
 
@@ -178,62 +202,11 @@ color_gradients <- list(detachment_force = c("blue", "red"),
                         glue_area_mm = c("yellow", "red")
 )
 
-for (i in 1:length(parameter_list_tree)){
-  
-  temp_gg_data = gg_data  %>%
-    filter(Species != "Megaselia_abdita") %>%
-    filter(Species != "Megaselia_scalaris") %>%
-    filter(Species != "Drosophila_elegans") %>%
-    filter(Species != "Drosophila_quadraria") %>%
-    filter(
-      
-      ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-         (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
-         (Species == "Drosophila_suzukii" & Stock == "WT3") |
-         (Species == "Drosophila_biarmipes" & Stock == "G224") |
-         (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
-      |
-        (! Species %in% c("Drosophila_melanogaster", 
-                          "Drosophila_suzukii", 
-                          "Drosophila_biarmipes", 
-                          "Drosophila_simulans", 
-                          "Drosophila_hydei"))
-    ) %>%
-    filter(Comment == "ok") %>%
-    filter(! is.na(!!as.symbol(parameter_list_tree[i]))) %>%
-    filter(is.finite(!!as.symbol(parameter_list_tree[[i]]))) %>%
-    group_by(Species)
-  
-  temp_gg_data$Species = factor(temp_gg_data$Species, 
-                                levels = unique(temp_gg_data$Species),
-                                ordered = T)
-  
-  threshold = quantile(temp_gg_data[["detachment_force_div_glue_area"]], probs = seq(0, 1, 0.05), na.rm = TRUE)[20]
-  
-  temp_gg_data <- subset(temp_gg_data, detachment_force_div_glue_area < threshold)
-  
-  parameter_name <- parameter_list_tree[i]
-  median_col_name <- paste0("median_", parameter_name)
-  
-  temp_gg_data <- temp_gg_data %>%
-    mutate(!!median_col_name := median((!!sym(parameter_name)), na.rm = TRUE))
-  
-}
-
-# Extract relevant columns for gg_repel_data and aggregate by Species
-gg_repel_data <- temp_gg_data %>%
-  select(Species, starts_with("median_")) %>%
-  group_by(Species) %>%
-  summarise_all(median, na.rm = TRUE) %>%
-  distinct()
-
-
-
-
 new_names <- c( "Detachment force (DF)" = "median_detachment_force", 
                "Pupa shape (PS)" = "median_pupa_shape",
                "DF/GA" = "median_detachment_force_div_glue_area",
                "Glue area (GA)" = "median_glue_area_mm")
+
 gg_repel_data <- rename(gg_repel_data, all_of(new_names))
 
 # Additional processing for short_name
@@ -251,34 +224,6 @@ result_df <- cbind(gg_repel_data,
 
 result_df <- melt(result_df)
 result_df <- setNames(result_df, c("Species", "species_short", "parameter", "median"))
-
-
-# result_df$Species = factor(result_df$Species,
-#                                  levels = c("Drosophila_mauritiana",
-#                                  "Drosophila_simulans",
-#                                  "Drosophila_melanogaster",
-#                                  "Drosophila_yakuba",
-#                                  "Drosophila_eugracilis",
-#                                  "Drosophila_biarmipes",
-#                                  "Drosophila_suzukii",
-#                                  "Drosophila_prostipennis",
-#                                  "Drosophila_takahashii",
-#                                  "Drosophila_rhopaloa",
-#                                  "Drosophila_kurseongensis",
-#                                  "Drosophila_malerkotliana",
-#                                  "Drosophila_ananassae",
-#                                  "Drosophila_pseudoobscura",
-#                                  "Drosophila_tropicalis",
-#                                  "Zaprionus_lachaisei",
-#                                  "Zaprionus_indianus",
-#                                  "Drosophila_immigrans",
-#                                  "Drosophila_funebris",
-#                                  "Drosophila_pachea",
-#                                  "Drosophila_nannoptera",
-#                                  "Drosophila_hydei",
-#                                  "Drosophila_littoralis",
-#                                  "Drosophila_virilis",
-#                                  "Scaptodrosophila_lebanonensis"), ordered = T)
 
 levels_order_species <- c("D. mauri",
                           "D. simul",
