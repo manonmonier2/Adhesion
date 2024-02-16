@@ -135,31 +135,38 @@ protocol_list = unique(gg_data$Protocol)
 
 ####data prepatation
 
-temp_gg_data = gg_data  %>%
-  filter(Species != "Megaselia_abdita") %>%
-  filter(Species != "Megaselia_scalaris") %>%
-  filter(Species != "Drosophila_elegans") %>%
-  filter(Species != "Drosophila_quadraria") %>%
-  filter(
-    
-    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
-       (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
-       (Species == "Drosophila_suzukii" & Stock == "WT3") |
-       (Species == "Drosophila_biarmipes" & Stock == "G224") |
-       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
-    |
-      (! Species %in% c("Drosophila_melanogaster", 
-                        "Drosophila_suzukii", 
-                        "Drosophila_biarmipes", 
-                        "Drosophila_simulans", 
-                        "Drosophila_hydei"))
-  ) %>%
-  filter(Comment == "ok") %>%
-  group_by(Species)
+# temp_gg_data = gg_data  %>%
+#   filter(Species != "Megaselia_abdita") %>%
+#   filter(Species != "Megaselia_scalaris") %>%
+#   filter(Species != "Drosophila_elegans") %>%
+#   filter(Species != "Drosophila_quadraria") %>%
+#   filter(
+#     
+#     ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+#        (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+#        (Species == "Drosophila_suzukii" & Stock == "WT3") |
+#        (Species == "Drosophila_biarmipes" & Stock == "G224") |
+#        (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
+#     |
+#       (! Species %in% c("Drosophila_melanogaster", 
+#                         "Drosophila_suzukii", 
+#                         "Drosophila_biarmipes", 
+#                         "Drosophila_simulans", 
+#                         "Drosophila_hydei"))
+#   ) %>%
+#   filter(Comment == "ok") %>%
+#   filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
+#   group_by(Species)
+# 
+# temp_gg_data$Species = factor(temp_gg_data$Species, 
+#                               levels = unique(temp_gg_data$Species),
+#                               ordered = T)
+# 
+# threshold = quantile(temp_gg_data[["detachment_force_div_glue_area"]], probs = seq(0, 1, 0.05))[20]
+# 
+# temp_gg_data <- subset(temp_gg_data, detachment_force_div_glue_area < threshold)
 
-temp_gg_data$Species = factor(temp_gg_data$Species, 
-                              levels = unique(temp_gg_data$Species),
-                              ordered = T)
+
 
 result_df <- data.frame()
 
@@ -173,6 +180,38 @@ color_gradients <- list(detachment_force = c("blue", "red"),
 
 for (i in 1:length(parameter_list_tree)){
   
+  temp_gg_data = gg_data  %>%
+    filter(Species != "Megaselia_abdita") %>%
+    filter(Species != "Megaselia_scalaris") %>%
+    filter(Species != "Drosophila_elegans") %>%
+    filter(Species != "Drosophila_quadraria") %>%
+    filter(
+      
+      ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+         (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+         (Species == "Drosophila_suzukii" & Stock == "WT3") |
+         (Species == "Drosophila_biarmipes" & Stock == "G224") |
+         (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
+      |
+        (! Species %in% c("Drosophila_melanogaster", 
+                          "Drosophila_suzukii", 
+                          "Drosophila_biarmipes", 
+                          "Drosophila_simulans", 
+                          "Drosophila_hydei"))
+    ) %>%
+    filter(Comment == "ok") %>%
+    filter(! is.na(!!as.symbol(parameter_list_tree[i]))) %>%
+    filter(is.finite(!!as.symbol(parameter_list_tree[[i]]))) %>%
+    group_by(Species)
+  
+  temp_gg_data$Species = factor(temp_gg_data$Species, 
+                                levels = unique(temp_gg_data$Species),
+                                ordered = T)
+  
+  threshold = quantile(temp_gg_data[["detachment_force_div_glue_area"]], probs = seq(0, 1, 0.05), na.rm = TRUE)[20]
+  
+  temp_gg_data <- subset(temp_gg_data, detachment_force_div_glue_area < threshold)
+  
   parameter_name <- parameter_list_tree[i]
   median_col_name <- paste0("median_", parameter_name)
   
@@ -185,13 +224,16 @@ for (i in 1:length(parameter_list_tree)){
 gg_repel_data <- temp_gg_data %>%
   select(Species, starts_with("median_")) %>%
   group_by(Species) %>%
-  summarise_all(mean, na.rm = TRUE) %>%
+  summarise_all(median, na.rm = TRUE) %>%
   distinct()
 
-new_names <- c( "Detachment force" = "median_detachment_force", 
-               "Pupa shape" = "median_pupa_shape",
-               "Detachment force divided by glue area" = "median_detachment_force_div_glue_area",
-               "Glue area" = "median_glue_area_mm")
+
+
+
+new_names <- c( "Detachment force (DF)" = "median_detachment_force", 
+               "Pupa shape (PS)" = "median_pupa_shape",
+               "DF/GA" = "median_detachment_force_div_glue_area",
+               "Glue area (GA)" = "median_glue_area_mm")
 gg_repel_data <- rename(gg_repel_data, all_of(new_names))
 
 # Additional processing for short_name
@@ -264,10 +306,10 @@ levels_order_species <- c("D. mauri",
                           "D. viril",
                           "S. leban")
 
-levels_order_parameter <- c("Pupa shape",
-                            "Glue area",
-                            "Detachment force",
-                            "Detachment force divided by glue area")
+levels_order_parameter <- c("Pupa shape (PS)",
+                            "Glue area (GA)",
+                            "Detachment force (DF)",
+                            "DF/GA")
 
 
 
@@ -278,7 +320,7 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 p <- ggplot() +
   
   geom_tile(
-    data = result_df %>% filter(parameter == "Detachment force divided by glue area"), 
+    data = result_df %>% filter(parameter == "DF/GA"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -286,12 +328,12 @@ p <- ggplot() +
   scale_fill_gradient(low = "orange",
                       high =  "red",
                       na.value = "white") +
-  labs(fill = "Detachment force divided by glue area") +
+  labs(fill = "DF/GA (N/mm²)") +
   
   new_scale_fill() +
   
   geom_tile(
-    data = result_df %>% filter(parameter == "Detachment force"), 
+    data = result_df %>% filter(parameter == "Detachment force (DF)"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -299,13 +341,13 @@ p <- ggplot() +
   scale_fill_gradient(low = "lightblue",
                       high =  "blue",
                       na.value = "white") +
-  labs(fill = "median_detachment_force") +
+  labs(fill = "DF (N)") +
   
   
   new_scale_fill() +
   
   geom_tile(
-    data = result_df %>% filter(parameter == "Pupa shape"), 
+    data = result_df %>% filter(parameter == "Pupa shape (PS)"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -313,14 +355,14 @@ p <- ggplot() +
   scale_fill_gradient(low = "lightgreen",
                       high =  "darkgreen",
                       na.value = "white") +
-  labs(fill = "median_pupa_shape") +
+  labs(fill = "PS") +
   
   new_scale_fill() +
   
   
   
   geom_tile(
-    data = result_df %>% filter(parameter == "Glue area"), 
+    data = result_df %>% filter(parameter == "Glue area (GA)"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -328,11 +370,12 @@ p <- ggplot() +
   scale_fill_gradient(low = "pink",
                       high =  "purple",
                       na.value = "white") +
-  scale_x_discrete(limits = levels_order_parameter) +
+  scale_x_discrete(limits = levels_order_parameter, position = "top") +
   # theme_bw(base_size = 18) +
-  labs(fill = "median_glue_area_mm") +
+  labs(fill = "GA (mm)") +
+  
   theme(legend.position="right",
-        axis.text.x = element_text(angle = 45, hjust = 1, size = 15, family = "Courier New"),
+        axis.text.x = element_text(angle = 45, hjust = 0, size = 15, family = "Courier New"),
         axis.text.y = element_text( size = 15, family = "Courier New"),
         axis.title.x = element_blank(), axis.title.y = element_blank()) +
   coord_equal() #square shaped
@@ -353,4 +396,7 @@ tree <- read.tree(text = "(((((((((((((D._mauritiana,D._simulans),D._melanogaste
                   (((D._pachea,D._nannoptera),D._hydei),(D._littoralis,D._virilis)))),S._lebanonensis));")
 
 # Plot the tree using plot.phylo
-plot(tree)
+plot_tree <- plot(tree)
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/phylo_tree", ".pdf"), 
+       plot=plot_tree, width=20, height=10, device = cairo_pdf)
