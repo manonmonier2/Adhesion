@@ -178,7 +178,7 @@ parameter_with_threshold = c("log10_detachment_force", "log10_energy",
                              "log10_glue_area_mm")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -235,9 +235,7 @@ for (i in 1:length(parameter_list)){
     temp_data = gg_data %>%
       filter(Species == "Drosophila_melanogaster" & 
                Stock == "cantonS" & Protocol != "water" & Protocol != "1 tape ; detached ; speed x3") %>%
-      filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
-      group_by(Protocol)
-    
+      filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached")
     
     # | Comment == "cuticle_broke" | 
     # Comment == "not_detached"
@@ -260,21 +258,34 @@ for (i in 1:length(parameter_list)){
     names(mypal_protocol) <- levels(temp_data$Protocol)
     
     # complete plot
-    temp_data = temp_data %>% 
+    complete_data = temp_data %>% 
+      group_by(Protocol) %>%
       mutate("median_x" = median((!!sym(parameter_list[i])), na.rm = T)) %>%
       mutate("sd_x" = sd((!!sym(parameter_list[i])), na.rm = T)) %>%
       mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
-      mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
+      mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T)) %>%
+      mutate("quantile_25_x" = 
+               quantile(!!sym(parameter_list[i]), prob = 0.25, na.rm = T)) %>%
+      mutate("quantile_75_x" = 
+               quantile(!!sym(parameter_list[i]), prob = 0.75, na.rm = T)) %>%
+      mutate("quantile_25_y" = 
+               quantile(!!sym(parameter_list[j]), prob = 0.25, na.rm = T)) %>%
+      mutate("quantile_75_y" = 
+               quantile(!!sym(parameter_list[j]), prob = 0.75, na.rm = T))
     
-    p = ggplot(temp_data,
+    p = ggplot(complete_data,
                aes_string("median_x", y = "median_y", colour = "Protocol")) +
-      geom_point(temp_data,
+      geom_point(complete_data,
                  mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
       geom_point(size = 1) +
-      geom_errorbar(xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
-                    xmax = temp_data[["median_x"]] + temp_data[["sd_x"]]) +
-      geom_errorbar(ymin = temp_data[["median_y"]] - temp_data[["sd_y"]],
-                    ymax = temp_data[["median_y"]] + temp_data[["sd_y"]]) +
+      # geom_errorbar(xmin = complete_data[["median_x"]] - complete_data[["sd_x"]],
+      #               xmax = complete_data[["median_x"]] + complete_data[["sd_x"]]) +
+      # geom_errorbar(ymin = complete_data[["median_y"]] - complete_data[["sd_y"]],
+      #               ymax = complete_data[["median_y"]] + complete_data[["sd_y"]]) +
+      geom_errorbar(xmin = complete_data[["quantile_25_x"]],
+                    xmax = complete_data[["quantile_75_x"]]) +
+      geom_errorbar(ymin = complete_data[["quantile_25_y"]],
+                    ymax = complete_data[["quantile_75_y"]]) +
       xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
       ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
       scale_colour_manual(values = mypal_protocol) +
@@ -302,41 +313,58 @@ for (i in 1:length(parameter_list)){
     if (parameter_list[i] %in% parameter_with_threshold_melano | 
         parameter_list[j] %in% parameter_with_threshold_melano) {
       if (parameter_list[i] %in% parameter_with_threshold_melano) {
-        temp_data = temp_data %>%
+        trimmed_data = temp_data %>%
           filter(!!sym(parameter_list[i]) > as.numeric(thr_data[parameter_list[i]]))
       }
       if (parameter_list[j] %in% parameter_with_threshold_melano) {
-        temp_data = temp_data %>%
+        trimmed_data = temp_data %>%
           filter(!!sym(parameter_list[j]) > as.numeric(thr_data[parameter_list[j]]))
       }
       
-      temp_data = temp_data %>% 
+      trimmed_data = trimmed_data %>% 
+        group_by(Protocol) %>%
         mutate("median_x" = median((!!sym(parameter_list[i])), na.rm = T)) %>%
         mutate("sd_x" = sd((!!sym(parameter_list[i])), na.rm = T)) %>%
         mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
-        mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
+        mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T)) %>%
+        mutate("quantile_25_x" = 
+                 quantile(!!sym(parameter_list[i]), prob = 0.25, na.rm = T)) %>%
+        mutate("quantile_75_x" = 
+                 quantile(!!sym(parameter_list[i]), prob = 0.75, na.rm = T)) %>%
+        mutate("quantile_25_y" = 
+                 quantile(!!sym(parameter_list[j]), prob = 0.25, na.rm = T)) %>%
+        mutate("quantile_75_y" = 
+                 quantile(!!sym(parameter_list[j]), prob = 0.75, na.rm = T))
       
-      t = ggplot(temp_data,
+      t = ggplot(trimmed_data,
                  aes_string(parameter_list[i], y = parameter_list[j], colour = "Protocol")) +
         geom_point() +
         stat_cor(cor.coef.name = "r", 
                  aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), 
                  color = "black",
                  label.y.npc="top", label.x.npc = "left") +
-        geom_smooth(data = temp_data,
+        geom_smooth(data = trimmed_data,
                     method =lm,
                     mapping = aes_string(x = parameter_list[i],
                                          y = parameter_list[j]),
                     color="black", formula = y ~ x, se = F) +
         geom_point(size = 1) +
-        geom_errorbar(aes_string("median_x", y = "median_y", colour = "Protocol"),
-                      xmin = temp_data[["median_x"]] - temp_data[["sd_x"]],
-                      xmax = temp_data[["median_x"]] + temp_data[["sd_x"]],
-                      inherit.aes = FALSE) +
-        geom_errorbar(aes_string("median_x", y = "median_y", colour = "Protocol"),
-                      ymin = temp_data[["median_y"]] - temp_data[["sd_y"]],
-                      ymax = temp_data[["median_y"]] + temp_data[["sd_y"]],
-                      inherit.aes = FALSE) +
+        # geom_errorbar(aes_string("median_x", y = "median_y", colour = "Protocol"),
+        #               xmin = trimmed_data[["median_x"]] - trimmed_data[["sd_x"]],
+        #               xmax = trimmed_data[["median_x"]] + trimmed_data[["sd_x"]],
+        #               inherit.aes = FALSE) +
+        # geom_errorbar(aes_string("median_x", y = "median_y", colour = "Protocol"),
+        #               ymin = trimmed_data[["median_y"]] - trimmed_data[["sd_y"]],
+        #               ymax = trimmed_data[["median_y"]] + trimmed_data[["sd_y"]],
+        #               inherit.aes = FALSE) +
+      geom_errorbar(aes_string("median_x", y = "median_y", colour = "Protocol"),
+                    xmin = trimmed_data[["quantile_25_x"]],
+                    xmax = trimmed_data[["quantile_75_x"]],
+                    inherit.aes = FALSE) +
+      geom_errorbar(aes_string("median_x", y = "median_y", colour = "Protocol"),
+                    ymin = trimmed_data[["quantile_25_y"]],
+                    ymax = trimmed_data[["quantile_75_y"]],
+                    inherit.aes = FALSE) +
         xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
         ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
         scale_colour_manual(values = mypal_protocol) +
@@ -543,7 +571,15 @@ for (i in 1:length(parameter_list)){
       mutate("median_x" = median((!!sym(parameter_list[i])))) %>%
       mutate("sd_x" = sd((!!sym(parameter_list[i])))) %>%
       mutate("median_y" = median((!!sym(parameter_list[j])))) %>%
-      mutate("sd_y" = sd((!!sym(parameter_list[j]))))
+      mutate("sd_y" = sd((!!sym(parameter_list[j])))) %>%
+      mutate("quantile_25_x" = 
+               quantile(!!sym(parameter_list[i]), prob = 0.25, na.rm = T)) %>%
+      mutate("quantile_75_x" = 
+               quantile(!!sym(parameter_list[i]), prob = 0.75, na.rm = T)) %>%
+      mutate("quantile_25_y" = 
+               quantile(!!sym(parameter_list[j]), prob = 0.25, na.rm = T)) %>%
+      mutate("quantile_75_y" = 
+               quantile(!!sym(parameter_list[j]), prob = 0.75, na.rm = T))
     
     # construct data for the geom_text_repel function
     gg_repel_data = temp_data_species %>%
@@ -588,10 +624,14 @@ for (i in 1:length(parameter_list)){
       stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
                label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
       geom_point(size = 5, shape = 3) + 
-      geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
-                    xmax = temp_data_species$median_x + temp_data_species$sd_x) +
-      geom_errorbar(ymin = temp_data_species$median_y - temp_data_species$sd_y,
-                    ymax = temp_data_species$median_y + temp_data_species$sd_y) +
+      # geom_errorbar(xmin = temp_data_species$median_x - temp_data_species$sd_x,
+      #               xmax = temp_data_species$median_x + temp_data_species$sd_x) +
+      # geom_errorbar(ymin = temp_data_species$median_y - temp_data_species$sd_y,
+      #               ymax = temp_data_species$median_y + temp_data_species$sd_y) +
+      geom_errorbar(xmin = temp_data_species[["quantile_25_x"]],
+                    xmax = temp_data_species[["quantile_75_x"]]) +
+      geom_errorbar(ymin = temp_data_species[["quantile_25_y"]],
+                    ymax = temp_data_species[["quantile_75_y"]]) +
       xlim(min(temp_data_species[[parameter_list[i]]], na.rm = T),
            max(temp_data_species[[parameter_list[i]]], na.rm = T)) +
       ylim(min(temp_data_species[[parameter_list[j]]], na.rm = T),
@@ -635,10 +675,20 @@ for (i in 1:length(parameter_list)){
       }
       
       temp_data_species = temp_data_species %>% 
+        group_by(Species) %>%
         mutate("median_x" = median((!!sym(parameter_list[i])), na.rm = T)) %>%
         mutate("sd_x" = sd((!!sym(parameter_list[i])), na.rm = T)) %>%
         mutate("median_y" = median((!!sym(parameter_list[j])), na.rm = T)) %>%
-        mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T))
+        mutate("sd_y" = sd((!!sym(parameter_list[j])), na.rm = T)) %>%
+        mutate("quantile_25_x" = 
+                 quantile(!!sym(parameter_list[i]), prob = 0.25, na.rm = T)) %>%
+        mutate("quantile_75_x" = 
+                 quantile(!!sym(parameter_list[i]), prob = 0.75, na.rm = T)) %>%
+        mutate("quantile_25_y" = 
+                 quantile(!!sym(parameter_list[j]), prob = 0.25, na.rm = T)) %>%
+        mutate("quantile_75_y" = 
+                 quantile(!!sym(parameter_list[j]), prob = 0.75, na.rm = T))
+        
       
       # construct data for the geom_text_repel function
       gg_repel_data_trimmed = temp_data_species %>%
@@ -670,10 +720,14 @@ for (i in 1:length(parameter_list)){
         stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
                  label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
         geom_point(size = 1) +
-        geom_errorbar(xmin = temp_data_species[["median_x"]] - temp_data_species[["sd_x"]],
-                      xmax = temp_data_species[["median_x"]] + temp_data_species[["sd_x"]]) +
-        geom_errorbar(ymin = temp_data_species[["median_y"]] - temp_data_species[["sd_y"]],
-                      ymax = temp_data_species[["median_y"]] + temp_data_species[["sd_y"]]) +
+        # geom_errorbar(xmin = temp_data_species[["median_x"]] - temp_data_species[["sd_x"]],
+        #               xmax = temp_data_species[["median_x"]] + temp_data_species[["sd_x"]]) +
+        # geom_errorbar(ymin = temp_data_species[["median_y"]] - temp_data_species[["sd_y"]],
+        #               ymax = temp_data_species[["median_y"]] + temp_data_species[["sd_y"]]) +
+        geom_errorbar(xmin = temp_data_species[["quantile_25_x"]],
+                      xmax = temp_data_species[["quantile_75_x"]]) +
+        geom_errorbar(ymin = temp_data_species[["quantile_25_y"]],
+                      ymax = temp_data_species[["quantile_75_y"]]) +
         xlab(paste0(lab_list[i], " (", unit_list[i], ")")) +
         ylab(paste0(lab_list[j], " (", unit_list[j], ")")) +
         geom_text_repel(data = gg_repel_data_trimmed,
@@ -753,8 +807,8 @@ ggsave(file = paste0(plot_path_two_parameters_by_species, "extension_load_superp
 plot_path_two_parameters_detachment_protocol = paste0(plot_path, "/two_parameters/by_protocol_and_species/")
 dir.create(plot_path_two_parameters_detachment_protocol, showWarnings = FALSE, recursive = T)
 
-# species_to_keep =
-unique(gg_data$Species[which(gg_data$Protocol ==
+species_to_keep = 
+  unique(gg_data$Species[which(gg_data$Protocol ==
                                "1 strong tape ; 0.25 N")])[
                                  unique(gg_data$Species[
                                    which(gg_data$Protocol ==
@@ -771,7 +825,9 @@ temp_data = gg_data %>%
   filter(Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard") %>%
   group_by(Species, Protocol) %>%
   summarise(median = median(detachment_force),
-            sd = sd(detachment_force))
+            sd = sd(detachment_force),
+            "quantile_25" = quantile(detachment_force, prob = 0.25, na.rm = T),
+            "quantile_75" = quantile(detachment_force, prob = 0.75, na.rm = T))
 
 
 index_standard = which(temp_data$Protocol == "standard")
@@ -784,7 +840,15 @@ temp_gg_data = data.frame(Species = temp_data$Species[index_standard],
                             temp_data$median[index_strong_tape_and_0.25_N],
                           sd_standard = temp_data$sd[index_standard],
                           sd_strong_tape_and_0.25_N =
-                            temp_data$sd[index_strong_tape_and_0.25_N])
+                            temp_data$sd[index_strong_tape_and_0.25_N],
+                          quantile_25_standard = 
+                            temp_data$quantile_25[index_standard],
+                          quantile_25_strong_tape_and_0.25_N = 
+                            temp_data$quantile_25[index_strong_tape_and_0.25_N],
+                          quantile_75_standard = 
+                            temp_data$quantile_75[index_standard],
+                          quantile_75_strong_tape_and_0.25_N = 
+                            temp_data$quantile_75[index_strong_tape_and_0.25_N])
 
 c5 <- c("dodgerblue2", "orange", "red",
         "green4","#6A3D9A", "black")
@@ -807,14 +871,18 @@ p = ggplot(temp_gg_data, aes(x = median_standard,
                              color = Species)) +
   stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
            label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
-  geom_errorbar(xmin = temp_gg_data$median_standard -
-                  temp_gg_data$sd_standard,
-                xmax = temp_gg_data$median_standard +
-                  temp_gg_data$sd_standard) +
-  geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N -
-                  temp_gg_data$sd_strong_tape_and_0.25_N,
-                ymax = temp_gg_data$median_strong_tape_and_0.25_N +
-                  temp_gg_data$sd_strong_tape_and_0.25_N) +
+  # geom_errorbar(xmin = temp_gg_data$median_standard -
+  #                 temp_gg_data$sd_standard,
+  #               xmax = temp_gg_data$median_standard +
+  #                 temp_gg_data$sd_standard) +
+  # geom_errorbar(ymin = temp_gg_data$median_strong_tape_and_0.25_N -
+  #                 temp_gg_data$sd_strong_tape_and_0.25_N,
+  #               ymax = temp_gg_data$median_strong_tape_and_0.25_N +
+  #                 temp_gg_data$sd_strong_tape_and_0.25_N) +
+  geom_errorbar(xmin = temp_gg_data$quantile_25_standard,
+                xmax = temp_gg_data$quantile_75_standard) +
+  geom_errorbar(ymin = temp_gg_data$quantile_25_strong_tape_and_0.25_N,
+                ymax = temp_gg_data$quantile_75_strong_tape_and_0.25_N) +
   # geom_errorbar(ymin = 0.1220190 - 0.16868975,
   #               ymax = 0.1220190 + 0.16868975) +
   # geom_errorbar(ymin = 0.5984195 - 0.3208371,
@@ -874,7 +942,9 @@ temp_data = gg_data %>%
   filter(Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard") %>%
   group_by(Species, Comment) %>%
   summarise(median = median(detachment_force),
-            sd = sd(detachment_force))
+            sd = sd(detachment_force),
+            quantile_25 = quantile(detachment_force, prob = 0.25),
+            quantile_75 = quantile(detachment_force, prob = 0.75))
 
 
 index_ok =which(temp_data$Comment == "ok")
@@ -885,7 +955,11 @@ temp_gg_data = data.frame(Species = temp_data$Species[index_ok],
                           median_ok = temp_data$median[index_ok],
                           median_not_detached = temp_data$median[index_not_detached],
                           sd_ok = temp_data$sd[index_ok],
-                          sd_not_detached = temp_data$sd[index_not_detached])
+                          sd_not_detached = temp_data$sd[index_not_detached],
+                          quantile_25_ok = temp_data$quantile_25[index_ok],
+                          quantile_75_ok = temp_data$quantile_75[index_ok],
+                          quantile_25_not_detached = temp_data$quantile_25[index_not_detached],
+                          quantile_75_not_detached = temp_data$quantile_75[index_not_detached])
 
 c22 <- c("red", "dodgerblue2", "deeppink1", 
          "green4","chartreuse2", "purple",
@@ -914,14 +988,18 @@ p = ggplot(temp_gg_data, aes(x = median_ok,
                              color = Species)) +
   stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
            label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
-  geom_errorbar(xmin = temp_gg_data$median_ok -
-                  temp_gg_data$sd_ok,
-                xmax = temp_gg_data$median_ok +
-                  temp_gg_data$sd_ok) +
-  geom_errorbar(ymin = temp_gg_data$median_not_detached -
-                  temp_gg_data$sd_not_detached,
-                ymax = temp_gg_data$median_not_detached +
-                  temp_gg_data$sd_not_detached) +
+  # geom_errorbar(xmin = temp_gg_data$median_ok -
+  #                 temp_gg_data$sd_ok,
+  #               xmax = temp_gg_data$median_ok +
+  #                 temp_gg_data$sd_ok) +
+  # geom_errorbar(ymin = temp_gg_data$median_not_detached -
+  #                 temp_gg_data$sd_not_detached,
+  #               ymax = temp_gg_data$median_not_detached +
+  #                 temp_gg_data$sd_not_detached) +
+  geom_errorbar(xmin = temp_gg_data$quantile_25_ok,
+                xmax = temp_gg_data$quantile_75_ok) +
+  geom_errorbar(ymin = temp_gg_data$quantile_25_not_detached,
+                ymax = temp_gg_data$quantile_75_not_detached) +
   geom_point() +  scale_colour_manual(values = c22) +
   xlim(c(0,
          max(temp_gg_data$median_ok +
@@ -965,7 +1043,9 @@ temp_data = gg_data %>%
   filter(Protocol == "1 strong tape ; 0.25 N" | Protocol == "standard") %>%
   group_by(Species, Comment) %>%
   summarise(median = median(detachment_force),
-            sd = sd(detachment_force))
+            sd = sd(detachment_force), 
+            quantile_25 = quantile(detachment_force, prob = 0.25),
+            quantile_75 = quantile(detachment_force, prob = 0.75))
 
 
 index_ok =which(temp_data$Comment == "ok")
@@ -976,7 +1056,11 @@ temp_gg_data = data.frame(Species = temp_data$Species[index_ok],
                           median_ok = temp_data$median[index_ok],
                           median_cuticle_broke = temp_data$median[index_cuticle_broke],
                           sd_ok = temp_data$sd[index_ok],
-                          sd_cuticle_broke = temp_data$sd[index_cuticle_broke])
+                          sd_cuticle_broke = temp_data$sd[index_cuticle_broke],
+                          quantile_25_ok = temp_data$quantile_25[index_ok],
+                          quantile_75_ok = temp_data$quantile_75[index_ok],
+                          quantile_25_cuticle_broke = temp_data$quantile_25[index_cuticle_broke],
+                          quantile_75_cuticle_broke = temp_data$quantile_75[index_cuticle_broke])
 
 c20 <- c("red", "dodgerblue2", "deeppink1", 
          "green4","chartreuse2", "purple",
@@ -1004,14 +1088,18 @@ p = ggplot(temp_gg_data, aes(x = median_ok,
                              color = Species)) +
   stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
            label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
-  geom_errorbar(xmin = temp_gg_data$median_ok -
-                  temp_gg_data$sd_ok,
-                xmax = temp_gg_data$median_ok +
-                  temp_gg_data$sd_ok) +
-  geom_errorbar(ymin = temp_gg_data$median_cuticle_broke -
-                  temp_gg_data$sd_cuticle_broke,
-                ymax = temp_gg_data$median_cuticle_broke +
-                  temp_gg_data$sd_cuticle_broke) +
+  # geom_errorbar(xmin = temp_gg_data$median_ok -
+  #                 temp_gg_data$sd_ok,
+  #               xmax = temp_gg_data$median_ok +
+  #                 temp_gg_data$sd_ok) +
+  # geom_errorbar(ymin = temp_gg_data$median_cuticle_broke -
+  #                 temp_gg_data$sd_cuticle_broke,
+  #               ymax = temp_gg_data$median_cuticle_broke +
+  #                 temp_gg_data$sd_cuticle_broke) +
+  geom_errorbar(xmin = temp_gg_data$quantile_25_ok,
+                xmax = temp_gg_data$quantile_75_ok) +
+  geom_errorbar(ymin = temp_gg_data$quantile_25_cuticle_broke,
+                ymax = temp_gg_data$quantile_75_cuticle_broke) +
   geom_point() +  scale_colour_manual(values = c20) +
   xlim(c(0,
          max(temp_gg_data$median_ok +
