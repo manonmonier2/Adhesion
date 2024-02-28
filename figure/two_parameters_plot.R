@@ -178,7 +178,7 @@ parameter_with_threshold = c("log10_detachment_force", "log10_energy",
                              "log10_glue_area_mm")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -235,7 +235,7 @@ for (i in 1:length(parameter_list)){
     temp_data = gg_data %>%
       filter(Species == "Drosophila_melanogaster" & 
                Stock == "cantonS" & Protocol != "water" & Protocol != "1 tape ; detached ; speed x3") %>%
-      filter(Comment == "ok" ) %>%
+      filter(Comment == "ok" | Comment == "cuticle_broke" | Comment == "not_detached") %>%
       group_by(Protocol)
     
     
@@ -662,14 +662,6 @@ for (i in 1:length(parameter_list)){
         geom_point(temp_data_species,
                    mapping = aes_string(x = parameter_list[i], y = parameter_list[j])) +
         geom_abline(slope=1) +
-        # geom_smooth(method=lm , color="red", formula = y ~ x, se=FALSE, fullrange = T) +
-        # stat_poly_eq(data = temp_data_species,
-        #              color = "red",
-        #              inherit.aes = F,
-        #              method = lm,
-        #              mapping = aes_string("median_x", y = "median_y"),
-        #              formula = y ~ x) +
-        # geom_abline(slope=1) +
         geom_smooth(data = temp_data_species,
                     method =lm,
                     mapping = aes_string(x = temp_data_species$median_x,
@@ -677,13 +669,6 @@ for (i in 1:length(parameter_list)){
                     color="black", formula = y ~ x, se = F, linetype = "dashed") +
         stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
                  label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
-        # stat_regline_equation(aes(label = ..rr.label..)) +
-        #stat_poly_eq avec package ggpmisc ne fonctionne pas sur PC Manon
-        # stat_poly_eq(data = temp_data_species,
-        #              method =lm,
-        #              mapping = aes_string(x = parameter_list[i],
-        #                                   y = parameter_list[j]),
-        #              color="blue", formula = y ~ x, label.x = "right") +
         geom_point(size = 1) +
         geom_errorbar(xmin = temp_data_species[["median_x"]] - temp_data_species[["sd_x"]],
                       xmax = temp_data_species[["median_x"]] + temp_data_species[["sd_x"]]) +
@@ -695,11 +680,9 @@ for (i in 1:length(parameter_list)){
                         aes(x = median_x,
                             y = median_y,
                             label = species_short),
-                        # nudge_y = max(gg_repel_data_trimmed$median_y),
                         segment.linetype = "solid",
                         segment.color = "grey",
                         force = 50,
-                        # direction = "y",
                         color = "black",
                         size = 7) +
         scale_colour_manual(values = c25) +
