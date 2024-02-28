@@ -96,7 +96,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -158,8 +158,8 @@ prep_gg_data = gg_data  %>%
 ####
 
 gg_repel_data = setNames(data.frame(matrix(ncol = length(parameter_list_tree) + 1, 
-                                       nrow = length(unique(prep_gg_data$Species)))), 
-         c("Species", paste0("median_", parameter_list_tree)))
+                                           nrow = length(unique(prep_gg_data$Species)))), 
+                         c("Species", paste0("median_", parameter_list_tree)))
 gg_repel_data$Species = unique(prep_gg_data$Species)
 
 for (i in 1:length(parameter_list_tree)){
@@ -189,8 +189,8 @@ for (i in 1:length(parameter_list_tree)){
   
   for (s in temp_median$Species) {
     gg_repel_data[which(gg_repel_data$Species == s), 
-              median_col_name] = temp_median[which(temp_median$Species == s), 
-                                             median_col_name]
+                  median_col_name] = temp_median[which(temp_median$Species == s), 
+                                                 median_col_name]
   }
 }
 
@@ -202,10 +202,10 @@ color_gradients <- list(detachment_force = c("blue", "red"),
                         glue_area_mm = c("yellow", "red")
 )
 
-new_names <- c( "Detachment force (DF)" = "median_detachment_force", 
-               "Pupa shape (PS)" = "median_pupa_shape",
-               "DF/GA" = "median_detachment_force_div_glue_area",
-               "Glue area (GA)" = "median_glue_area_mm")
+new_names <- c( "Detachment force (F)" = "median_detachment_force", 
+                "Pupa shape (PS)" = "median_pupa_shape",
+                "F/A" = "median_detachment_force_div_glue_area",
+                "Glue area (A)" = "median_glue_area_mm")
 
 gg_repel_data <- rename(gg_repel_data, all_of(new_names))
 
@@ -252,9 +252,9 @@ levels_order_species <- c("D. mauri",
                           "S. leban")
 
 levels_order_parameter <- c("Pupa shape (PS)",
-                            "Glue area (GA)",
-                            "Detachment force (DF)",
-                            "DF/GA")
+                            "Glue area (A)",
+                            "Detachment force (F)",
+                            "F/A")
 
 
 
@@ -265,20 +265,20 @@ dir.create(plot_path_one_parameter_by_species, showWarnings = FALSE, recursive =
 p <- ggplot() +
   
   geom_tile(
-    data = result_df %>% filter(parameter == "DF/GA"), 
+    data = result_df %>% filter(parameter == "F/A"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
   ) + 
-  scale_fill_gradient(low = "orange",
-                      high =  "red",
+  scale_fill_gradient(low = "white",
+                      high =  "black",
                       na.value = "white") +
-  labs(fill = "DF/GA (N/mm²)") +
+  labs(fill = "F/A (N/mm²)") +
   
   new_scale_fill() +
   
   geom_tile(
-    data = result_df %>% filter(parameter == "Detachment force (DF)"), 
+    data = result_df %>% filter(parameter == "Detachment force (F)"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -286,7 +286,7 @@ p <- ggplot() +
   scale_fill_gradient(low = "lightblue",
                       high =  "blue",
                       na.value = "white") +
-  labs(fill = "DF (N)") +
+  labs(fill = "F (N)") +
   
   
   new_scale_fill() +
@@ -307,7 +307,7 @@ p <- ggplot() +
   
   
   geom_tile(
-    data = result_df %>% filter(parameter == "Glue area (GA)"), 
+    data = result_df %>% filter(parameter == "Glue area (A)"), 
     aes(x = parameter, 
         y = factor(species_short, level = levels_order_species), fill = median),
     color = "white", lwd = 1.5, linetype = 1
@@ -316,8 +316,7 @@ p <- ggplot() +
                       high =  "purple",
                       na.value = "white") +
   scale_x_discrete(limits = levels_order_parameter, position = "top") +
-  # theme_bw(base_size = 18) +
-  labs(fill = "GA (mm)") +
+  labs(fill = "A (mm²)") +
   
   theme(legend.position="right",
         axis.text.x = element_text(angle = 45, hjust = 0, size = 15, family = "Courier New"),
@@ -334,14 +333,16 @@ ggsave(file = paste0(plot_path_one_parameter_by_species, "/heatmap", ".pdf"),
 
 #####arbre phylo#######
 
-tree <- read.tree(text = "(((((((((((((D._mauritiana,D._simulans),D._melanogaster),D._yakuba),
-                  D._eugracilis),((D._biarmipes,D._suzukii),(D._prostipennis,D._takahashii))),
-                  ((D._rhopaloa,D._kurseongensis)))),(D._malerkotliana,D._ananassae))
-                  ,D._pseudoobscura),D._tropicalis),(((Z._lachaisei,Z._indianus),(D._immigrans,D._funebris)),
-                  (((D._pachea,D._nannoptera),D._hydei),(D._littoralis,D._virilis)))),S._lebanonensis));")
+tree <- read.tree(text = "(((((((((((((D._mauritiana:1,D._simulans:1):1,D._melanogaster:2):1,D._yakuba:3):1
+                  ,D._eugracilis:4):1,((D._biarmipes:1,D._suzukii:1):2,(D._prostipennis:1,D._takahashii:1):2):2):1,
+                  ((D._rhopaloa:1,D._kurseongensis:1):4):1):1):0,(D._malerkotliana:1,D._ananassae:1):6):1
+                  ,D._pseudoobscura:8):1,D._tropicalis:9):1,(((Z._lachaisei:1,Z._indianus:1):2,(D._immigrans:1,D._funebris:1):2):1,
+                  (((D._pachea:1,D._nannoptera:1):1,D._hydei:2):1,(D._littoralis:1,D._virilis:1):2):1):6):1,S._lebanonensis:11):1):1;", edge.length = T)
+
 
 # Plot the tree using plot.phylo
-plot_tree <- plot(tree)
+plot_tree <- plot(tree, use.edge.length = T)
 
-ggsave(file = paste0(plot_path_one_parameter_by_species, "/phylo_tree", ".pdf"), 
-       plot=plot_tree, width=20, height=10, device = cairo_pdf)
+
+
+
