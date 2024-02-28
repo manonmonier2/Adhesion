@@ -17,7 +17,7 @@ log10_na = function(vect){
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
 
 # retrieve parameters
 # Input
@@ -79,7 +79,7 @@ for (id in gg_data$Sample_ID){
   if(length(which(metadata$Sample_ID == id)) == 1) {
     current_pupa_area = (((gg_data$Scale_um[gg_data$Sample_ID == id]^2) * gg_data$Area[gg_data$Sample_ID == id]) / (gg_data$Scale_px[gg_data$Sample_ID == id]^2))/1000000
     current_pupa_length = (gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id])/1000
-    current_pupa_shape = current_pupa_length/sqrt(current_pupa_length)
+    current_pupa_shape = current_pupa_length/sqrt(current_pupa_area)
   } else {
     current_pupa_area = NA
     current_pupa_length = NA
