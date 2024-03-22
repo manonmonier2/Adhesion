@@ -173,7 +173,7 @@ format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = 
 ####
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
 
 # retrieve parameters
 # Input
@@ -368,7 +368,8 @@ for (i in 1:length(parameter_list)){
     )
   
   if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "glue_area_div_pupa_area",
-                               "log10_glue_area_mm", "log10_detachment_force_div_glue_area", "log10_na(glue_area_div_pupa_area)")) {
+                               "log10_glue_area_mm", "log10_detachment_force_div_glue_area", "log10_na(glue_area_div_pupa_area)", 
+                               "log10_glue_area_div_pupa_area")) {
     temp_data_species = temp_gg_data %>%
       filter(Comment == "ok") %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
