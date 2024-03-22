@@ -51,6 +51,7 @@ glue_area_mm = c()
 pupa_width = c()
 detachment_force_div_glue_area = c()
 pupa_shape = c()
+glue_area_div_pupa_area = c()
 
 
 # id ="2022012104"
@@ -86,6 +87,7 @@ for (id in gg_data$Sample_ID){
     current_pupa_shape = NA
   }
   
+  
   # if(length(which(metadata$Sample_ID == id)) == 1) {
   #   current_pupa_length = (gg_data$Scale_um[gg_data$Sample_ID == id] * gg_data$Feret[gg_data$Sample_ID == id] / gg_data$Scale_px[gg_data$Sample_ID == id])/1000
   # } else {
@@ -101,9 +103,11 @@ for (id in gg_data$Sample_ID){
   if(length(which(metadata$Sample_ID == id)) == 1) {
     current_glue_area_mm = gg_data$Glue_area[gg_data$Sample_ID == id] / 1000000
     current_detachment_force_div_glue_area = current_detachment_force / current_glue_area_mm
+    current_glue_area_div_pupa_area = current_glue_area_mm / current_pupa_area
   } else {
     current_glue_area_mm = NA
     current_detachment_force_div_glue_area = NA
+    current_glue_area_div_pupa_area = NA
   }
   
 
@@ -119,6 +123,7 @@ for (id in gg_data$Sample_ID){
   glue_area_mm = c(glue_area_mm, current_glue_area_mm)
   pupa_width = c(pupa_width, current_pupa_width)
   detachment_force_div_glue_area = c(detachment_force_div_glue_area, current_detachment_force_div_glue_area)
+  glue_area_div_pupa_area = c(glue_area_div_pupa_area, current_glue_area_div_pupa_area)
 }
 
 gg_data = cbind(gg_data, 
@@ -134,6 +139,7 @@ gg_data = cbind(gg_data,
                 pupa_width,
                 glue_area_mm,
                 detachment_force_div_glue_area, 
+                glue_area_div_pupa_area,
                 log10_na(detachment_force),
                 log10_na(energy),
                 log10_na(negative_energy),
@@ -145,10 +151,11 @@ gg_data = cbind(gg_data,
                 log10_na(pupa_shape),
                 log10_na(pupa_width),
                 log10_na(glue_area_mm),
-                log10_na(detachment_force_div_glue_area)
+                log10_na(detachment_force_div_glue_area),
+                log10_na(glue_area_div_pupa_area)
 )
 
-colnames(gg_data)[(ncol(gg_data) - 11) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_pupa_area", "log10_pupa_length", "log10_pupa_shape", "log10_pupa_width", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")
+colnames(gg_data)[(ncol(gg_data) - 12) : ncol(gg_data)] = c("log10_detachment_force", "log10_energy", "log10_negative_energy", "log10_rigidity", "log10_position_difference", "log10_pression_extension", "log10_pupa_area", "log10_pupa_length", "log10_pupa_shape", "log10_pupa_width", "log10_glue_area_mm", "log10_detachment_force_div_glue_area", "log10_glue_area_div_pupa_area")
 
 # add column "speed" in gg_data
 gg_data = gg_data %>%
