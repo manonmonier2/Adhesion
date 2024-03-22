@@ -1,0 +1,756 @@
+rm(list = ls())
+
+library("config")
+library("ggplot2")
+library("dplyr")
+library("rcompanion")
+library("agricolae")
+library("FSA")
+library("ggpubr")
+library("DescTools")
+library("ggtext")
+library("doBy")
+library("ggrepel")
+library("reshape2")
+library("gridExtra")
+library("pivottabler") ### doc : http://www.pivottabler.org.uk/articles/v04-regularlayout.html
+library("extrafont")
+library("ggsci")
+library("ggnewscale")
+library("ape")
+# font_import()
+# library("rstatix")
+# library("broom")
+# library("npmv")
+library("vegan")
+library("olsrr")
+loadfonts(device = "win")
+
+
+reorder_by_factor = function(data, factor_name, fun, parameter) {
+  order_data = data %>%
+    group_by(!!as.symbol(factor_name)) %>% 
+    filter(!is.na(!!as.symbol(parameter))) %>%
+    filter(is.finite(!!as.symbol(parameter))) %>%
+    summarise(fun = 
+                do.call(fun, list(x = (!!as.symbol(parameter)))))
+  order_data = as.data.frame(order_data[order(order_data$fun), ])
+  
+  return(order_data[[factor_name]])
+}
+
+
+format_label = function(factor_name, factor_labels, stat_group = NULL, n_data = NULL) {
+  if (factor_name == "Species"){
+    
+    a_col = levels(factor_labels)
+    a_col = gsub("_", " ", a_col, fixed = T)
+    a_col = gsub("Drosophila", "D.", a_col, fixed = T)
+    a_col = gsub("Megaselia", "M.", a_col, fixed = T)
+    a_col = gsub("Scaptodrosophila", "S.", a_col, fixed = T)
+    a_col = gsub("Zaprionus", "Z.", a_col, fixed = T)
+    a_col = substr(a_col, 1, 8)
+    #a_col = paste0("*", a_col, "*")
+    a_col = StrAlign(a_col, sep = "\\l")
+  } else {
+    a_col = StrAlign(levels(factor_labels), sep = "\\r")
+  }
+  
+  if (length(stat_group) > 0){
+    ordered_groups = unlist(lapply(levels(stat_group[[factor_name]]),
+                                   function(x) {
+                                     stat_group[stat_group[[factor_name]] == x, ]$groups
+                                   }))
+    group_diversity = sort(unique(unlist(lapply(ordered_groups, function(x) {
+      return(base::unlist(strsplit(x, split = "")))
+    }))))
+    
+    edited_groups = unlist(lapply(ordered_groups, function(g) {
+      base::paste(unlist(lapply(group_diversity, function(x) {
+        if (grepl(x, g)) {
+          return(x)
+        } else {
+          return(" ")
+        }
+      })), collapse = "")
+    }))
+    
+    
+    b_col = edited_groups
+  } else {
+    b_col = ""
+  }
+  
+  if (length(n_data) > 0){
+    
+    n_count = unlist(lapply(levels(n_data[[factor_name]]), 
+                            function(x) {
+                              sum(n_data[[factor_name]] == x)
+                            }))
+    c_col = StrAlign(paste0(n_count), sep = "\\r")
+  } else {
+    c_col = ""
+  }
+  
+  labels =  paste(a_col,
+                  b_col,
+                  c_col,
+                  sep = "   ")
+  return(labels)
+}
+
+
+# load config file
+opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "manon_acanthoptera")
+
+# retrieve parameters
+# Input
+path_index = opt$index_path
+path_batch_by_id = opt$batch_by_id
+plot_path = opt$plot_path
+path_integral = opt$integral_path
+ecology_path = opt$ecology_path
+ecology_path_output = opt$ecology_path_output
+origin_fly_path = opt$origin_fly_path
+
+
+parameter_list = gsub(" +$", "", 
+                      gsub("^ +", "", unlist(strsplit(opt$parameter_list, ","))))
+parameter_list_tree = gsub(" +$", "", 
+                           gsub("^ +", "", unlist(strsplit(opt$parameter_list_tree, ","))))
+parameter_ecology = gsub(" +$", "", 
+                         gsub("^ +", "", unlist(strsplit(opt$parameter_ecology, ","))))
+lab_list = gsub(" +$", "", 
+                gsub("^ +", "", unlist(strsplit(opt$lab_list, ","))))
+unit_list = gsub(" +$", "",
+                 gsub("^ +", "", unlist(strsplit(opt$unit_list, ","))))
+stat_list = gsub(" +$", "", 
+                 gsub("^ +", "", unlist(strsplit(opt$stat_list, ","))))
+
+comment_list = gsub(" +$", "", 
+                    gsub("^ +", "", unlist(strsplit(opt$comment_list, ","))))
+
+comment_lab_list = gsub(" +$", "", 
+                        gsub("^ +", "", unlist(strsplit(opt$comment_lab_list, ","))))
+
+# read data figure
+gg_data = read.table(paste0(plot_path, "/data_figure.csv"), 
+                     stringsAsFactors = F,
+                     sep = "\t",
+                     header = T)
+
+species_list = unique(gg_data$Species)
+stock_list = unique(gg_data$Stock)
+protocol_list = unique(gg_data$Protocol)
+
+
+### adhesion data preparation###
+
+
+prep_gg_data = gg_data  %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+       (Species == "Drosophila_suzukii" & Stock == "WT3") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
+    |
+      (! Species %in% c("Drosophila_melanogaster",
+                        "Drosophila_suzukii",
+                        "Drosophila_biarmipes",
+                        "Drosophila_simulans",
+                        "Drosophila_hydei"))
+  ) %>%
+  filter(Comment == "ok")
+
+####
+
+gg_repel_data = setNames(data.frame(matrix(ncol = length(parameter_ecology) + 1, 
+                                           nrow = length(unique(prep_gg_data$Species)))), 
+                         c("Species", paste0("median_", parameter_ecology)))
+gg_repel_data$Species = unique(prep_gg_data$Species)
+
+for (i in 1:length(parameter_ecology)){
+  temp_gg_data = prep_gg_data
+  ## filter only for detachment_force_div_glue_area !
+  if(parameter_ecology[[i]] == "detachment_force_div_glue_area"){
+    temp_gg_data = temp_gg_data %>%
+      filter(is.finite(!!as.symbol(parameter_ecology[[i]]))) %>%
+      select(Species, !!as.symbol(parameter_ecology[[i]]))
+    
+    threshold = quantile(temp_gg_data[[parameter_ecology[[i]]]], probs = seq(0, 1, 0.05), na.rm = TRUE)[20]
+    
+    temp_gg_data = temp_gg_data %>%
+      filter(!!as.symbol(parameter_ecology[[i]]) < threshold)
+  }
+  
+  median_col_name = paste0("median_", parameter_ecology[i])
+  
+  temp_median = temp_gg_data %>%
+    group_by(Species) %>%
+    mutate(!!median_col_name := 
+             median(!!sym(parameter_ecology[[i]]), na.rm = TRUE)) %>%
+    filter(!duplicated(Species)) %>%
+    select(Species, !!median_col_name)
+  
+  temp_median = as.data.frame(temp_median)
+  
+  for (s in temp_median$Species) {
+    gg_repel_data[which(gg_repel_data$Species == s), 
+                  median_col_name] = temp_median[which(temp_median$Species == s), 
+                                                 median_col_name]
+  }
+}
+
+#####
+
+####import origin fly data
+fly_origin_data = read.table(origin_fly_path, 
+                             stringsAsFactors = F,
+                             sep = ",",
+                             header = T,
+                             skip = 2)
+
+fly_origin_data$Species = sub(x = fly_origin_data$Species, pattern = " ", replacement = "_")
+
+#suppression des stocks non comparés
+temp_fly_origin_data = fly_origin_data  %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Stock == "cantonS") |
+       (Species == "Drosophila_suzukii" & Stock == "WT3") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes"))
+    |
+      (! Species %in% c("Drosophila_melanogaster",
+                        "Drosophila_suzukii",
+                        "Drosophila_biarmipes",
+                        "Drosophila_simulans"))
+  )
+
+
+###attribution id unique pour chaque localisation (couple latitude longitude)
+data_adhesion_geo = base::merge(gg_repel_data, temp_fly_origin_data, by = c("Species"))
+
+data_adhesion_geo$location_id = paste(data_adhesion_geo$Estimated_longitude, 
+                                 data_adhesion_geo$Estimated_latitude, sep = ",")
+
+name_id_geo <- c( "0" = "13.0706587,77.5852584",
+                  "1" = "12.54833,105.217",
+                  "2" = "21.05448,105.25889",
+                  "3" = "24.850615,121.61117",
+                  "4" = "22.319859,103.86763",
+                  "5" = "43.26889,2.2869954",
+                  "6" = "34.411247,-111.73584",
+                  "7" = "16.977152,-96.558014",
+                  "8" = "49.17399,4.1538463",
+                  "9" = "40.175747,-105.02103",
+                  "10" = "48.822495,2.440678",
+                  # "11" = "48.822495,2.440678", #comment non unique locations
+                  "12" = "19.29701,-98.46533",
+                  "13" = "-12.829525,45.163338",
+                  # "14" = "48.822495,2.440678",
+                  # "15" = "48.822495,2.440678",
+                  "16" = "42.636204,12.743362",
+                  "17" = "43.90158,7.227273",
+                  "18" = "36.942,-121.66008",
+                  # "19" = "36.942,-121.66008",
+                  "20" = "46.572933,1.881029",
+                  "21" = "5.799649,-7.113159",
+                  "22" = "-5.026362,38.73042",
+                  "23" = "-11.634446,43.351208")
+
+
+#invert names and values from name_id_geo
+temp_name_id_geo = name_id_geo
+name_id_geo = as.character(names(name_id_geo))
+names(name_id_geo)= temp_name_id_geo
+
+data_adhesion_geo$location_id = name_id_geo[data_adhesion_geo$location_id]
+
+
+#species without known location are lost in future version of data_adhesion_geo
+#plot of adhesion vs developmental data before loosing information from some species
+gg_repel_data_adhesion_geo = data_adhesion_geo %>%
+  distinct()
+
+short_name = gg_repel_data_adhesion_geo$Species
+short_name = gsub("_", " ", short_name, fixed = T)
+short_name = gsub("Drosophila", "D.", short_name, fixed = T)
+short_name = gsub("Megaselia", "M.", short_name, fixed = T)
+short_name = gsub("Scaptodrosophila", "S.", short_name, fixed = T)
+short_name = gsub("Zaprionus", "Z.", short_name, fixed = T)
+short_name = substr(short_name, 1, 8)
+
+gg_repel_data_adhesion_geo = cbind(gg_repel_data_adhesion_geo, 
+                                   data.frame("species_short" = short_name))
+
+
+p_force_hours <- ggplot(data_adhesion_geo, aes(median_detachment_force, Pupation_duration_hours)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force,
+                                   y = data_adhesion_geo$Pupation_duration_hours),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force,
+                      y = Pupation_duration_hours,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median detachment force (N)") +
+  ylab("Pupation duration (hours)")
+
+p_force_hours
+
+ggsave(file = paste0(ecology_path, "/force_hours", ".pdf"),
+       plot=p_force_hours, width=10, height=8, device = "pdf")
+
+p_strength_hours <- ggplot(data_adhesion_geo, aes(median_detachment_force_div_glue_area, Pupation_duration_hours)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force_div_glue_area,
+                                   y = data_adhesion_geo$Pupation_duration_hours),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force_div_glue_area,
+                      y = Pupation_duration_hours,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median adhesion strength (N/mm²)") +
+  ylab("Pupation duration (hours)")
+
+p_strength_hours
+
+ggsave(file = paste0(ecology_path, "/strength_hours", ".pdf"),
+       plot=p_strength_hours, width=10, height=8, device = "pdf")
+
+
+p_pupa_size_hours <- ggplot(data_adhesion_geo, aes(median_pupa_area, Pupation_duration_hours)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_pupa_area,
+                                   y = data_adhesion_geo$Pupation_duration_hours),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_pupa_area,
+                      y = Pupation_duration_hours,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Pupa area (mm²)") +
+  ylab("Pupation duration (hours)")
+
+p_pupa_size_hours
+
+ggsave(file = paste0(ecology_path, "/pupa_size_hours", ".pdf"),
+       plot=p_pupa_size_hours, width=10, height=8, device = "pdf")
+
+
+
+######load ecology data#######
+ecology_data = read.table(paste0(ecology_path, "/ecology_data.csv"), 
+                          stringsAsFactors = F,
+                          sep = ";",
+                          header = T)
+
+ecology_data$location_id <- as.character(ecology_data$location_id)
+
+for (column in colnames(ecology_data)[3:17]) {
+  
+  col_min_name = paste0("min_", column)
+  col_max_name = paste0("max_", column)
+  col_mean_name = paste0("mean_", column)
+  
+  
+  temp = ecology_data %>% 
+    group_by(location_id) %>%
+    summarise(!!col_min_name := min(!!as.symbol(column), na.rm = T), 
+              !!col_max_name := max(!!as.symbol(column), na.rm = T),
+              !!col_mean_name := mean(!!as.symbol(column), na.rm = T))
+  
+  
+  
+  data_adhesion_geo = base::merge(data_adhesion_geo, temp, by = "location_id")
+  
+}
+
+
+#####stat descriptives####
+#####adhesion force#####
+gg_repel_data_adhesion_geo = data_adhesion_geo %>%
+  distinct()
+
+short_name = gg_repel_data_adhesion_geo$Species
+short_name = gsub("_", " ", short_name, fixed = T)
+short_name = gsub("Drosophila", "D.", short_name, fixed = T)
+short_name = gsub("Megaselia", "M.", short_name, fixed = T)
+short_name = gsub("Scaptodrosophila", "S.", short_name, fixed = T)
+short_name = gsub("Zaprionus", "Z.", short_name, fixed = T)
+short_name = substr(short_name, 1, 8)
+
+gg_repel_data_adhesion_geo = cbind(gg_repel_data_adhesion_geo, 
+                              data.frame("species_short" = short_name))
+
+
+p_force_latitude <- ggplot(data_adhesion_geo, aes(median_detachment_force, Latitude)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force,
+                                   y = data_adhesion_geo$Latitude),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force,
+                      y = Latitude,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median detachment force (N)") +
+  ylab("Latitude (°)")
+
+p_force_latitude
+
+ggsave(file = paste0(ecology_path, "/force_latitude", ".pdf"),
+       plot=p_force_latitude, width=10, height=8, device = "pdf")
+
+p_force_precipitation <- ggplot(data_adhesion_geo, aes(median_detachment_force, mean_precipitation_sum_.mm.)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force,
+                                   y = data_adhesion_geo$mean_precipitation_sum_.mm.),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force,
+                      y = mean_precipitation_sum_.mm.,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median detachment force (N)") +
+  ylab("Mean precipitation (mm)")
+
+p_force_precipitation
+
+ggsave(file = paste0(ecology_path, "/force_precipitation", ".pdf"),
+       plot=p_force_precipitation, width=10, height=8, device = "pdf")
+
+p_force_temperature <- ggplot(data_adhesion_geo, aes(median_detachment_force, mean_apparent_temperature_max_.C.)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force,
+                                   y = data_adhesion_geo$mean_apparent_temperature_max_.C.),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force,
+                      y = mean_apparent_temperature_max_.C.,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median detachment force (N)") +
+  ylab("Mean apparent temperature (°C)")
+
+p_force_temperature
+
+ggsave(file = paste0(ecology_path, "/force_temperature", ".pdf"),
+       plot=p_force_temperature, width=10, height=8, device = "pdf")
+
+
+p_force_evapotranspi <- ggplot(data_adhesion_geo, aes(median_detachment_force, mean_et0_fao_evapotranspiration_.mm.)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force,
+                                   y = data_adhesion_geo$mean_et0_fao_evapotranspiration_.mm.),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force,
+                      y = mean_et0_fao_evapotranspiration_.mm.,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median detachment force (N)") +
+  ylab("Reference evapotranspiration (mm)")
+
+p_force_evapotranspi
+
+ggsave(file = paste0(ecology_path, "/force_evapotranspi", ".pdf"),
+       plot=p_force_evapotranspi, width=10, height=8, device = "pdf")
+
+
+#####adhesion strength######
+
+p_strength_latitude <- ggplot(data_adhesion_geo, aes(median_detachment_force_div_glue_area, Latitude)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force_div_glue_area,
+                                   y = data_adhesion_geo$Latitude),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force_div_glue_area,
+                      y = Latitude,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median adhesion strength (N/mm²)") +
+  ylab("Latitude (°)")
+
+p_strength_latitude
+
+ggsave(file = paste0(ecology_path, "/strength_latitude", ".pdf"),
+       plot=p_strength_latitude, width=10, height=8, device = "pdf")
+
+
+p_strength_temperature <- ggplot(data_adhesion_geo, aes(median_detachment_force_div_glue_area, mean_apparent_temperature_max_.C.)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force_div_glue_area,
+                                   y = data_adhesion_geo$mean_apparent_temperature_max_.C.),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force_div_glue_area,
+                      y = mean_apparent_temperature_max_.C.,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median adhesion strength (N/mm²)") +
+  ylab("Mean apparent temperature (°C)")
+
+p_strength_temperature
+
+ggsave(file = paste0(ecology_path, "/strength_temperature", ".pdf"),
+       plot=p_strength_temperature, width=10, height=8, device = "pdf")
+
+
+
+
+p_strength_precipitation <- ggplot(data_adhesion_geo, aes(median_detachment_force_div_glue_area, mean_precipitation_sum_.mm.)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force_div_glue_area,
+                                   y = data_adhesion_geo$mean_precipitation_sum_.mm.),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force_div_glue_area,
+                      y = mean_precipitation_sum_.mm.,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median adhesion strength (N/mm²)") +
+  ylab("Mean precipitation (mm)")
+
+p_strength_precipitation
+
+ggsave(file = paste0(ecology_path, "/strength_precipitation", ".pdf"),
+       plot=p_strength_precipitation, width=10, height=8, device = "pdf")
+
+
+
+
+
+
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = "median_position_difference",
+                             measure = c("mean_temperature_2m_max.C.",
+                                         "min_temperature_2m_max.C.",
+                                         "max_temperature_2m_max.C."))
+ggplot(gg_data_adhesion_geo, aes(median_position_difference, value, colour = variable)) + geom_point()
+
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = "median_position_difference",
+                             measure = c("min_rain_sum_.mm."))
+ggplot(gg_data_adhesion_geo, aes(median_position_difference, value, colour = variable)) + geom_point()
+
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = "median_position_difference",
+                             measure = c("mean_rain_sum_.mm."))
+ggplot(gg_data_adhesion_geo, aes(median_position_difference, value, colour = variable)) + geom_point()
+
+
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = "median_position_difference",
+                             measure = c("max_rain_sum_.mm."))
+ggplot(gg_data_adhesion_geo, aes(median_position_difference, value, colour = variable)) + geom_point()
+
+
+#force adhesion
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = "median_detachment_force",
+                             measure = c("mean_temperature_2m_max.C.",
+                                         "min_temperature_2m_max.C.",
+                                         "max_temperature_2m_max.C."))
+ggplot(gg_data_adhesion_geo, aes(median_detachment_force, value, colour = variable)) + geom_point()
+
+
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = c("median_detachment_force", "Species"),
+                             measure = c("Pupation_duration_hours"))
+p_force_hours <- ggplot(gg_data_adhesion_geo, aes(median_detachment_force, value)) +
+                  geom_point() + theme_bw() +
+  geom_text_repel(data = gg_data_adhesion_geo,
+                  aes(label = Species))
+
+
+
+
+
+
+
+
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = "median_detachment_force",
+                             measure = c("Altitude"))
+ggplot(gg_data_adhesion_geo, aes(median_detachment_force, value, colour = variable)) + geom_point()
+
+
+#rigidity
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = "median_rigidity",
+                             measure = c("mean_temperature_2m_max.C.",
+                                         "min_temperature_2m_max.C.",
+                                         "max_temperature_2m_max.C."))
+ggplot(gg_data_adhesion_geo, aes(median_rigidity, value, colour = variable)) + geom_point()
+
+
+gg_data_adhesion_geo <- melt(data_adhesion_geo, id = "median_detachment_force_div_glue_area",
+                             measure = c("Latitude"))
+ggplot(gg_data_adhesion_geo, aes(median_detachment_force_div_glue_area, value, colour = variable)) + geom_point()
+
+####stats####
+
+#normality of residuals
+model <- lm(median_detachment_force ~ mean_temperature_2m_max.C. + 
+              min_temperature_2m_max.C. +
+              max_temperature_2m_max.C., data = data_adhesion_geo)
+olsrr::ols_test_normality(model)
+
+data_adhesion_geo %>%
+  select(median_detachment_force, 
+         median_energy, median_negative_energy,
+         median_rigidity, median_position_difference, median_pupa_area,
+         median_pupa_area, median_pupa_length, median_pupa_shape,
+         median_pupa_width, median_glue_area_mm, median_detachment_force_div_glue_area
+         ) %>%
+  shapiro_test()
+
+shapiro_test(data_adhesion_geo$median_glue_area_mm)
+
+#Nonparametric Comparison of Multivariate Samples
+
+adonis2(cbind(data_adhesion_geo$median_detachment_force) ~
+              # data_adhesion_geo$median_energy, 
+              # data_adhesion_geo$median_negative_energy,
+              # data_adhesion_geo$median_rigidity,
+              # data_adhesion_geo$median_position_difference, 
+              # data_adhesion_geo$median_pupa_area,
+              # data_adhesion_geo$median_pupa_length, 
+              # data_adhesion_geo$median_pupa_shape,
+              # data_adhesion_geo$median_pupa_width, 
+              # data_adhesion_geo$median_glue_area_mm, 
+              # data_adhesion_geo$median_detachment_force_div_glue_area) ~
+          mean_temperature_2m_max.C. * mean_temperature_2m_min_.C. *
+          mean_apparent_temperature_max_.C. * mean_apparent_temperature_min_.C. *
+          mean_apparent_temperature_mean_.C. * mean_daylight_duration_.s. *
+          mean_sunshine_duration_.s. * mean_precipitation_sum_.mm. *
+          mean_rain_sum_.mm. * mean_snowfall_sum_.cm. * 
+          mean_wind_speed_10m_max_.km.h. * mean_wind_gusts_10m_max_.km.h. *
+          mean_shortwave_radiation_sum_.MJ.m. * mean_et0_fao_evapotranspiration_.mm., 
+        data = data_adhesion_geo, 
+        method = "euc", na.rm = T)
+
+model <- glm(data_adhesion_geo$median_detachment_force ~
+  #data_adhesion_geo$median_detachment_force,
+  # data_adhesion_geo$median_energy, 
+  # data_adhesion_geo$median_negative_energy,
+  # data_adhesion_geo$median_rigidity,
+  # data_adhesion_geo$median_position_difference, 
+  # data_adhesion_geo$median_pupa_area,
+  # data_adhesion_geo$median_pupa_length, 
+  # data_adhesion_geo$median_pupa_shape,
+  # data_adhesion_geo$median_pupa_width, 
+  # data_adhesion_geo$median_glue_area_mm, 
+  # data_adhesion_geo$median_detachment_force_div_glue_area) ~
+  mean_temperature_2m_max.C. + mean_temperature_2m_min_.C. +
+  mean_apparent_temperature_max_.C. + mean_apparent_temperature_min_.C.+
+    mean_apparent_temperature_mean_.C. + mean_daylight_duration_.s. +
+    mean_sunshine_duration_.s. + mean_precipitation_sum_.mm. +
+    mean_rain_sum_.mm. + mean_snowfall_sum_.cm. + 
+    mean_wind_speed_10m_max_.km.h. + mean_wind_gusts_10m_max_.km.h. +
+    mean_shortwave_radiation_sum_.MJ.m. + mean_et0_fao_evapotranspiration_.mm. +
+    Latitude +
+    Altitude + Pupation_duration_hours, data = data_adhesion_geo)
+
+summary(model)
