@@ -14,7 +14,6 @@ library("ggrepel")
 library("reshape2")
 library("gridExtra")
 library("pivottabler") ### doc : http://www.pivottabler.org.uk/articles/v04-regularlayout.html
-
 library("extrafont")
 # font_import()
 loadfonts(device = "win")
@@ -368,7 +367,8 @@ for (i in 1:length(parameter_list)){
                           "Drosophila_hydei"))
     )
   
-  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")) {
+  if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "glue_area_div_pupa_area",
+                               "log10_glue_area_mm", "log10_detachment_force_div_glue_area", "log10_na(glue_area_div_pupa_area)")) {
     temp_data_species = temp_gg_data %>%
       filter(Comment == "ok") %>%
       filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
@@ -518,11 +518,13 @@ for (i in 1:length(parameter_list)){
     focus_lab = gsub("Zaprionus", "Z.", focus_lab, fixed = T)
     focus_lab = StrAlign(focus_lab, sep = "\\l")
     focus_lab = substr(focus_lab, 1, 8)
-    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "log10_glue_area_mm", "log10_detachment_force_div_glue_area")) {
+    if (parameter_list[i] %in% c("Glue_area", "log10_glue_area", "detachment_force_div_glue_area", "glue_area_div_pupa_area",
+                                 "log10_glue_area_mm", "log10_detachment_force_div_glue_area", "log10_na(glue_area_div_pupa_area)")) {
       temp_data_stock = gg_data %>%
         filter(Species == focus) %>%
         filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
         filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
+        filter(Stock != "Japan") %>%
         group_by(Stock) %>%
         filter(length(!!as.symbol(parameter_list[i])) > 1)
       
@@ -533,6 +535,7 @@ for (i in 1:length(parameter_list)){
         filter(Comment == "ok") %>%
         filter(Protocol == "standard") %>%
         filter(Species == focus) %>%
+        filter(Stock != "Japan") %>%
         filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
         filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
         group_by(Stock) %>%
@@ -542,6 +545,7 @@ for (i in 1:length(parameter_list)){
         filter(Comment == "ok" | Comment == "cuticle_broke" | 
                  Comment == "not_detached") %>%
         filter(Protocol == "standard") %>%
+        filter(Stock != "Japan") %>%
         filter(Species == focus) %>%
         filter(! is.na(!!as.symbol(parameter_list[i]))) %>%
         filter(is.finite(!!as.symbol(parameter_list[[i]]))) %>%
