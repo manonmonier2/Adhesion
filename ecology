@@ -120,6 +120,10 @@ parameter_list_tree = gsub(" +$", "",
                            gsub("^ +", "", unlist(strsplit(opt$parameter_list_tree, ","))))
 parameter_ecology = gsub(" +$", "", 
                          gsub("^ +", "", unlist(strsplit(opt$parameter_ecology, ","))))
+pretty_names_ecology = gsub(" +$", "", 
+                           gsub("^ +", "", unlist(strsplit(opt$pretty_names_ecology, ","))))
+unit_list_ecology = gsub(" +$", "", 
+                         gsub("^ +", "", unlist(strsplit(opt$unit_list_ecology, ","))))
 lab_list = gsub(" +$", "", 
                 gsub("^ +", "", unlist(strsplit(opt$lab_list, ","))))
 unit_list = gsub(" +$", "",
@@ -277,6 +281,7 @@ data_adhesion_geo$location_id = name_id_geo[data_adhesion_geo$location_id]
 gg_repel_data_adhesion_geo = data_adhesion_geo %>%
   distinct()
 
+
 short_name = gg_repel_data_adhesion_geo$Species
 short_name = gsub("_", " ", short_name, fixed = T)
 short_name = gsub("Drosophila", "D.", short_name, fixed = T)
@@ -288,6 +293,45 @@ short_name = substr(short_name, 1, 8)
 gg_repel_data_adhesion_geo = cbind(gg_repel_data_adhesion_geo, 
                                    data.frame("species_short" = short_name))
 
+parameter_development = c("Pupation_duration_hours", "Cells_per_gland")
+
+
+for (i in 1:length(parameter_ecology)){
+  for (j in 1:length(parameter_development)){
+    
+    median_parameter_ecology = paste0("median_", parameter_ecology[i])
+    
+
+    
+    p = ggplot(gg_repel_data_adhesion_geo,
+               aes(x = median_parameter_ecology,
+                   y = parameter_development[j])) +
+      geom_point() +
+      geom_smooth(data = gg_repel_data_adhesion_geo,
+                  method =lm,
+                  mapping = aes_string(x = median_parameter_ecology,
+                                       y = parameter_development[j]),
+                  color="black", formula = y ~ x, se = F, linetype = "dashed") +
+      stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+               label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+      xlab(paste0(pretty_names_ecology[i], " (", unit_list_ecology[i], ")")) +
+      ylab("Pupation duration (hours)") +
+      # ylab(paste0(pretty_names_ecology[j], " (", unit_list_ecology[j], ")")) + #ce nom est faux à modifier
+      geom_text_repel(data = gg_repel_data_adhesion_geo,
+                      aes(x = median_parameter_ecology,
+                          y = parameter_development[j],
+                          label = species_short),
+                      # nudge_y = max(gg_repel_data$median_y),
+                      segment.linetype = "solid",
+                      segment.color = "grey",
+                      force = 50,
+                      # direction = "y",
+                      color = "black", 
+                      size = 7) +
+      theme_bw(base_size = 22)
+    
+
+  }}
 
 p_force_hours <- ggplot(data_adhesion_geo, aes(median_detachment_force, Pupation_duration_hours)) +
   geom_point() + theme_bw(base_size = 22) + 
@@ -374,6 +418,101 @@ p_pupa_size_hours
 ggsave(file = paste0(ecology_path, "/pupa_size_hours", ".pdf"),
        plot=p_pupa_size_hours, width=10, height=8, device = "pdf")
 
+
+
+p_glue_area_div_pupa_area_hours <- ggplot(data_adhesion_geo, aes(median_glue_area_div_pupa_area, Pupation_duration_hours)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_glue_area_div_pupa_area,
+                                   y = data_adhesion_geo$Pupation_duration_hours),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_glue_area_div_pupa_area,
+                      y = Pupation_duration_hours,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median glue area divided by pupa area") +
+  ylab("Pupation duration (hours)")
+
+p_glue_area_div_pupa_area_hours
+
+ggsave(file = paste0(ecology_path, "/glue_area_div_pupa_area_hours", ".pdf"),
+       plot=p_glue_area_div_pupa_area_hours, width=10, height=8, device = "pdf")
+
+
+
+
+
+
+
+
+
+p_force_glands <- ggplot(data_adhesion_geo, aes(median_detachment_force, Cells_per_gland)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_detachment_force,
+                                   y = data_adhesion_geo$Cells_per_gland),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_detachment_force,
+                      y = Cells_per_gland,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median detachment force (N)") +
+  ylab("Number of cells per gland")
+
+p_force_glands
+
+ggsave(file = paste0(ecology_path, "/force_glands", ".pdf"),
+       plot=p_force_glands, width=10, height=8, device = "pdf")
+
+
+
+p_glue_area_div_pupa_area_glands <- ggplot(data_adhesion_geo, aes(median_glue_area_div_pupa_area, Cells_per_gland)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_glue_area_div_pupa_area,
+                                   y = data_adhesion_geo$Cells_per_gland),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_glue_area_div_pupa_area,
+                      y = Cells_per_gland,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median glue area divided by pupa area") +
+  ylab("Number of cells per gland")
+
+p_glue_area_div_pupa_area_glands
+
+ggsave(file = paste0(ecology_path, "/glue_area_div_pupa_area_glands", ".pdf"),
+       plot=p_glue_area_div_pupa_area_glands, width=10, height=8, device = "pdf")
 
 
 ######load ecology data#######
@@ -624,6 +763,128 @@ p_strength_precipitation
 
 ggsave(file = paste0(ecology_path, "/strength_precipitation", ".pdf"),
        plot=p_strength_precipitation, width=10, height=8, device = "pdf")
+
+
+#####glue_area_div_pupa_area#####
+
+p_glue_area_div_pupa_area_precipitation <- ggplot(data_adhesion_geo, aes(median_glue_area_div_pupa_area, mean_precipitation_sum_.mm.)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_glue_area_div_pupa_area,
+                                   y = data_adhesion_geo$mean_precipitation_sum_.mm.),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_glue_area_div_pupa_area,
+                      y = mean_precipitation_sum_.mm.,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median glue area divided by pupa area") +
+  ylab("Mean precipitation (mm)")
+
+p_glue_area_div_pupa_area_precipitation
+
+ggsave(file = paste0(ecology_path, "/glue_area_div_pupa_area_precipitation", ".pdf"),
+       plot=p_glue_area_div_pupa_area_precipitation, width=10, height=8, device = "pdf")
+
+
+p_glue_area_div_pupa_area_temperature <- ggplot(data_adhesion_geo, aes(median_glue_area_div_pupa_area, mean_apparent_temperature_max_.C.)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_glue_area_div_pupa_area,
+                                   y = data_adhesion_geo$mean_apparent_temperature_max_.C.),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_glue_area_div_pupa_area,
+                      y = mean_apparent_temperature_max_.C.,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median glue area divided by pupa area") +
+  ylab("Mean apparent temperature (°C)")
+
+p_glue_area_div_pupa_area_temperature
+
+ggsave(file = paste0(ecology_path, "/glue_area_div_pupa_area_temperature", ".pdf"),
+       plot=p_glue_area_div_pupa_area_temperature, width=10, height=8, device = "pdf")
+
+
+p_glue_area_div_pupa_area_evapotranspi <- ggplot(data_adhesion_geo, aes(median_glue_area_div_pupa_area, mean_et0_fao_evapotranspiration_.mm.)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_glue_area_div_pupa_area,
+                                   y = data_adhesion_geo$mean_et0_fao_evapotranspiration_.mm.),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_glue_area_div_pupa_area,
+                      y = mean_et0_fao_evapotranspiration_.mm.,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median glue area divided by pupa area") +
+  ylab("Reference evapotranspiration (mm)")
+
+p_glue_area_div_pupa_area_evapotranspi
+
+ggsave(file = paste0(ecology_path, "/glue_area_div_pupa_area_evapotranspi", ".pdf"),
+       plot=p_glue_area_div_pupa_area_evapotranspi, width=10, height=8, device = "pdf")
+
+
+
+p_glue_area_div_pupa_area_latitude <- ggplot(data_adhesion_geo, aes(median_glue_area_div_pupa_area, Latitude)) +
+  geom_point() + theme_bw(base_size = 22) + 
+  geom_abline(slope=1) +
+  geom_smooth(data = data_adhesion_geo,
+              method =lm,
+              mapping = aes_string(x = data_adhesion_geo$median_glue_area_div_pupa_area,
+                                   y = data_adhesion_geo$Latitude),
+              color="black", formula = y ~ x, se = F, linetype = "dashed") +
+  stat_cor(cor.coef.name = "r", aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color = "black",
+           label.y.npc="top", label.x.npc = "left", inherit.aes = TRUE) +
+  geom_text_repel(data = gg_repel_data_adhesion_geo,
+                  aes(x = median_glue_area_div_pupa_area,
+                      y = Latitude,
+                      label = species_short),
+                  segment.linetype = "solid",
+                  segment.color = "grey",
+                  force = 50,
+                  # direction = "y",
+                  color = "black", 
+                  size = 7) + 
+  xlab("Median glue area divided by pupa area") +
+  ylab("Latitude (°)")
+
+p_glue_area_div_pupa_area_latitude
+
+ggsave(file = paste0(ecology_path, "/glue_area_div_pupa_area_latitude", ".pdf"),
+       plot=p_glue_area_div_pupa_area_latitude, width=10, height=8, device = "pdf")
+
+
+
 
 
 
