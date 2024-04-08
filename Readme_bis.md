@@ -219,6 +219,7 @@ noise_6: median of the force between index_5 and index_6.
 
 
 **_5_interpolation.R_**
+
 This script calculates the integral of the adhesion test curves obtained for each pupae.
 
 Input:
@@ -241,6 +242,7 @@ difference_integrales = difference between the integration of the compression an
 
 
 **_6_prepare_data_figure.R_**
+
 This script calculates adhesion properties and exports them in a text file.
 
 Input:
@@ -271,18 +273,8 @@ For each of these values, their corresponding value in log base 10 is calculated
 
 
 
-**_represention_by_id.R_**
-
-Curves of every id:
-
-f(extension)=load
-f(time)=load
-
-writes in **[load_extension]** and **[load_time]**
-
-
-
 **_one_parameter_plot.R_**
+
 This script creates boxplot graphs, tables and bar plot graphs.
 
 Input:
@@ -318,7 +310,27 @@ The **barplot percentage of pupae with null glue area** creates a barplot of the
 The **table melano comments** creates a table with the number of pupae detached, not detached or broken for Drosophila melanogaster pupae tested with different protocols.
 
 
+**_two_parameters_plot.R_**
 
+This script creates scatter plot graphs.
+
+Input:
+All files (.csv) in **[batch/batch_by_id]** obtained from 3_load_data.R.
+**[index/index.csv]** obtained from 4_index_definition.R.
+**[integral/integral.csv]** obtained from 5_interpolation.R.
+**[plot/data_figure.csv]** obtained from 6_prepare_data_figure.R.
+
+Output:
+In **[plot/two_parameters]** directory:
+Folder **[by_protocol_and_species]**: files of scatter plots between two adhesion properties for Drosophila melanogaster pupae tested with different protocols (.pdf).
+Folder **[by_species]**: files of scatter plots between two adhesion properties for all species tested (.pdf).
+
+The **FUNCTIONS** section is identic as in one_parameter_plot.R. 
+
+The **by protocol for Drosophila melanogaster** section creates the scatter plots for pupae tested with different protocols for Drosophila melanogaster and saved in **[plot/two_parameters/by_protocol_and_species]**. This plot creates plots displaying all the data (p) and plots with a limited dataset (t). The t plot axis limits are defined with **get threshold values with "detached pupae" protocol**.
+The **by species** section creates the scatter plots for pupae from different species and saved in **[plot/two_parameters/by_species]**. As for by protocol for Drosophila melanogaster, axis limits are defined with **get threshold values with "detached pupae" protocol**.
+
+#######reprendre à superposition##########
 
 
 
