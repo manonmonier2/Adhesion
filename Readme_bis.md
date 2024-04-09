@@ -14,6 +14,7 @@ All the word between "[" "]" reference to a parameter in the _config.yml_ file.
 
 ## How to run scripts
 
+Please note that these scripts are adapted to our data set. In order to use them on your own data, you might need to 
 Before running the scripts (in an IDE or command line), the configuration file [config.yml] must be modified according to your PC architecture. 
 The [base_path] variable in line 4 should point to the "example" folder. (Note: If you modify this folder, the config.yml file must be updated accordingly).
 
