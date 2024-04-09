@@ -352,7 +352,36 @@ Output:
 In **[plot/one_parameter/by_species]** : heatmap.pdf
 
 
+The **data preparation** section selects the species, protocols and stocks used in the plot. For the adhesion parameter 'detachment_force_div_glue_area' corresponding to adhesion strenght, we remove 5% of the dataset which are very high values. For each species, we calculate the median of the adhesion parameters pupa shape, glue area, glue investment, detachment force and adhesion strength listed in 'parameter_list_tree'. Using the ggplot function, 'geom_tile' creates independant columns for each adhesion parameters with a color gradient scecified. The function 'new_scale_fill' creates a new scale for each adhesion parameter. The plot is saved in **[plot/one_parameter/by_species]**.
 
+The section **arbre phylo** creates the newick format code for the phylogenetic tree arborescence. The tree is displayed using the function 'plot'.
+
+
+
+**_ecology.R_**
+
+This script makes scatter plots and table with ecology variables.
+
+Input:
+All files (.csv) in **[batch/batch_by_id]** obtained from 3_load_data.R.
+**[index/index.csv]** obtained from 4_index_definition.R.
+**[integral/integral.csv]** obtained from 5_interpolation.R.
+**[plot/data_figure.csv]** obtained from 6_prepare_data_figure.R.
+
+In **[ecolody_data]** directory: Csv file made manually with collection site, pupation duration time and references for studied species (data_fly_origin.csv). Csv file obtained from OpenMeteo website with daily meteorological data, elevation, longitude and latitude for 23 collection locations over 10 years (open-meteo-13.04N77.55E921m.csv). Daily meteorological data of 23 collection locations over 10 years (ecology_data.csv). Csv file,  made manually, of the average humidity preference index for each species studied in humidity preference experiments (humidity_experiments.csv). 
+
+Output:
+**[plot/ecology]**: files of scatter plots between ecological, humidity preference variables and adhesion properties for all species tested (.pdf).
+Three tables files with correlation coefficients between ecological, humidity preference variables and adhesion properties (coef_humidity_adhesion.csv; coef_meteo_adhesion.csv; coef_meteo_development.csv).
+
+
+The **read data figure** and **adhesion data preparation** are sections to import and select the species, protocols and stocks used in the following plots. For the adhesion parameter 'detachment_force_div_glue_area' corresponding to adhesion strenght, we remove 5% of the dataset which are very high values. For each species, we calculate the median of the adhesion parameters pupa shape, glue area, glue investment, detachment force, rigidity, deformation reversibility, pupa area and adhesion strength listed in 'parameter_ecology'.
+
+The **add humidity experiments data** section imports the humidity experiment data (humidity_experiments.csv). It creates several scatter plots for adhesion properties versus 'Average humidity preference index'. It also creates a table containing the correlation coefficients r² between each couple of parameters. Plots and table are saved in **[plot/ecology]**. 
+
+The **import origin fly data** section imports the file made manually with collection site, pupation duration time and references for studied species (data_fly_origin.csv). It creates several scatter plots for adhesion properties versus the pupation duration and the number of cells per gland (listed in 'parameter_development'). It also creates a table containing the correlation coefficients r² between each couple of parameters. Plots and table are saved in **[plot/ecology]**. 
+
+The **load ecology data** section imports daily meteorological data of 23 collection locations over 10 years (ecology_data.csv).
 
 
 
