@@ -327,10 +327,31 @@ Folder **[by_species]**: files of scatter plots between two adhesion properties 
 
 The **FUNCTIONS** section is identic as in one_parameter_plot.R. 
 
-The **by protocol for Drosophila melanogaster** section creates the scatter plots for pupae tested with different protocols for Drosophila melanogaster and saved in **[plot/two_parameters/by_protocol_and_species]**. This plot creates plots displaying all the data (p) and plots with a limited dataset (t). The t plot axis limits are defined with **get threshold values with "detached pupae" protocol**.
-The **by species** section creates the scatter plots for pupae from different species and saved in **[plot/two_parameters/by_species]**. As for by protocol for Drosophila melanogaster, axis limits are defined with **get threshold values with "detached pupae" protocol**.
+The **by protocol for Drosophila melanogaster** section creates the scatter plots with crosses representing quantiles, between two adhesion properties. These plots are for pupae tested with different protocols for Drosophila melanogaster and are saved in **[plot/two_parameters/by_protocol_and_species]**. This plot creates plots displaying all the data (p) and plots with a limited dataset (t). The t plot axis limits are defined with **get threshold values with "detached pupae" protocol**.
+The **by species** section creates the scatter plots with crosses representing quantiles, between two adhesion properties. These plots are for pupae from different species and are saved in **[plot/two_parameters/by_species]**. As for by protocol for Drosophila melanogaster, axis limits are defined with **get threshold values with "detached pupae" protocol**.
 
-#######reprendre à superposition##########
+The **superposition** section creates one plot with superposition of several curves with the force versus the captor position. Only curve portion between index_1 and index_2 are displayed. Plot is saved in **[plot/two_parameters/by_species]**.
+The **plot species protocol standard and strong force 0,25N** section creates one scatter plot displaying the median and the quantiles between the detachment force for pupae detached with a standard protocol versus pupae detached with the '1 strong tape ; glue ; 0.25 N protocol' protocol. Plot is saved in **[plot/two_parameters/by_protocol_and_species]**.
+The **plot species force detached and not detached** section section creates one scatter plot displaying the median and the quantiles between the detachment force for pupae detached versus not detached pupae. Plot is saved in **[plot/two_parameters/by_protocol_and_species]**.
+The **plot species force detached and cuticle broke** section section creates one scatter plot displaying the median and the quantiles between the detachment force for pupae detached versus broken pupae. Plot is saved in **[plot/two_parameters/by_protocol_and_species]**.
+
+
+
+**_phylogenetic_tree.R_**
+
+This script makes the figure displaying medians of pupa shape, glue area, glue investment, detachment force and adhesion strength with a color gradient, for each species and their phylogeny topology is displayed. 
+
+
+Input:
+All files (.csv) in **[batch/batch_by_id]** obtained from 3_load_data.R.
+**[index/index.csv]** obtained from 4_index_definition.R.
+**[integral/integral.csv]** obtained from 5_interpolation.R.
+**[plot/data_figure.csv obtained]** from 6_prepare_data_figure.R.
+
+Output:
+In **[plot/one_parameter/by_species]** : heatmap.pdf
+
+
 
 
 
