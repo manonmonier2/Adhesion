@@ -7,7 +7,7 @@ R version 4.1.2 (2021-11-01)
 
 ### R package
 
-eadxl 1.3.1, cli 3.1.0, config 3.2, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8
+eadxl 1.3.1, cli 3.1.0, config 3.2, svglite 2.0.0, ggplot2 3.3.6, dplyr 1.0.8, rcompanion 2.4.34, agricolae 1.3-5, FSA 0.9.4, ggpubr 0.4.0, DescTools 0.99.48, ggtext 0.1.2, doBy4.6.18, ggrepel 0.9.3, reshape2 1.4.4, gridExtra 2.3, pivottabler 1.5.5, extrafont 0.19, ggsci 3.0.0, ggnewscale 0.4.10, ape 5.7-1, vegan 2.6-4, olsrr 2.6-4
 
 ## Script description
 All the word between "[" "]" reference to a parameter in the _config.yml_ file.
@@ -16,6 +16,7 @@ All the word between "[" "]" reference to a parameter in the _config.yml_ file.
 
 Before running the scripts (in an IDE or command line), the configuration file [config.yml] must be modified according to your PC architecture. 
 The [base_path] variable in line 4 should point to the "example" folder. (Note: If you modify this folder, the config.yml file must be updated accordingly).
+
 
 ## Script workflow
 
@@ -233,11 +234,17 @@ The script separated the curve in three curves, the compression curve from index
 We interpolate and perform integration on the three curves.
 
 The script saves the following values in **[integral/integral.csv]**:
+
 integrale_compression = integration of the compression curve
+
 integrale_decompression = integration of the whole decompression curve (negative + positive sections).
+
 integrale_decompression_negative = integration of the negative section of the decompression curve.
+
 integrale_decompression_positive = integration of the positive section of the decompression curve.
+
 sum_decompression_negative_and_positive = sum of the integration of positive and negative sections of the decompression curves.
+
 difference_integrales = difference between the integration of the compression and decompression curves.
 
 
@@ -381,24 +388,6 @@ The **add humidity experiments data** section imports the humidity experiment da
 
 The **import origin fly data** section imports the file made manually with collection site, pupation duration time and references for studied species (data_fly_origin.csv). It creates several scatter plots for adhesion properties versus the pupation duration and the number of cells per gland (listed in 'parameter_development'). It also creates a table containing the correlation coefficients r² between each couple of parameters. Plots and table are saved in **[plot/ecology]**. 
 
-The **load ecology data** section imports daily meteorological data of 23 collection locations over 10 years (ecology_data.csv).
+The **load ecology data** section imports daily meteorological data of 23 collection locations over 10 years (ecology_data.csv). It creates several scatter plots for adhesion properties versus the ecological parameters (listed in 'parameter_meteo'). It also creates a table containing the correlation coefficients r² between each couple of parameters. Plots and table are saved in **[plot/ecology]**. 
 
 
-
-## USAGE
-
-### Preparation
-All the parameters must be provided in the _config.yml_ file.
-
-Multiple config can be saved, the **"default"** configuration is currently used.
-
-#### Concatenation
-``` shell
-Rscript concatenation_batch.R
-```
-
-``` shell
-concatenation_metadata.R
-```
-
-#### 
