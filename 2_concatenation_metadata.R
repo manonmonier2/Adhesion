@@ -1,11 +1,29 @@
 rm(list = ls())
 
 library("readxl")
-library("config")
 library("dplyr")
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+if (interactive()) {
+  opt <- config::get(use_parent = F)
+} else {
+  option_list = list(
+    make_option(c("-i", "--path_config_file"), type = "character",
+                help = "path to the config path (yml)", metavar = "character")
+  )
+  args <- parse_args(OptionParser(option_list = option_list))
+  
+  if (file.exists(args$path_config_path)) {
+    opt <- config::get(file = args$path_config_path, use_parent = F)
+  } else {
+    stop("Invalid config file path.")
+  }
+  
+}
+
+if (! dir.exists(opt$base_path)) {
+  stop("No valid configuration found. Check your path in the config file.")
+}
 
 # retrieve parameters
 # Input
@@ -177,7 +195,7 @@ concatenate_data_imagej = data.frame()
 list_type = c("size", "glue", "side")
 for(file_type in list_type){
   list_imagej_file = list.files(path_imagej, full.names = T, 
-                                pattern = paste0(file_type, ".csv$"))
+                                pattern = paste0(file_type, ".*\\.csv$"))
   
   concatenate_by_type = data.frame()
   for(imagej_file in list_imagej_file){
@@ -218,13 +236,15 @@ for(file_type in list_type){
                                 temp_imagej_data)
   }
   
-  if (nrow(concatenate_data_imagej) > 0){
-    concatenate_data_imagej = base::merge(concatenate_data_imagej,
-                                          concatenate_by_type,
-                                          all.x = T,
-                                          all.y = T)
-  } else {
-    concatenate_data_imagej = concatenate_by_type
+  if (nrow(concatenate_by_type) > 0) {
+    if (nrow(concatenate_data_imagej) > 0){
+      concatenate_data_imagej = base::merge(concatenate_data_imagej,
+                                            concatenate_by_type,
+                                            all.x = T,
+                                            all.y = T)
+    } else {
+      concatenate_data_imagej = concatenate_by_type
+    }
   }
 }
 

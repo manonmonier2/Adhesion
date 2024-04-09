@@ -1,6 +1,5 @@
 rm(list = ls())
 
-library("config")
 library("readxl")
 
 ###
@@ -24,7 +23,26 @@ detect_index_3 = function(vect){
 
 
 # load config file
-opt = config::get(file = paste0(dirname(rstudioapi::getSourceEditorContext()$path), "/config.yml"), config = "portable")
+if (interactive()) {
+  opt <- config::get(use_parent = F)
+} else {
+  option_list = list(
+    make_option(c("-i", "--path_config_file"), type = "character",
+                help = "path to the config path (yml)", metavar = "character")
+  )
+  args <- parse_args(OptionParser(option_list = option_list))
+  
+  if (file.exists(args$path_config_path)) {
+    opt <- config::get(file = args$path_config_path, use_parent = F)
+  } else {
+    stop("Invalid config file path.")
+  }
+  
+}
+
+if (! dir.exists(opt$base_path)) {
+  stop("No valid configuration found. Check your path in the config file.")
+}
 
 # retrieve parameters
 # Input

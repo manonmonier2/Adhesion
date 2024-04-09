@@ -1,158 +1,72 @@
 default:
-  # Absolute path to batches data files.
-  batches: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/raw
-  
-  # Absolute path to the created concatenate file
-  concatenate_file: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/concatenate/data_concatenate.csv
-  
-  # Absolute path to the created concatenate id file
-  concatenate_id_file: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/concatenate/id_concatenate.csv
-  
-  # Absolute path to metadata files. The first 15 columns must have exactly the same name. If a 16th column is present, it contains the protocol
-  metadata: C:/Users/jean-/OneDrive/Documents/Adhesion/data/metadata/raw
-  
-  # Absolute path to the created concatenate metadata fileconcatenate_file
-  concatenate_metadata: C:/Users/jean-/OneDrive/Documents/Adhesion/data/metadata/metadata_concatenate.csv
-  
-  # Absolute path to the created directory containing one file by id
-  batch_by_id: C:/Users/jean-/OneDrive/Documents/Adhesion/data/batch/batch_by_id
-  
+
+  # Absolute path to the data to use
+  base_path: [your local path]
+
+  # Path to batches data files.
+  batches: !expr file.path(base_path, "batch/raw")
+
+  # Path to the created concatenate file
+  concatenate_file: !expr file.path(base_path, "batch/concatenate/data_concatenate.csv")
+
+  # Path to the created concatenate id file
+  concatenate_id_file: !expr file.path(base_path, "batch/concatenate/id_concatenate.csv")
+
+  # Path to metadata files. The first 15 columns must have exactly the same name. If a 16th column is present, it contains the protocol
+  metadata: !expr file.path(base_path, "metadata/raw")
+
+  # Path to the created concatenate metadata fileconcatenate_file
+  concatenate_metadata: !expr file.path(base_path, "metadata/metadata_concatenate.csv")
+
+  # Path to the created directory containing one file by id
+  batch_by_id: !expr file.path(base_path, "batch/batch_by_id")
+
   # List (comma separated, no space) of accepted comment
   # comment_accepted: ok
   comment_accepted: ok,not_detached, cuticle_broke
-  
+
   # List (comma separated, no space) of accepted protocol
   protocol_accepted: 0s,5min,default
-  
-  # Absolute path to the created directory containing one file by index result
-  index_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/index/index.csv
-  
-  #Absolute path to the created directory containing a file with all the ecological data for all species
-  ecology_path: C:/Users/jean-/OneDrive/Documents/Adhesion/data/ecology_data
-  
-  #Absolute path to the created directory containing individual files with ecological data for each location
-  ecology_path_output: C:/Users/jean-/OneDrive/Documents/Adhesion/data/ecology_data/Output
-  
-  # Absolute path to the created directory containing the plots (load_time)
-  plot_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/plot
-  
-  # Absolute path to the created directory containing the integral files
-  integral_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/integral
-  
-  # Absolute path to the created directory containing the imageJ files
-  imagej_path:  C:/Users/jean-/OneDrive/Documents/Adhesion/data/imageJ/raw
-  
+
+  # Path to the created directory containing one file by index result
+  index_path:  !expr file.path(base_path, "index/index.csv")
+
+  # Path to the created directory containing a file with all the ecological data for all species
+  ecology_path: !expr file.path(base_path, "ecology_data")
+
+  # Path to the created directory containing individual files with ecological data for each location
+  ecology_path_output: !expr file.path(base_path, "ecology_data/Output")
+
+  # Path to the created directory containing the plots (load_time)
+  plot_path:  !expr file.path(base_path, "plot")
+
+  # Path to the created directory containing the integral files
+  integral_path:  !expr file.path(base_path, "integral")
+
+  # Path to the created directory containing the imageJ files
+  imagej_path:  !expr file.path(base_path, "imageJ/raw")
+
   # Raw parameter names
   parameter_list: detachment_force, energy, negative_energy, rigidity, position_difference, pression_extension, pupa_area, pupa_length, pupa_shape, pupa_width, glue_area_mm, detachment_force_div_glue_area, glue_area_div_pupa_area, log10_detachment_force, log10_energy, log10_negative_energy, log10_rigidity, log10_position_difference, log10_pression_extension, log10_pupa_area, log10_pupa_length, log10_pupa_shape, log10_pupa_width, log10_glue_area_mm, log10_detachment_force_div_glue_area, log10_glue_area_div_pupa_area
-  
+
   #Parameter list for phylogenetic tree
   parameter_list_tree: detachment_force, pupa_shape, detachment_force_div_glue_area, glue_area_mm
-  
+
   #Parameter list for ecology analysis
   parameter_ecology: detachment_force, energy, negative_energy, rigidity, position_difference, pression_extension, pupa_area, pupa_length, pupa_shape, pupa_width, glue_area_mm, detachment_force_div_glue_area
 
   # Pretty parameter names (must be in same order as parameter_list)
   lab_list: Detachment force, Two-way detachment energy, One-way detachment energy, Rigidity, Deformation reversibility, Maximal difference of extension, Pupa area, Pupa length, Pupa shape, Pupa width, Glue area, Detachment force divided by glue area, Glue area divided by pupa area, log10(Detachment force), log10(Two-way detachment energy), log10(One-way detachment energy), log10(Rigidity), log10(Deformation reversibility), log10(Maximal difference of extension) , log10(Pupa area), log10(Pupa length), log10(Pupa shape), log10(Pupa width), log10(Glue area), log10(Detachment force divided by glue area), log10(Glue area divided by pupa area)
-  
+
   # Unit of each parameter (must be in same order as parameter_list)
   unit_list: N, N.mm, N.mm, N/mm, mm, mm, mm^2, mm, mm, mm, mm^2, N/mm^2, (), N, N.mm, N.mm, N/mm, mm, mm, mm^2, mm, mm, mm, mm^2, N/mm^2, ()
 
   # Stat (R function name) to perform
   stat_list: mean, max, min, median, sd
-  
+
   # Raw comment names
   comment_list: cuticle_broke, not_detached, ok
-  
+
   # Pretty comment names (must be in same order as comment_list)
   comment_lab_list: a, b, c
 
-portable:
-  # Absolute path to batches data files.
-  batches: C:\Users\jean-noel.lorenzi\/Documents/Adhesion/data/batch/raw
-  
-  # Absolute path to the created concatenate file
-  concatenate_file: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/batch/concatenate/data_concatenate.csv
-  
-  # Absolute path to the created concatenate id file
-  concatenate_id_file: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/batch/concatenate/id_concatenate.csv
-  
-  # Absolute path to metadata files. The first 15 columns must have exactly the same name. If a 16th column is present, it contains the protocol
-  metadata: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/metadata/raw
-  
-  # Absolute path to the created concatenate metadata fileconcatenate_file
-  concatenate_metadata: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/metadata/metadata_concatenate.csv
-  
-  # Absolute path to the created directory containing one file by id
-  batch_by_id: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/batch/batch_by_id
-  
-  # List (comma separated, no space) of accepted comment
-  # comment_accepted: ok
-  comment_accepted: ok,not_detached, cuticle_broke
-  
-  # List (comma separated, no space) of accepted protocol
-  protocol_accepted: 0s,5min,default
-  
-  # Absolute path to the created directory containing one file by index result
-  index_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/index/index.csv
-  
-  #Absolute path to the created directory containing a file with all the ecological data for all species
-  ecology_path: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/ecology_data
-  
-  #Absolute path to the created directory containing individual files with ecological data for each location
-  ecology_path_output: C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/ecology_data/Output
-  
-  # Absolute path to the created directory containing the plots (load_time)
-  plot_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/plot
-  
-  # Absolute path to the created directory containing the integral files
-  integral_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/integral
-  
-  # Absolute path to the created directory containing the imageJ files
-  imagej_path:  C:/Users/jean-noel.lorenzi/Documents/Adhesion/data/imageJ/raw
-   
-manon_acanthoptera:
-  # Absolute path to batches data files
-  batches: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/batch/raw
-
-  # Absolute path to the created concatenate file
-  concatenate_file: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/batch/concatenate/data_concatenate.csv
-
-  # Absolute path to the created concatenate id file
-  concatenate_id_file: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/batch/concatenate/id_concatenate.csv
-
-  # Absolute path to metadata files. The first 15 columns must have exactly the same name. If a 16th column is present, it contains the protocol
-  metadata: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/metadata/raw
-
-  # Absolute path to the created concatenate metadata fileconcatenate_file
-  concatenate_metadata: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/metadata/metadata_concatenate.csv
-
-  # Absolute path to the created directory containing one file by id
-  batch_by_id: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/batch/batch_by_id
-
-  # List (comma separated, no space) of accepted comment
-  # comment_accepted: ok
-  comment_accepted: ok,not_detached, cuticle_broke
-
-  # List (comma separated, no space) of accepted protocol
-  protocol_accepted: 0s,5min,default
-
-  # Absolute path to the created directory containing one file by index result
-  index_path:  /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/index/index.csv
-  
-  #Absolute path to the created directory containing a file with all the ecological data for all species
-  ecology_path: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/ecology_data
-  
-  #Absolute path to the created directory containing a file with all the origin data for all species
-  origin_fly_path: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/ecology_data/data_fly_origin.csv
-
-  #Absolute path to the created directory containing individual files with ecological data for each location
-  ecology_path_output: /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/ecology_data/Output
-
-  # Absolute path to the created directory containing the plots (load_time)
-  plot_path:  /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/plot
-
-  # Absolute path to the created directory containing the integral files
-  integral_path:  /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/integral
-
-  # Absolute path to the created directory containing the imageJ files
-  imagej_path:  /perso/monier/Documents/Adhesion_test_data/Integrales/Jean_Noel_15_01_24/data/imageJ/raw
