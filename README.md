@@ -281,7 +281,7 @@ For each of these values, their corresponding value in log base 10 is calculated
 
 
 
-**_one_parameter_plot.R_**
+**_7_one_parameter_plot.R_**
 
 This script creates boxplot graphs, tables and bar plot graphs.
 
@@ -318,7 +318,7 @@ The **barplot percentage of pupae with null glue area** creates a barplot of the
 The **table melano comments** creates a table with the number of pupae detached, not detached or broken for Drosophila melanogaster pupae tested with different protocols.
 
 
-**_two_parameters_plot.R_**
+**_8_two_parameters_plot.R_**
 
 This script creates scatter plot graphs.
 
@@ -345,7 +345,7 @@ The **plot species force detached and cuticle broke** section section creates on
 
 
 
-**_phylogenetic_tree.R_**
+**_9_phylogenetic_tree.R_**
 
 This script makes the figure displaying medians of pupa shape, glue area, glue investment, detachment force and adhesion strength with a color gradient, for each species and their phylogeny topology is displayed. 
 
@@ -366,7 +366,7 @@ The section **arbre phylo** creates the newick format code for the phylogenetic 
 
 
 
-**_ecology.R_**
+**_10_ecology.R_**
 
 This script makes scatter plots and table with ecology variables.
 
@@ -390,5 +390,29 @@ The **add humidity experiments data** section imports the humidity experiment da
 The **import origin fly data** section imports the file made manually with collection site, pupation duration time and references for studied species (data_fly_origin.csv). It creates several scatter plots for adhesion properties versus the pupation duration and the number of cells per gland (listed in 'parameter_development'). It also creates a table containing the correlation coefficients r² between each couple of parameters. Plots and table are saved in **[plot/ecology]**. 
 
 The **load ecology data** section imports daily meteorological data of 23 collection locations over 10 years (ecology_data.csv). It creates several scatter plots for adhesion properties versus the ecological parameters (listed in 'parameter_meteo'). It also creates a table containing the correlation coefficients r² between each couple of parameters. Plots and table are saved in **[plot/ecology]**. 
+
+
+
+**_11_representation_by_id.R_**
+
+This script creates plots representing curves of load, time and captor position.
+
+Input:
+All files (.csv) in **[batch/batch_by_id]** obtained from 3_load_data.R.
+**[index/index.csv]** obtained from 4_index_definition.R.
+**[Metadata/metadata_concatenate.csv]** obtained from 2_concatenation_metadata.R.
+
+Output:
+In **[plot/load_extension]** directory: All csv files of individual curves (f(position)=load) for all pupa ids. Landmarks position on curves are indicated with a dashed line.
+In **[plot/load_time]** directory: All csv files of individual curves (f(time)=load) for all pupa ids. Landmarks position on curves are indicated with a dashed line.
+In **[plot/time_extension]** directory: All csv files of individual curves (f(time)=position) for all pupa ids. Landmarks position on curves are indicated with a dashed line.
+
+
+Using landmarks defined in **[index/index.csv]** for each pupa, the script defines 6 regions (listed in gg_region) between each landmark. 
+Using ggplot, the script creates three types of plots: f(position)=load, f(time)=load and f(time)=position. For each plot, regions between landmarks are differenciated by colours and landmarks position are identified by dashed lines.
+For plots representing f(position)=load, the region 1 (between the beginning of the experiment and index_1) and 6 (between index_5 and index_6) are shortened for a better visualization. The 10 first values of region 1 and the 10 last values of region 6 are discarded.
+
+
+The script creates three plots representing f(position)=load, f(time)=load and f(time)=position for only one pupa id, 2020072701. This pupa id curve f(position)=load is later used to represent calculations made on the curves. This id has been chosen because its curve represents a common type of curve encountered in our experiments. This curve does not display regions and landmarks positions.
 
 
