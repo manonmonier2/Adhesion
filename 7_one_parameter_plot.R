@@ -1250,6 +1250,85 @@ p1 = ggarrange(p_total_detached, p, ncol = 1, common.legend = T, align = c("v"))
 ggsave(file = paste0(plot_path_one_parameter_by_species, "/stat_bar_plot_standard_strong_025N", ".pdf"), 
        plot=p1, width=8, height=12, device = cairo_pdf)
 
+#barplot percentage of pupae with null glue area
+comment_stats_glue = gg_data %>%
+  filter(
+    ((Species == "Drosophila_melanogaster" & Protocol == "standard" & Stock == "cantonS") |
+       (Species == "Drosophila_simulans" & Stock == "simulans_vincennes") |
+       (Species == "Drosophila_suzukii" & Stock == "suzukii_Vincennes") |
+       (Species == "Drosophila_biarmipes" & Stock == "G224")) |
+      (Species == "Drosophila_hydei" & Protocol == "1 strong tape ; 0.25 N") |
+      (! Species %in% c("Drosophila_melanogaster", "Drosophila_simulans", "Drosophila_suzukii", "Drosophila_biarmipes", "Drosophila_hydei"))) %>%
+  filter(Species != "Megaselia_abdita") %>%
+  filter(Species != "Megaselia_scalaris") %>%
+  filter(Species != "Drosophila_quadraria") %>%
+  filter(Species != "Drosophila_elegans") %>%
+  
+  filter(Comment == "ok" | Comment == "not_detached" | Comment == "cuticle_broke") %>%
+  
+  # filter(Protocol == "standard") %>%
+  
+  select(Species, glue_area_mm) %>%
+  group_by(Species) %>% 
+  summarise(glue_null = sum(glue_area_mm == 0, na.rm = TRUE), 
+            glue_total = sum(! glue_area_mm == 0, na.rm = TRUE))
+
+
+comment_stats_glue = as.data.frame(comment_stats_glue)
+
+
+comment_stats_glue$glue_not_null = comment_stats_glue$glue_total - comment_stats_glue$glue_null
+
+comment_stats_glue$percent_glue_not_null = comment_stats_glue$glue_not_null*100/comment_stats_glue$glue_total
+comment_stats_glue$percent_glue_null = comment_stats_glue$glue_null*100/comment_stats_glue$glue_total
+
+
+
+mdat_glue = melt(comment_stats_glue, id.vars=c("Species"),
+                     measure.vars=c("percent_glue_null", "percent_glue_not_null"))
+
+mdat_glue = as.data.frame(mdat_glue)
+
+#order variables
+mdat_glue$variable <- factor(mdat_glue$variable, levels=c('percent_glue_not_null', 'percent_glue_null'))
+
+# Change species ordering manually
+mdat_glue$Species <- factor(mdat_glue$Species, 
+                                levels = c("Drosophila_tropicalis", "Drosophila_rhopaloa",
+                                           "Zaprionus_indianus", 
+                                           "Drosophila_prostipennis",
+                                           "Drosophila_malerkotliana",
+                                           "Drosophila_funebris",
+                                           "Drosophila_immigrans",
+                                           "Drosophila_nannoptera",
+                                           "Zaprionus_lachaisei",
+                                           "Drosophila_kurseongensis",
+                                           "Drosophila_pseudoobscura",
+                                           "Drosophila_littoralis", "Drosophila_virilis",
+                                           "Scaptodrosophila_lebanonensis", "Drosophila_pachea",
+                                           "Drosophila_hydei","Drosophila_melanogaster"))
+mdat_glue <- mdat_glue[!is.na(mdat_glue$Species), ]
+mdat_glue = as.data.frame(mdat_glue)
+
+x_labels = format_label(factor_name = "Species", factor_labels = as.factor(mdat_glue[["Species"]]))
+x_labels = gsub(" *$", "", x_labels)
+
+p_glue = ggplot(data = mdat_glue,
+                    aes(x = Species, y = value, fill = variable)) + coord_flip() +
+  geom_bar(position="stack", stat = "identity", colour="black", width = 0.8) + theme_bw(base_size = 18) +
+  theme(axis.title.y = element_blank(),
+        axis.text.x = element_text(family = "Courier New"),
+        axis.text.y= element_text(family = "Courier New")) +
+  scale_x_discrete(labels = x_labels) +
+  scale_fill_manual(name = "Measurement of glue area", labels = c("Not null", "Null"), 
+                    values=c('black', 'white')) +
+  ylab("Percentage of pupae with or without a measure of glue area")
+
+ggsave(file = paste0(plot_path_one_parameter_by_species, "/bar_plot_glue", ".pdf"), 
+       plot=p_glue, width=16, height=8, device = cairo_pdf)
+
+
+
 
 #table melano comments
 melano_stats_ok = gg_data %>%
